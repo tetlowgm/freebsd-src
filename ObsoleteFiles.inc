@@ -51,6 +51,9 @@
 #   xargs -n1 | sort | uniq -d;
 # done
 
+# 20240804: retire fips.so
+OLD_LIBS+=usr/lib/ossl-modules/fips.so
+
 # 20240729: retire ifaddr_byindex
 OLD_FILES+=usr/share/man/man9/ifaddr_byindex.9.gz
 
