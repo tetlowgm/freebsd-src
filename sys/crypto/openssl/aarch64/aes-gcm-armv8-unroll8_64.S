@@ -1,5 +1,5 @@
 /* Do not modify. This file is auto-generated from aes-gcm-armv8-unroll8_64.pl. */
-#include "arm_arch.h"
+#include "arch/arm_arch.h"
 
 #if __ARM_MAX_ARCH__>=8
 .arch	armv8-a+crypto

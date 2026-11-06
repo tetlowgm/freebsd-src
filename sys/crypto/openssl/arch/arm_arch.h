@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -79,9 +79,10 @@ extern unsigned int OPENSSL_armv8_rsa_neonized;
 #define ARMV8_SHA3 (1 << 11)
 #define ARMV8_UNROLL8_EOR3 (1 << 12)
 #define ARMV8_SVE (1 << 13)
-#define ARMV8_SVE2 (1 << 14)
+#define ARMV9_SVE2 (1 << 14)
 #define ARMV8_HAVE_SHA3_AND_WORTH_USING (1 << 15)
 #define ARMV8_UNROLL12_EOR3 (1 << 16)
+#define ARMV9_SVE2_POLY1305 (1 << 17)
 
 /*
  * MIDR_EL1 system register
@@ -95,9 +96,11 @@ extern unsigned int OPENSSL_armv8_rsa_neonized;
 
 #define ARM_CPU_IMP_ARM 0x41
 #define HISI_CPU_IMP 0x48
+#define ARM_CPU_IMP_QCOMM 0x51
 #define ARM_CPU_IMP_APPLE 0x61
 #define ARM_CPU_IMP_MICROSOFT 0x6D
 #define ARM_CPU_IMP_AMPERE 0xC0
+#define ARM_CPU_IMP_NVIDIA 0x4E
 
 #define ARM_CPU_PART_CORTEX_A72 0xD08
 #define ARM_CPU_PART_N1 0xD0C
@@ -105,6 +108,13 @@ extern unsigned int OPENSSL_armv8_rsa_neonized;
 #define ARM_CPU_PART_N2 0xD49
 #define HISI_CPU_PART_KP920 0xD01
 #define ARM_CPU_PART_V2 0xD4F
+#define ARM_CPU_PART_N3 0xD8E
+#define ARM_CPU_PART_V3_AE 0xD83
+#define ARM_CPU_PART_V3 0xD84
+
+#define QCOM_CPU_PART_ORYON_X1 0x001
+
+#define NVIDIA_CPU_PART_OLYMPUS 0x010
 
 #define APPLE_CPU_PART_M1_ICESTORM 0x022
 #define APPLE_CPU_PART_M1_FIRESTORM 0x023
@@ -149,8 +159,9 @@ extern unsigned int OPENSSL_armv8_rsa_neonized;
 
 /*
  * Support macros for
- *   - Armv8.3-A Pointer Authentication and
+ *   - Armv8.3-A Pointer Authentication
  *   - Armv8.5-A Branch Target Identification
+ *   - Armv9.4-A Guarded Control Stack
  * features which require emitting a .note.gnu.property section with the
  * appropriate architecture-dependent feature bits set.
  * Read more: "ELF for the Arm® 64-bit Architecture"
@@ -184,7 +195,13 @@ extern unsigned int OPENSSL_armv8_rsa_neonized;
 #define AARCH64_VALIDATE_LINK_REGISTER
 #endif
 
-#if GNU_PROPERTY_AARCH64_POINTER_AUTH != 0 || GNU_PROPERTY_AARCH64_BTI != 0
+#if defined(__ARM_FEATURE_GCS_DEFAULT) && __ARM_FEATURE_GCS_DEFAULT == 1
+#define GNU_PROPERTY_AARCH64_GCS (1 << 2)
+#else
+#define GNU_PROPERTY_AARCH64_GCS 0 /* No GCS */
+#endif
+
+#if GNU_PROPERTY_AARCH64_POINTER_AUTH != 0 || GNU_PROPERTY_AARCH64_BTI != 0 || GNU_PROPERTY_AARCH64_GCS != 0
 /* clang-format off */
 .pushsection .note.gnu.property, "a";
 /* clang-format on */
@@ -195,7 +212,7 @@ extern unsigned int OPENSSL_armv8_rsa_neonized;
 .asciz "GNU";
 .long 0xc0000000; /* GNU_PROPERTY_AARCH64_FEATURE_1_AND */
 .long 4;
-.long(GNU_PROPERTY_AARCH64_POINTER_AUTH | GNU_PROPERTY_AARCH64_BTI);
+.long(GNU_PROPERTY_AARCH64_POINTER_AUTH | GNU_PROPERTY_AARCH64_BTI | GNU_PROPERTY_AARCH64_GCS);
 .long 0;
 .popsection;
 #endif

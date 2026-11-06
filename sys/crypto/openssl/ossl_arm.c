@@ -36,7 +36,7 @@
 
 #include <crypto/openssl/ossl.h>
 #include <crypto/openssl/ossl_cipher.h>
-#include <crypto/openssl/arm_arch.h>
+#include <crypto/openssl/arch/arm_arch.h>
 
 ossl_cipher_setkey_t AES_set_encrypt_key;
 ossl_cipher_setkey_t AES_set_decrypt_key;

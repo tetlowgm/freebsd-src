@@ -37,7 +37,7 @@
 
 #include <crypto/openssl/ossl.h>
 #include <crypto/openssl/ossl_cipher.h>
-#include <crypto/openssl/arm_arch.h>
+#include <crypto/openssl/arch/arm_arch.h>
 
 /*
  * Feature bits defined in arm_arch.h

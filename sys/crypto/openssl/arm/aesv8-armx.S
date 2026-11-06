@@ -1,5 +1,5 @@
 /* Do not modify. This file is auto-generated from aesv8-armx.pl. */
-#include "arm_arch.h"
+#include "arch/arm_arch.h"
 
 #if __ARM_MAX_ARCH__>=7
 .arch	armv7-a	@ don't confuse not-so-latest binutils with argv8 :-)
