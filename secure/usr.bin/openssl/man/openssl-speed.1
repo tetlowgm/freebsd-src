@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OPENSSL-SPEED 1ossl"
-.TH OPENSSL-SPEED 1ossl 2026-09-29 3.5.9 OpenSSL
+.TH OPENSSL-SPEED 1ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -90,7 +90,6 @@ openssl\-speed \- test library performance
 [\fB\-testmode\fR]
 [\fB\-rand\fR \fIfiles\fR]
 [\fB\-writerand\fR \fIfile\fR]
-[\fB\-engine\fR \fIid\fR]
 [\fB\-provider\fR \fIname\fR]
 [\fB\-provider\-path\fR \fIpath\fR]
 [\fB\-provparam\fR \fI[name:]key=value\fR]
@@ -112,8 +111,7 @@ see "COMMAND SUMMARY" in \fBopenssl\fR\|(1).
 .IP \fB\-elapsed\fR 4
 .IX Item "-elapsed"
 When calculating operations\- or bytes\-per\-second, use wall\-clock time
-instead of CPU user time as divisor. It can be useful when testing speed
-of hardware engines.
+instead of CPU user time as divisor.
 .IP "\fB\-evp\fR \fIalgo\fR" 4
 .IX Item "-evp algo"
 Use the specified cipher or message digest algorithm via the EVP interface.
@@ -181,10 +179,6 @@ the speed command will return with a failure result.
 .IP "\fB\-rand\fR \fIfiles\fR, \fB\-writerand\fR \fIfile\fR" 4
 .IX Item "-rand files, -writerand file"
 See "Random State Options" in \fBopenssl\fR\|(1) for details.
-.IP "\fB\-engine\fR \fIid\fR" 4
-.IX Item "-engine id"
-See "Engine Options" in \fBopenssl\fR\|(1).
-This option is deprecated.
 .IP "\fB\-provider\fR \fIname\fR" 4
 .IX Item "-provider name"
 .PD 0
@@ -215,6 +209,8 @@ The \fB\-engine\fR option was deprecated in OpenSSL 3.0.
 DSA512 was removed in OpenSSL 3.2.
 .PP
 The \fB\-testmode\fR option was added in OpenSSL 3.4.
+.PP
+The \fB\-engine\fR option was removed in OpenSSL 4.0.
 .SH COPYRIGHT
 .IX Header "COPYRIGHT"
 Copyright 2000\-2024 The OpenSSL Project Authors. All Rights Reserved.

@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "EVP_PKEY-HMAC 7ossl"
-.TH EVP_PKEY-HMAC 7ossl 2026-09-29 3.5.9 OpenSSL
+.TH EVP_PKEY-HMAC 7ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -95,9 +95,6 @@ supports the following parameters.
 .IP """cipher"" (\fBOSSL_PKEY_PARAM_CIPHER\fR) <UTF8 string>" 4
 .IX Item """cipher"" (OSSL_PKEY_PARAM_CIPHER) <UTF8 string>"
 The name of a cipher to be used when generating the MAC.
-.IP """engine"" (\fBOSSL_PKEY_PARAM_ENGINE\fR) <UTF8 string>" 4
-.IX Item """engine"" (OSSL_PKEY_PARAM_ENGINE) <UTF8 string>"
-The name of an engine to be used for the specified cipher (if any).
 .SS "Common MAC key generation parameters"
 .IX Subsection "Common MAC key generation parameters"
 MAC key generation is unusual in that no new key is actually generated. Instead
@@ -124,6 +121,10 @@ See "FIPS indicators" in \fBfips_module\fR\|(7) for more information.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 \&\fBEVP_KEYMGMT\fR\|(3), \fBEVP_PKEY\fR\|(3), \fBprovider\-keymgmt\fR\|(7)
+.SH HISTORY
+.IX Header "HISTORY"
+The CMAC parameter \fIengine\fR (\fBOSSL_PKEY_PARAM_ENGINE\fR) was removed in
+OpenSSL 4.0.
 .SH COPYRIGHT
 .IX Header "COPYRIGHT"
 Copyright 2020\-2026 The OpenSSL Project Authors. All Rights Reserved.

@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OPENSSL-ENC 1ossl"
-.TH OPENSSL-ENC 1ossl 2026-09-29 3.5.9 OpenSSL
+.TH OPENSSL-ENC 1ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -101,7 +101,8 @@ openssl\-enc \- symmetric cipher routines
 [\fB\-none\fR]
 [\fB\-skeymgmt\fR \fIskeymgmt\fR]
 [\fB\-skeyopt\fR \fIopt\fR:\fIvalue\fR]
-[\fB\-engine\fR \fIid\fR]
+[\fB\-skeyuri\fR \fIuri\fR]
+[\fB\-storepass\fR \fIarg\fR]
 [\fB\-rand\fR \fIfiles\fR]
 [\fB\-writerand\fR \fIfile\fR]
 [\fB\-provider\fR \fIname\fR]
@@ -120,7 +121,9 @@ either by itself or in addition to the encryption or decryption.
 .IX Header "OPTIONS"
 .IP \fB\-\fR\f(BIcipher\fR 4
 .IX Item "-cipher"
-The cipher to use.
+The cipher to use. This option is specified by prepending a hyphen to the
+cipher name (e.g., \fB\-aes\-256\-cbc\fR), not as an argument to a \f(CW\*(C`\-cipher\*(C'\fR flag.
+Use \f(CW\*(C`openssl list \-cipher\-algorithms\*(C'\fR to see the available ciphers.
 .IP \fB\-help\fR 4
 .IX Item "-help"
 Print out a usage message.
@@ -265,6 +268,16 @@ please refer to the output of the \f(CW\*(C`openssl list \-skey\-managers\*(C'\f
 To obtain an existing opaque symmetric key or generate a new one, key
 options are specified as opt:value. These options can\*(Aqt be used together with
 any options implying raw key directly or indirectly.
+.IP "\fB\-skeyuri\fR \fIuri\fR" 4
+.IX Item "-skeyuri uri"
+The URI identifying the symmetric key object to be used for encryption.  This
+option can\*(Aqt be used together with any options implying raw key directly or
+indirectly. The \fB\-skeymgmt\fR option is ignored. If both \fB\-skeyuri\fR and
+\&\fB\-skeyopt\fR options are provided, \fB\-skeyuri\fR is ignored.
+.IP "\fB\-storepass\fR \fIarg\fR" 4
+.IX Item "-storepass arg"
+The input URI password source. For more information about the format of \fIarg\fR
+see \fBopenssl\-passphrase\-options\fR\|(1).
 .IP "\fB\-rand\fR \fIfiles\fR, \fB\-writerand\fR \fIfile\fR" 4
 .IX Item "-rand files, -writerand file"
 See "Random State Options" in \fBopenssl\fR\|(1) for details.
@@ -279,26 +292,13 @@ See "Random State Options" in \fBopenssl\fR\|(1) for details.
 .IX Item "-propquery propq"
 .PD
 See "Provider Options" in \fBopenssl\fR\|(1), \fBprovider\fR\|(7), and \fBproperty\fR\|(7).
-.IP "\fB\-engine\fR \fIid\fR" 4
-.IX Item "-engine id"
-See "Engine Options" in \fBopenssl\fR\|(1).
-This option is deprecated.
 .SH NOTES
 .IX Header "NOTES"
 The program can be called either as \f(CW\*(C`openssl \fR\f(CIcipher\fR\f(CW\*(C'\fR or
-\&\f(CW\*(C`openssl enc \-\fR\f(CIcipher\fR\f(CW\*(C'\fR. The first form doesn\*(Aqt work with
-engine\-provided ciphers, because this form is processed before the
-configuration file is read and any ENGINEs loaded.
+\&\f(CW\*(C`openssl enc \-\fR\f(CIcipher\fR\f(CW\*(C'\fR.
 Use the \fBopenssl\-list\fR\|(1) command to get a list of supported ciphers.
 .PP
-Engines which provide entirely new encryption algorithms (such as the ccgost
-engine which provides gost89 algorithm) should be configured in the
-configuration file. Engines specified on the command line using \fB\-engine\fR
-option can only be used for hardware\-assisted implementations of
-ciphers which are supported by the OpenSSL core or another engine specified
-in the configuration file.
-.PP
-When the enc command lists supported ciphers, ciphers provided by engines,
+When the enc command lists supported ciphers, ciphers provided by providers,
 specified in the configuration files are listed too.
 .PP
 A password will be prompted for to derive the key and IV if necessary.
@@ -347,11 +347,11 @@ to the output.
 .SH "SUPPORTED CIPHERS"
 .IX Header "SUPPORTED CIPHERS"
 Note that some of these ciphers can be disabled at compile time
-and some are available only if an appropriate engine is configured
+and some are available only if an appropriate provider is configured
 in the configuration file. The output when invoking this command
 with the \fB\-list\fR option (that is \f(CW\*(C`openssl enc \-list\*(C'\fR) is
 a list of ciphers, supported by your version of OpenSSL, including
-ones provided by configured engines.
+ones provided by configured providers.
 .PP
 This command does not support authenticated encryption modes
 like CCM and GCM, and will not support such modes in the future.
@@ -416,9 +416,6 @@ In both cases, no IV is needed. See example below.
 \& des\-ede3\-ofb       Three key triple DES EDE in OFB mode
 \&
 \& desx               DESX algorithm.
-\&
-\& gost89             GOST 28147\-89 in CFB mode (provided by ccgost engine)
-\& gost89\-cnt         GOST 28147\-89 in CNT mode (provided by ccgost engine)
 \&
 \& idea\-cbc           IDEA algorithm in CBC mode
 \& idea               same as idea\-cbc
@@ -548,21 +545,25 @@ certain parameters. So if, for example, you want to use RC2 with a
 76 bit key or RC4 with an 84 bit key you can\*(Aqt use this program.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-\&\fBopenssl\-list\fR\|(1), \fBEVP_SKEY\fR\|(3)
+\&\fBopenssl\-list\fR\|(1), \fBEVP_SKEY\fR\|(3), \fBopenssl\-passphrase\-options\fR\|(1)
 .SH HISTORY
 .IX Header "HISTORY"
 The default digest was changed from MD5 to SHA256 in OpenSSL 1.1.0.
 .PP
 The \fB\-list\fR option was added in OpenSSL 1.1.1e.
 .PP
-The \fB\-ciphers\fR and \fB\-engine\fR options were deprecated in OpenSSL 3.0.
+The \fB\-ciphers\fR option was deprecated in OpenSSL 3.0.
 .PP
 The \fB\-saltlen\fR option was added in OpenSSL 3.2.
 .PP
 The \fB\-skeymgmt\fR and \fB\-skeyopt\fR options were added in OpenSSL 3.5.
+.PP
+The \fB\-engine\fR option was removed in OpenSSL 4.0.
+.PP
+The \fB\-skeyuri\fR and \fB\-storepass\fR options were added in OpenSSL 4.0.
 .SH COPYRIGHT
 .IX Header "COPYRIGHT"
-Copyright 2000\-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000\-2026 The OpenSSL Project Authors. All Rights Reserved.
 .PP
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "SSL_CTX_SET_MSG_CALLBACK 3ossl"
-.TH SSL_CTX_SET_MSG_CALLBACK 3ossl 2026-09-29 3.5.9 OpenSSL
+.TH SSL_CTX_SET_MSG_CALLBACK 3ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -159,8 +159,8 @@ processed.
 .PP
 Due to automatic protocol version negotiation, \fIversion\fR is not
 necessarily the protocol version used by the sender of the message: If
-a TLS 1.0 ClientHello message is received by an SSL 3.0\-only server,
-\&\fIversion\fR will be \fBSSL3_VERSION\fR.
+a TLS 1.1 ClientHello message is received by an TLS 1\-only server,
+\&\fIversion\fR will be \fBTLS1_VERSION\fR.
 .PP
 Pseudo content type values may be sent at various points during the processing
 of data. The following pseudo content types are currently defined:

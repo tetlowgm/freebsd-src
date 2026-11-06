@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OPENSSL-GENPKEY 1ossl"
-.TH OPENSSL-GENPKEY 1ossl 2026-09-29 3.5.9 OpenSSL
+.TH OPENSSL-GENPKEY 1ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -79,12 +79,11 @@ openssl\-genpkey \- generate a private key or key pair
 [\fB\-paramfile\fR \fIfile\fR]
 [\fB\-algorithm\fR \fIalg\fR]
 [\fB\-pkeyopt\fR \fIopt\fR:\fIvalue\fR]
+[\fB\-encopt\fR \fIopt\fR:\fIvalue\fR]
 [\fB\-genparam\fR]
 [\fB\-text\fR]
 [\fB\-rand\fR \fIfiles\fR]
 [\fB\-writerand\fR \fIfile\fR]
-[\fB\-engine\fR \fIid\fR]
-.PP
 [\fB\-provider\fR \fIname\fR]
 [\fB\-provider\-path\fR \fIpath\fR]
 [\fB\-provparam\fR \fI[name:]key=value\fR]
@@ -124,14 +123,28 @@ The output file password source. For more information about the format of \fIarg
 see \fBopenssl\-passphrase\-options\fR\|(1).
 .IP \fB\-\fR\f(BIcipher\fR 4
 .IX Item "-cipher"
-This option encrypts the private key with the supplied cipher. Any algorithm
-name accepted by \fBEVP_get_cipherbyname()\fR is acceptable such as \fBdes3\fR.
+Encrypts the private key with the specified cipher. This option is specified
+by prepending a hyphen to the cipher name. For example, to encrypt with
+AES\-128 in CBC mode, use \fB\-aes\-128\-cbc\fR. To encrypt with AES\-256 in CBC mode,
+use \fB\-aes\-256\-cbc\fR.
+.Sp
+Note: the cipher name is used directly as the option (e.g., \fB\-aes\-256\-cbc\fR),
+not as an argument to a \f(CW\*(C`\-cipher\*(C'\fR flag.
+.Sp
+Use \f(CW\*(C`openssl list \-cipher\-algorithms\*(C'\fR to see the available ciphers.
 .IP "\fB\-algorithm\fR \fIalg\fR" 4
 .IX Item "-algorithm alg"
 Public key algorithm to use such as RSA, DSA, DH or DHX. If used this option must
 precede any \fB\-pkeyopt\fR options. The options \fB\-paramfile\fR and \fB\-algorithm\fR
-are mutually exclusive. Engines or providers may add algorithms in addition to
+are mutually exclusive. Providers may add algorithms in addition to
 the standard built\-in ones.
+.Sp
+A complete list of available algorithms can be obtained using:
+    openssl list \-public\-key\-algorithms
+.Sp
+When selecting an algorithm from this output, use the \f(CW\*(C`PEM string\*(C'\fR for legacy
+algorithms, or the portion of the \f(CW\*(C`IDs\*(C'\fR field before the \f(CW\*(C`@\*(C'\fR symbol for
+provided algorithms.
 .Sp
 Valid built\-in algorithm names for private key generation are RSA, RSA\-PSS, EC,
 X25519, X448, ED25519, ED448, ML\-DSA and ML\-KEM.
@@ -143,13 +156,26 @@ Note that the algorithm name X9.42 DH may be used as a synonym for DHX keys and
 PKCS#3 refers to DH Keys. Some options are not shared between DH and DHX keys.
 .IP "\fB\-pkeyopt\fR \fIopt\fR:\fIvalue\fR" 4
 .IX Item "-pkeyopt opt:value"
-Set the public key algorithm option \fIopt\fR to \fIvalue\fR. The precise set of
-options supported depends on the public key algorithm used and its
+Set the public key algorithm option \fIopt\fR to \fIvalue\fR.
+The precise set of
+supported options depends on the public key algorithm used and its
 implementation. See "KEY GENERATION OPTIONS" and
 "PARAMETER GENERATION OPTIONS" below for more details.
 .Sp
 To list the possible \fIopt\fR values for an algorithm use:
 \&\fBopenssl\fR \fBgenpkey\fR \-algorithm XXX \-help
+.IP "\fB\-encopt\fR \fIopt\fR:\fIvalue\fR" 4
+.IX Item "-encopt opt:value"
+Set the private key encoder parameter \fIopt\fR to \fIvalue\fR.
+In order to set multiple parameters, multiple \fB\-encopt\fR options can be
+specified, each specifying a single parameter.
+The precise set of supported parameters depends on the public key algorithm
+involved and its implementation.
+This is primarily applicable to \fBML\-DSA\fR and \fBML\-KEM\fR, whose private key
+encoding to a \fBPKCS#8\fR object can take a number of different forms.
+The \f(CW\*(C`output_formats\*(C'\fR parameter can be used to select the preferred output
+forms.
+See \fBEVP_PKEY\-ML\-DSA\fR\|(7) and \fBEVP_PKEY\-ML\-KEM\fR\|(7) for details.
 .IP \fB\-genparam\fR 4
 .IX Item "-genparam"
 Generate a set of parameters instead of a private key. If used this option must
@@ -168,10 +194,6 @@ parameters along with the PEM or DER structure.
 .IP "\fB\-rand\fR \fIfiles\fR, \fB\-writerand\fR \fIfile\fR" 4
 .IX Item "-rand files, -writerand file"
 See "Random State Options" in \fBopenssl\fR\|(1) for details.
-.IP "\fB\-engine\fR \fIid\fR" 4
-.IX Item "-engine id"
-See "Engine Options" in \fBopenssl\fR\|(1).
-This option is deprecated.
 .IP "\fB\-provider\fR \fIname\fR" 4
 .IX Item "-provider name"
 .PD 0
@@ -431,7 +453,7 @@ The EC parameter generation options are the same as for key generation. See
 .SH NOTES
 .IX Header "NOTES"
 The use of the genpkey program is encouraged over the algorithm specific
-utilities because additional algorithm options and ENGINE provided algorithms
+utilities because additional algorithm options and provider provided algorithms
 can be used.
 .SH EXAMPLES
 .IX Header "EXAMPLES"
@@ -582,12 +604,18 @@ were added in OpenSSL 1.0.2.
 The ability to generate X25519 keys was added in OpenSSL 1.1.0.
 The ability to generate X448, ED25519 and ED448 keys was added in OpenSSL 1.1.1.
 .PP
-The \fB\-engine\fR option was deprecated in OpenSSL 3.0.
-.PP
 Support for \fBML\-DSA\fR and \fBML\-KEM\fR was added in OpenSSL 3.5.
+.PP
+The \fB\-engine\fR option was removed in OpenSSL 4.0.
+.PP
+The \fB\-encopt\fR option was added in OpenSSL 4.0.
+.PP
+As of OpenSSL 4.0 the \fB\-pass\fR and \fB\-\fR\f(BIcipher\fR options apply when
+private keys are output in either \fBDER\fR or \fBPEM\fR form.
+Previously, these private key encryption options were ignored in \fBDER\fR form.
 .SH COPYRIGHT
 .IX Header "COPYRIGHT"
-Copyright 2006\-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006\-2026 The OpenSSL Project Authors. All Rights Reserved.
 .PP
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

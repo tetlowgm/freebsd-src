@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "X509V3_EXT_PRINT 3ossl"
-.TH X509V3_EXT_PRINT 3ossl 2026-09-29 3.5.9 OpenSSL
+.TH X509V3_EXT_PRINT 3ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -70,8 +70,8 @@ X509V3_EXT_print, X509V3_EXT_print_fp \- pretty print X509 certificate extension
 .Vb 1
 \& #include <openssl/x509v3.h>
 \&
-\& int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, unsigned long flag, int indent);
-\& int X509V3_EXT_print_fp(FILE *out, X509_EXTENSION *ext, int flag, int indent);
+\& int X509V3_EXT_print(BIO *out, const X509_EXTENSION *ext, unsigned long flag, int indent);
+\& int X509V3_EXT_print_fp(FILE *out, const X509_EXTENSION *ext, int flag, int indent);
 .Ve
 .SH DESCRIPTION
 .IX Header "DESCRIPTION"

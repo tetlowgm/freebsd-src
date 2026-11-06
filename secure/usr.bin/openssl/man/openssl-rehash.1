@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OPENSSL-REHASH 1ossl"
-.TH OPENSSL-REHASH 1ossl 2026-09-29 3.5.9 OpenSSL
+.TH OPENSSL-REHASH 1ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -81,28 +81,16 @@ values
 [\fB\-provparam\fR \fI[name:]key=value\fR]
 [\fB\-propquery\fR \fIpropq\fR]
 [\fIdirectory\fR] ...
-.PP
-\&\fBc_rehash\fR
-[\fB\-h\fR]
-[\fB\-help\fR]
-[\fB\-old\fR]
-[\fB\-n\fR]
-[\fB\-v\fR]
-[\fB\-provider\fR \fIname\fR]
-[\fB\-provider\-path\fR \fIpath\fR]
-[\fB\-provparam\fR \fI[name:]key=value\fR]
-[\fB\-propquery\fR \fIpropq\fR]
-[\fIdirectory\fR] ...
 .SH DESCRIPTION
 .IX Header "DESCRIPTION"
-This command is generally equivalent to the external
-script \fBc_rehash\fR,
-except for minor differences noted below.
-.PP
 \&\fBopenssl rehash\fR scans directories and calculates a hash value of
 each \fI.pem\fR, \fI.crt\fR, \fI.cer\fR, or \fI.crl\fR
-file in the specified directory list and creates symbolic links
-for each file, where the name of the link is the hash value.
+file in the specified directory list
+that is in PEM format and contains exactly one certificate or CRL.
+The extension matching is case\-insensitive and uses C locale.
+For each of these files, it creates a symbolic link with its name being the
+hash value of the certificate subject name or CRL issuer name, respectively.
+In this context, the first 4 bytes of SHA\-1 digest is used.
 (If the platform does not support symbolic links, a copy is made.)
 This command is useful as many programs that use OpenSSL require
 directories to be set up like this in order to find certificates.
@@ -128,29 +116,12 @@ the period, like this: \fIHHHHHHHH.\fR\fBr\fR\fID\fR.
 .PP
 Multiple objects may have the same hash; they will be indicated by
 incrementing the \fID\fR value. Duplicates are found by comparing the
-full SHA\-1 fingerprint. A warning will be displayed if a duplicate
-is found.
+full SHA\-1 fingerprint of the certificate or CRL in DER representation.
+A warning will be displayed if a duplicate is found.
 .PP
-A warning will also be displayed if there are files that
-cannot be parsed as either a certificate or a CRL or if
-more than one such object appears in the file.
-.SS "Script Configuration"
-.IX Subsection "Script Configuration"
-The \fBc_rehash\fR script
-uses the \fBopenssl\fR program to compute the hashes and
-fingerprints. If not found in the user\*(Aqs \fBPATH\fR, then set the
-\&\fBOPENSSL\fR environment variable to the full pathname.
-Any program can be used, it will be invoked as follows for either
-a certificate or CRL:
-.PP
-.Vb 2
-\&  $OPENSSL x509 \-hash \-fingerprint \-noout \-in FILENAME
-\&  $OPENSSL crl \-hash \-fingerprint \-noout \-in FILENAME
-.Ve
-.PP
-where \fIFILENAME\fR is the filename. It must output the hash of the
-file on the first line, and the fingerprint on the second,
-optionally prefixed with some text and an equals sign.
+A warning will also be displayed if there are files with a recognized filename
+extension that cannot be parsed as either a certificate or a CRL in PEM format
+or contain more than one such object.
 .SH OPTIONS
 .IX Header "OPTIONS"
 .IP "\fB\-help\fR \fB\-h\fR" 4
@@ -191,15 +162,26 @@ See "Provider Options" in \fBopenssl\fR\|(1), \fBprovider\fR\|(7), and \fBproper
 .IX Item "OPENSSL"
 The path to an executable to use to generate hashes and
 fingerprints (see above).
+.IP \fBPATH\fR 4
+.IX Item "PATH"
+List of paths, separated by colons (or semicolons, on Windows platforms),
+where the \fBopenssl\fR executable is searched in case the path to the hash
+generating executable is not provided in the \fBOPENSSL\fR environment variable
+or it is not usable (that is, does not exist or is not executable).
 .IP \fBSSL_CERT_DIR\fR 4
 .IX Item "SSL_CERT_DIR"
-Colon separated list of directories to operate on.
+List of directories to operate on.
+On Unix\-like systems the list entries are separated by a colon.
+On Windows they are separated by a semicolon.
 Ignored if directories are listed on the command line.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 \&\fBopenssl\fR\|(1),
 \&\fBopenssl\-crl\fR\|(1),
 \&\fBopenssl\-x509\fR\|(1)
+.SH HISTORY
+.IX Header "HISTORY"
+\&\fBc_rehash\fR was removed in OpenSSL 4.0. Use \fBopenssl rehash\fR instead.
 .SH COPYRIGHT
 .IX Header "COPYRIGHT"
 Copyright 2015\-2026 The OpenSSL Project Authors. All Rights Reserved.

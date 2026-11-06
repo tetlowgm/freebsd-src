@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OPENSSL-STOREUTL 1ossl"
-.TH OPENSSL-STOREUTL 1ossl 2026-09-29 3.5.9 OpenSSL
+.TH OPENSSL-STOREUTL 1ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -77,13 +77,13 @@ openssl\-storeutl \- STORE command
 [\fB\-certs\fR]
 [\fB\-keys\fR]
 [\fB\-crls\fR]
+[\fB\-skeys\fR]
 [\fB\-subject\fR \fIarg\fR]
 [\fB\-issuer\fR \fIarg\fR]
 [\fB\-serial\fR \fIarg\fR]
 [\fB\-alias\fR \fIarg\fR]
 [\fB\-fingerprint\fR \fIarg\fR]
 [\fB\-\fR\f(BIdigest\fR]
-[\fB\-engine\fR \fIid\fR]
 [\fB\-provider\fR \fIname\fR]
 [\fB\-provider\-path\fR \fIpath\fR]
 [\fB\-provparam\fR \fI[name:]key=value\fR]
@@ -126,8 +126,10 @@ Fetch objects recursively when possible.
 .IX Item "-keys"
 .IP \fB\-crls\fR 4
 .IX Item "-crls"
+.IP \fB\-skeys\fR 4
+.IX Item "-skeys"
 .PD
-Only select the certificates, keys or CRLs from the given URI.
+Only select the certificates, keys, CRLs or symmetric keys from the given URI.
 However, if this URI would return a set of names (URIs), those are always
 returned.
 .Sp
@@ -172,10 +174,6 @@ Search for an object having the given fingerprint.
 .IP \fB\-\fR\f(BIdigest\fR 4
 .IX Item "-digest"
 The digest that was used to compute the fingerprint given with \fB\-fingerprint\fR.
-.IP "\fB\-engine\fR \fIid\fR" 4
-.IX Item "-engine id"
-See "Engine Options" in \fBopenssl\fR\|(1).
-This option is deprecated.
 .IP "\fB\-provider\fR \fIname\fR" 4
 .IX Item "-provider name"
 .PD 0
@@ -194,10 +192,12 @@ See "Provider Options" in \fBopenssl\fR\|(1), \fBprovider\fR\|(7), and \fBproper
 .IX Header "HISTORY"
 This command was added in OpenSSL 1.1.1.
 .PP
-The \fB\-engine\fR option was deprecated in OpenSSL 3.0.
+The \fB\-engine\fR option was removed in OpenSSL 4.0.
+.PP
+The \fB\-skeys\fR option was added in OpenSSL 4.0
 .SH COPYRIGHT
 .IX Header "COPYRIGHT"
-Copyright 2016\-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016\-2025 The OpenSSL Project Authors. All Rights Reserved.
 .PP
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

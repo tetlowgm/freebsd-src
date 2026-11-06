@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "SSL_CONF_CMD 3ossl"
-.TH SSL_CONF_CMD 3ossl 2026-09-29 3.5.9 OpenSSL
+.TH SSL_CONF_CMD 3ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -112,8 +112,9 @@ Disables support for session tickets, same as setting \fBSSL_OP_NO_TICKET\fR.
 .IP \fB\-serverpref\fR 4
 .IX Item "-serverpref"
 Use server and not client preference order when determining which cipher suite,
-signature algorithm or elliptic curve to use for an incoming connection.
-Equivalent to \fBSSL_OP_CIPHER_SERVER_PREFERENCE\fR. Only used by servers.
+signature algorithm or elliptic curve (TLS 1.2) or group (TLS 1.3) to use for
+an incoming connection.
+Equivalent to \fBSSL_OP_SERVER_PREFERENCE\fR. Only used by servers.
 .IP \fB\-client_renegotiation\fR 4
 .IX Item "-client_renegotiation"
 Allows servers to accept client\-initiated renegotiation. Equivalent to
@@ -142,8 +143,8 @@ acceleration (e.g. mobile) is in use. Equivalent to \fBSSL_OP_PRIORITIZE_CHACHA\
 Only used by servers. Requires \fB\-serverpref\fR.
 .IP \fB\-allow_no_dhe_kex\fR 4
 .IX Item "-allow_no_dhe_kex"
-In TLSv1.3 allow a non\-(ec)dhe based key exchange mode on resumption. This means
-that there will be no forward secrecy for the resumed session.
+In (D)TLSv1.3 allow a non\-(ec)dhe based key exchange mode on resumption. This
+means that there will be no forward secrecy for the resumed session.
 .IP \fB\-prefer_no_dhe_kex\fR 4
 .IX Item "-prefer_no_dhe_kex"
 In TLSv1.3, on resumption let the server prefer a non\-(ec)dhe based key
@@ -151,11 +152,36 @@ exchange mode over an (ec)dhe based one. Requires \fB\-allow_no_dhe_kex\fR.
 Equivalent to \fBSSL_OP_PREFER_NO_DHE_KEX\fR. Only used by servers.
 .IP \fB\-strict\fR 4
 .IX Item "-strict"
-Enables strict mode protocol handling. Equivalent to setting
+Enables strict certificate chain checking. Equivalent to setting
 \&\fBSSL_CERT_FLAG_TLS_STRICT\fR.
+.Sp
+When enabled, this enforces additional TLS certificate chain requirements that
+many implementations ignore:
+.RS 4
+.IP \(bu 4
+All certificates in the chain must use signature algorithms that are in the
+configured or negotiated list. Without strict mode, SHA1\-based signatures are
+permitted as a fallback even if not explicitly configured.
+.IP \(bu 4
+The parameters (such as EC curves) of CA certificates in the chain are
+validated against the supported list, not just the end\-entity certificate.
+.IP \(bu 4
+For client authentication in TLS 1.2 and earlier, the certificate type must
+match one of the types requested by the server in the CertificateRequest
+message.
+.IP \(bu 4
+For client authentication, the certificate chain must contain a certificate
+issued by one of the CAs in the server\*(Aqs CertificateRequest CA list (if
+provided).
+.RE
+.RS 4
+.Sp
+Suite B modes (enabled via \fBSSL_CERT_FLAG_SUITEB_128_LOS\fR or
+\&\fBSSL_CERT_FLAG_SUITEB_192_LOS\fR) always imply strict mode.
+.RE
 .IP "\fB\-sigalgs\fR \fIalgs\fR" 4
 .IX Item "-sigalgs algs"
-This sets the supported signature algorithms for TLSv1.2 and TLSv1.3.
+This sets the supported signature algorithms for (D)TLSv1.2 and (D)TLSv1.3.
 For clients this value is used directly for the supported signature
 algorithms extension. For servers it is used to determine which signature
 algorithms to support.
@@ -167,7 +193,7 @@ or \fBsignature_scheme\fR. For the default providers shipped with OpenSSL,
 \&\fBhash\fR is a supported algorithm OID short name such as \fBSHA1\fR, \fBSHA224\fR,
 \&\fBSHA256\fR, \fBSHA384\fR or \fBSHA512\fR.
 \&\fBsignature_scheme\fR is one of the signature schemes defined
-in TLSv1.3, specified using the IETF name, e.g., \fBecdsa_secp256r1_sha256\fR,
+in (D)TLSv1.3, specified using the IETF name, e.g., \fBecdsa_secp256r1_sha256\fR,
 \&\fBed25519\fR, or \fBrsa_pss_pss_sha256\fR. Additional providers may make available
 further algorithms via the TLS\-SIGALG capability.
 Signature scheme names and public key algorithm names (but not the hash names)
@@ -179,11 +205,11 @@ activated providers are permissible.
 .Sp
 Note: algorithms which specify a PKCS#1 v1.5 signature scheme (either by
 using \fBRSA\fR as the \fBalgorithm\fR or by using one of the \fBrsa_pkcs1_*\fR
-identifiers) are ignored in TLSv1.3 and will not be negotiated.
+identifiers) are ignored in (D)TLSv1.3 and will not be negotiated.
 .IP "\fB\-client_sigalgs\fR \fIalgs\fR" 4
 .IX Item "-client_sigalgs algs"
 This sets the supported signature algorithms associated with client
-authentication for TLSv1.2 and TLSv1.3.  For servers the \fBalgs\fR is used
+authentication for (D)TLSv1.2 and (D)TLSv1.3.  For servers the \fBalgs\fR is used
 in the \fBsignature_algorithms\fR field of a \fBCertificateRequest\fR message.
 For clients it is used to determine which signature algorithm to use with
 the client certificate.  If a server does not request a certificate this
@@ -195,7 +221,7 @@ value set for \fB\-sigalgs\fR will be used instead.
 .IX Item "-groups groups"
 This sets the supported groups. For clients, the groups are sent using
 the supported groups extension. For servers, it is used to determine which
-group to use. This setting affects groups used for signatures (in TLSv1.2
+group to use. This setting affects groups used for signatures (in (D)TLSv1.2
 and earlier) and key exchange.
 .Sp
 In its simplest form the \fIgroups\fR argument is a colon separated list of
@@ -210,9 +236,9 @@ Group names are case\-insensitive in OpenSSL 3.5 and later.
 The list should be in order of preference with the most preferred group first.
 .Sp
 The first group listed will also be used for the \fBkey_share\fR sent by a client
-in a TLSv1.3 \fBClientHello\fR.
+in a (D)TLSv1.3 \fBClientHello\fR.
 .Sp
-The commands below list the IANA names for TLS 1.2 and TLS 1.3,
+The commands below list the IANA names for (D)TLS 1.2 and (D)TLS 1.3,
 respectively:
 .Sp
 .Vb 2
@@ -220,7 +246,7 @@ respectively:
 \&    $ openssl list \-tls1_3 \-tls\-groups
 .Ve
 .Sp
-The recommended groups for TLS 1.3 are presently documented in the default
+The recommended groups for (D)TLS 1.3 are presently documented in the default
 TLS group list in the OpenSSL code base. Starting with OpenSSL 3.5, the
 hybrid algorithm \fBX25519MLKEM768\fR is first in this default list.
 It mitigates against threats from future quantum computers while
@@ -232,7 +258,7 @@ in the HISTORY section below.
 An enriched alternative syntax, that enables clients to send multiple keyshares
 and allows servers to prioritise some groups over others, is described in
 \&\fBSSL_CTX_set1_groups_list\fR\|(3).
-Since TLS 1.2 has neither keyshares nor a hello retry mechanism, with TLS 1.2
+Since (D)TLS 1.2 has neither keyshares nor a hello retry mechanism, with (D)TLS 1.2
 the enriched syntax is ultimately equivalent to just a simple ordered list of
 groups, as with the simple form above.
 .IP "\fB\-curves\fR \fIgroups\fR" 4
@@ -253,38 +279,38 @@ over choosing a specific curve.
 Curve names are case\-insensitive in OpenSSL 3.5 and later.
 .IP \fB\-tx_cert_comp\fR 4
 .IX Item "-tx_cert_comp"
-Enables support for sending TLSv1.3 compressed certificates.
+Enables support for sending (D)TLSv1.3 compressed certificates.
 .IP \fB\-no_tx_cert_comp\fR 4
 .IX Item "-no_tx_cert_comp"
-Disables support for sending TLSv1.3 compressed certificates.
+Disables support for sending (D)TLSv1.3 compressed certificates.
 .IP \fB\-rx_cert_comp\fR 4
 .IX Item "-rx_cert_comp"
-Enables support for receiving TLSv1.3 compressed certificates.
+Enables support for receiving (D)TLSv1.3 compressed certificates.
 .IP \fB\-no_rx_cert_comp\fR 4
 .IX Item "-no_rx_cert_comp"
-Disables support for receiving TLSv1.3 compressed certificates.
+Disables support for receiving (D)TLSv1.3 compressed certificates.
 .IP \fB\-comp\fR 4
 .IX Item "-comp"
 .PD 0
 .IP "\fB\-cipher\fR \fIciphers\fR" 4
 .IX Item "-cipher ciphers"
 .PD
-Sets the TLSv1.2 and below ciphersuite list to \fBciphers\fR. This list will be
-combined with any configured TLSv1.3 ciphersuites. Note: syntax checking
+Sets the (D)TLSv1.2 and below ciphersuite list to \fBciphers\fR. This list will be
+combined with any configured (D)TLSv1.3 ciphersuites. Note: syntax checking
 of \fBciphers\fR is currently not performed unless a \fBSSL\fR or \fBSSL_CTX\fR
 structure is associated with \fBctx\fR.
 .IP "\fB\-ciphersuites\fR \fI1.3ciphers\fR" 4
 .IX Item "-ciphersuites 1.3ciphers"
-Sets the available ciphersuites for TLSv1.3 to value. This is a
-colon\-separated list of TLSv1.3 ciphersuite names in order of preference. This
-list will be combined any configured TLSv1.2 and below ciphersuites.
+Sets the available ciphersuites for (D)TLSv1.3 to value. This is a
+colon\-separated list of (D)TLSv1.3 ciphersuite names in order of preference.
+This list will be combined any configured (D)TLSv1.2 and below ciphersuites.
 See \fBopenssl\-ciphers\fR\|(1) for more information.
 .IP "\fB\-min_protocol\fR \fIminprot\fR, \fB\-max_protocol\fR \fImaxprot\fR" 4
 .IX Item "-min_protocol minprot, -max_protocol maxprot"
 Sets the minimum and maximum supported protocol.
-Currently supported protocol values are \fBSSLv3\fR, \fBTLSv1\fR, \fBTLSv1.1\fR,
-\&\fBTLSv1.2\fR, \fBTLSv1.3\fR for TLS; \fBDTLSv1\fR, \fBDTLSv1.2\fR for DTLS, and \fBNone\fR
-for no limit.
+Currently supported protocol values are \fBTLSv1\fR, \fBTLSv1.1\fR,
+\&\fBTLSv1.2\fR, \fBTLSv1.3\fR for TLS; \fBDTLSv1\fR, \fBDTLSv1.2\fR, \fBDTLSv1.3\fR for DTLS,
+and \fBNone\fR for no limit.
 If either the lower or upper bound is not specified then only the other bound
 applies, if specified.
 If your application supports both TLS and DTLS you can specify any of these
@@ -294,13 +320,13 @@ To restrict the supported protocol versions use these commands rather than the
 deprecated alternative commands below.
 .IP "\fB\-record_padding\fR \fIpadding\fR" 4
 .IX Item "-record_padding padding"
-Controls use of TLSv1.3 record layer padding.  \fBpadding\fR is a string of the
+Controls use of (D)TLSv1.3 record layer padding.  \fBpadding\fR is a string of the
 form "number[,number]" where the (required) first number is the padding block
 size (in octets) for application data, and the optional second number is the
 padding block size for handshake and alert messages.  If the optional second
 number is omitted, the same padding will be applied to all messages.
 .Sp
-Padding attempts to pad TLSv1.3 records so that they are a multiple of the set
+Padding attempts to pad (D)TLSv1.3 records so that they are a multiple of the set
 length on send. A value of 0 or 1 turns off padding as relevant. Otherwise, the
 values must be >1 or <=16384.
 .IP \fB\-debug_broken_protocol\fR 4
@@ -333,20 +359,23 @@ the appropriate context. This option is only supported if certificate
 operations are permitted.
 .IP "\fB\-no_ssl3\fR, \fB\-no_tls1\fR, \fB\-no_tls1_1\fR, \fB\-no_tls1_2\fR, \fB\-no_tls1_3\fR" 4
 .IX Item "-no_ssl3, -no_tls1, -no_tls1_1, -no_tls1_2, -no_tls1_3"
-Disables protocol support for SSLv3, TLSv1.0, TLSv1.1, TLSv1.2 or TLSv1.3 by
-setting the corresponding options \fBSSL_OP_NO_SSLv3\fR, \fBSSL_OP_NO_TLSv1\fR,
+Disables protocol support for TLSv1.0, TLSv1.1, TLSv1.2 or TLSv1.3 by
+setting the corresponding options \fBSSL_OP_NO_TLSv1\fR,
 \&\fBSSL_OP_NO_TLSv1_1\fR, \fBSSL_OP_NO_TLSv1_2\fR and \fBSSL_OP_NO_TLSv1_3\fR
 respectively. These options are deprecated, use \fB\-min_protocol\fR and
 \&\fB\-max_protocol\fR instead.
+.Sp
+Note that \fB\-no_ssl3\fR is a no\-op since support for SSLv3 was removed in OpenSSL
+4.0.
 .IP "\fB\-anti_replay\fR, \fB\-no_anti_replay\fR" 4
 .IX Item "-anti_replay, -no_anti_replay"
 Switches replay protection, on or off respectively. With replay protection on,
 OpenSSL will automatically detect if a session ticket has been used more than
-once, TLSv1.3 has been negotiated, and early data is enabled on the server. A
-full handshake is forced if a session ticket is used a second or subsequent
+once, (D)TLSv1.3 has been negotiated, and early data is enabled on the server.
+A full handshake is forced if a session ticket is used a second or subsequent
 time. Anti\-Replay is on by default unless overridden by a configuration file and
 is only used by servers. Anti\-replay measures are required for compliance with
-the TLSv1.3 specification. Some applications may be able to mitigate the replay
+the (D)TLSv1.3 specification. Some applications may be able to mitigate the replay
 risks in other ways and in such cases the built\-in OpenSSL functionality is not
 required. Switching off anti\-replay is equivalent to \fBSSL_OP_NO_ANTI_REPLAY\fR.
 .SH "SUPPORTED CONFIGURATION FILE COMMANDS"
@@ -360,15 +389,15 @@ are also case insensitive.
 Note: the command prefix (if set) alters the recognised \fBoption\fR values.
 .IP \fBCipherString\fR 4
 .IX Item "CipherString"
-Sets the ciphersuite list for TLSv1.2 and below to \fBvalue\fR. This list will be
-combined with any configured TLSv1.3 ciphersuites. Note: syntax
+Sets the ciphersuite list for (D)TLSv1.2 and below to \fBvalue\fR. This list will
+be combined with any configured (D)TLSv1.3 ciphersuites. Note: syntax
 checking of \fBvalue\fR is currently not performed unless an \fBSSL\fR or \fBSSL_CTX\fR
 structure is associated with \fBctx\fR.
 .IP \fBCiphersuites\fR 4
 .IX Item "Ciphersuites"
-Sets the available ciphersuites for TLSv1.3 to \fBvalue\fR. This is a
-colon\-separated list of TLSv1.3 ciphersuite names in order of preference. This
-list will be combined any configured TLSv1.2 and below ciphersuites.
+Sets the available ciphersuites for (D)TLSv1.3 to \fBvalue\fR. This is a
+colon\-separated list of (D)TLSv1.3 ciphersuite names in order of preference.
+This list will be combined any configured (D)TLSv1.2 and below ciphersuites.
 See \fBopenssl\-ciphers\fR\|(1) for more information.
 .IP \fBCertificate\fR 4
 .IX Item "Certificate"
@@ -392,7 +421,7 @@ if certificate operations are permitted.
 .IX Item "RequestCAFile"
 This option indicates a file containing a set of certificates in PEM form.
 The subject names of the certificates are sent to the peer in the
-\&\fBcertificate_authorities\fR extension for TLS 1.3 (in ClientHello or
+\&\fBcertificate_authorities\fR extension for (D)TLSv1.3 (in ClientHello or
 CertificateRequest) or in a certificate request for previous versions or
 TLS.
 .IP \fBServerInfoFile\fR 4
@@ -406,13 +435,13 @@ the appropriate context. This option is only supported if certificate
 operations are permitted.
 .IP \fBRecordPadding\fR 4
 .IX Item "RecordPadding"
-Controls use of TLSv1.3 record layer padding.  \fBvalue\fR is a string of the form
+Controls use of (D)TLSv1.3 record layer padding.  \fBvalue\fR is a string of the form
 "number[,number]" where the (required) first number is the padding block size
 (in octets) for application data, and the optional second number is the padding
 block size for handshake and alert messages.  If the optional second number is
 omitted, the same padding will be applied to all messages.
 .Sp
-Padding attempts to pad TLSv1.3 records so that they are a multiple of the set
+Padding attempts to pad (D)TLSv1.3 records so that they are a multiple of the set
 length on send. A value of 0 or 1 turns off padding as relevant. Otherwise, the
 values must be >1 or <=16384.
 .Sp
@@ -422,7 +451,7 @@ config file is created, there is no knowledge of what kind of SSL objects are
 being created, this option is silently ignored for QUIC objects.
 .IP \fBSignatureAlgorithms\fR 4
 .IX Item "SignatureAlgorithms"
-This sets the supported signature algorithms for TLSv1.2 and TLSv1.3.
+This sets the supported signature algorithms for (D)TLSv1.2 and (D)TLSv1.3.
 For clients this
 value is used directly for the supported signature algorithms extension. For
 servers it is used to determine which signature algorithms to support.
@@ -433,7 +462,7 @@ in order of decreasing preference of the form \fBalgorithm+hash\fR or
 \&\fBalgorithm\fR is one of \fBRSA\fR, \fBDSA\fR or \fBECDSA\fR and \fBhash\fR is a supported
 algorithm OID short name such as \fBSHA1\fR, \fBSHA224\fR, \fBSHA256\fR, \fBSHA384\fR
 or \fBSHA512\fR.
-\&\fBsignature_scheme\fR is one of the signature schemes defined in TLSv1.3,
+\&\fBsignature_scheme\fR is one of the signature schemes defined in (D)TLSv1.3,
 specified using the IANA name, e.g., \fBecdsa_secp256r1_sha256\fR, \fBed25519\fR,
 or \fBrsa_pss_pss_sha256\fR.
 Signature scheme names and public key algorithm names (but not the hash names)
@@ -446,11 +475,11 @@ activated providers are permissible.
 .Sp
 Note: algorithms which specify a PKCS#1 v1.5 signature scheme (either by
 using \fBRSA\fR as the \fBalgorithm\fR or by using one of the \fBrsa_pkcs1_*\fR
-identifiers) are ignored in TLSv1.3 and will not be negotiated.
+identifiers) are ignored in (D)TLSv1.3 and will not be negotiated.
 .IP \fBClientSignatureAlgorithms\fR 4
 .IX Item "ClientSignatureAlgorithms"
 This sets the supported signature algorithms associated with client
-authentication for TLSv1.2 and TLSv1.3.
+authentication for (D)TLSv1.2 and (D)TLSv1.3.
 For servers the value is used in the
 \&\fBsignature_algorithms\fR field of a \fBCertificateRequest\fR message.
 For clients it is
@@ -464,8 +493,8 @@ the value set for \fBSignatureAlgorithms\fR will be used instead.
 This sets the supported groups. For clients, the groups are
 sent using the supported groups extension. For servers, it is used
 to determine which group to use. This setting affects groups used for
-signatures (in TLSv1.2 and earlier) and key exchange. The first group listed
-will also be used for the \fBkey_share\fR sent by a client in a TLSv1.3
+signatures (in (D)TLSv1.2 and earlier) and key exchange. The first group listed
+will also be used for the \fBkey_share\fR sent by a client in a (D)TLSv1.3
 \&\fBClientHello\fR.
 .Sp
 The \fBgroups\fR argument is a colon separated list of groups.  The preferred
@@ -478,7 +507,7 @@ Such an alias could be a \fBNIST\fR name (e.g. \fBP\-256\fR), an OpenSSL OID nam
 Group names are case\-insensitive in OpenSSL 3.5 and later.
 The list should be in order of preference with the most preferred group first.
 .Sp
-The commands below list the available groups for TLS 1.2 and TLS 1.3,
+The commands below list the available groups for (D)TLS 1.2 and (D)TLS 1.3,
 respectively:
 .Sp
 .Vb 2
@@ -489,7 +518,7 @@ respectively:
 An enriched alternative syntax, that enables clients to send multiple keyshares
 and allows servers to prioritise some groups over others, is described in
 \&\fBSSL_CTX_set1_groups_list\fR\|(3).
-Since TLS 1.2 has neither keyshares nor a hello retry mechanism, with TLS 1.2
+Since (D)TLS 1.2 has neither keyshares nor a hello retry mechanism, with (D)TLS 1.2
 the enriched syntax is ultimately equivalent to just a simple ordered list of
 groups, as with the simple form above.
 .IP \fBCurves\fR 4
@@ -499,8 +528,8 @@ This is a synonym for the "Groups" command.
 .IX Item "MinProtocol"
 This sets the minimum supported SSL, TLS or DTLS version.
 .Sp
-Currently supported protocol values are \fBSSLv3\fR, \fBTLSv1\fR, \fBTLSv1.1\fR,
-\&\fBTLSv1.2\fR, \fBTLSv1.3\fR, \fBDTLSv1\fR and \fBDTLSv1.2\fR.
+Currently supported protocol values are \fBTLSv1\fR, \fBTLSv1.1\fR,
+\&\fBTLSv1.2\fR, \fBTLSv1.3\fR, \fBDTLSv1\fR, \fBDTLSv1.2\fR and \fBDTLSv1.3\fR.
 The SSL and TLS bounds apply only to TLS\-based contexts, while the DTLS bounds
 apply only to DTLS\-based contexts.
 The command can be repeated with one instance setting a TLS bound, and the
@@ -510,8 +539,8 @@ The value \fBNone\fR applies to both types of contexts and disables the limits.
 .IX Item "MaxProtocol"
 This sets the maximum supported SSL, TLS or DTLS version.
 .Sp
-Currently supported protocol values are \fBSSLv3\fR, \fBTLSv1\fR, \fBTLSv1.1\fR,
-\&\fBTLSv1.2\fR, \fBTLSv1.3\fR, \fBDTLSv1\fR and \fBDTLSv1.2\fR.
+Currently supported protocol values are \fBTLSv1\fR, \fBTLSv1.1\fR,
+\&\fBTLSv1.2\fR, \fBTLSv1.3\fR, \fBDTLSv1\fR, \fBDTLSv1.2\fR and \fBDTLSv1.3\fR.
 The SSL and TLS bounds apply only to TLS\-based contexts, while the DTLS bounds
 apply only to DTLS\-based contexts.
 The command can be repeated with one instance setting a TLS bound, and the
@@ -532,8 +561,8 @@ effect.
 Only enabling some protocol versions does not disable the other protocol
 versions.
 .Sp
-Currently supported protocol values are \fBSSLv3\fR, \fBTLSv1\fR, \fBTLSv1.1\fR,
-\&\fBTLSv1.2\fR, \fBTLSv1.3\fR, \fBDTLSv1\fR and \fBDTLSv1.2\fR.
+Currently supported protocol values are \fBTLSv1\fR, \fBTLSv1.1\fR,
+\&\fBTLSv1.2\fR, \fBTLSv1.3\fR, \fBDTLSv1\fR, \fBDTLSv1.2\fR and \fBDTLSv1.3\fR.
 The special value \fBALL\fR refers to all supported versions.
 .Sp
 This can\*(Aqt enable protocols that are disabled using \fBMinProtocol\fR
@@ -563,7 +592,7 @@ the \fB\-flag\fR syntax is needed to disable it.
 of \fBSSL_OP_NO_COMPRESSION\fR.
 .Sp
 \&\fBEmptyFragments\fR: use empty fragments as a countermeasure against a
-SSL 3.0/TLS 1.0 protocol vulnerability affecting CBC ciphers. It
+TLS 1.0 protocol vulnerability affecting CBC ciphers. It
 is set by default. Inverse of \fBSSL_OP_DONT_INSERT_EMPTY_FRAGMENTS\fR.
 .Sp
 \&\fBBugs\fR: enable various bug workarounds. Same as \fBSSL_OP_ALL\fR.
@@ -576,8 +605,8 @@ is set by default. Inverse of \fBSSL_OP_DONT_INSERT_EMPTY_FRAGMENTS\fR.
 .Sp
 \&\fBServerPreference\fR: use server and not client preference order when
 determining which cipher suite, signature algorithm or elliptic curve
-to use for an incoming connection.  Equivalent to
-\&\fBSSL_OP_CIPHER_SERVER_PREFERENCE\fR. Only used by servers.
+(TLS 1.2) or group (TLS 1.3) to use for an incoming connection.
+Equivalent to \fBSSL_OP_SERVER_PREFERENCE\fR. Only used by servers.
 .Sp
 \&\fBPrioritizeChaCha\fR: prioritizes ChaCha ciphers when the client has a
 ChaCha20 cipher at the top of its preference list. This usually indicates
@@ -587,7 +616,7 @@ Only used by servers.
 \&\fBNoResumptionOnRenegotiation\fR: set
 \&\fBSSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION\fR flag. Only used by servers.
 .Sp
-\&\fBNoRenegotiation\fR: disables all attempts at renegotiation in TLSv1.2 and
+\&\fBNoRenegotiation\fR: disables all attempts at renegotiation in (D)TLSv1.2 and
 earlier, same as setting \fBSSL_OP_NO_RENEGOTIATION\fR.
 .Sp
 \&\fBUnsafeLegacyRenegotiation\fR: permits the use of unsafe legacy renegotiation.
@@ -600,7 +629,7 @@ for OpenSSL clients only. Equivalent to \fBSSL_OP_LEGACY_SERVER_CONNECT\fR.
 default. Inverse of \fBSSL_OP_NO_ENCRYPT_THEN_MAC\fR: that is,
 \&\fB\-EncryptThenMac\fR is the same as setting \fBSSL_OP_NO_ENCRYPT_THEN_MAC\fR.
 .Sp
-\&\fBAllowNoDHEKEX\fR: In TLSv1.3 allow a non\-(ec)dhe based key exchange mode on
+\&\fBAllowNoDHEKEX\fR: In (D)TLSv1.3 allow a non\-(ec)dhe based key exchange mode on
 resumption. This means that there will be no forward secrecy for the resumed
 session. Equivalent to \fBSSL_OP_ALLOW_NO_DHE_KEX\fR.
 .Sp
@@ -616,10 +645,10 @@ option is set by default. A future version of OpenSSL may not set this by
 default. Equivalent to \fBSSL_OP_ENABLE_MIDDLEBOX_COMPAT\fR.
 .Sp
 \&\fBAntiReplay\fR: If set then OpenSSL will automatically detect if a session ticket
-has been used more than once, TLSv1.3 has been negotiated, and early data is
+has been used more than once, (D)TLSv1.3 has been negotiated, and early data is
 enabled on the server. A full handshake is forced if a session ticket is used a
 second or subsequent time. This option is set by default and is only used by
-servers. Anti\-replay measures are required to comply with the TLSv1.3
+servers. Anti\-replay measures are required to comply with the (D)TLSv1.3
 specification. Some applications may be able to mitigate the replay risks in
 other ways and in such cases the built\-in OpenSSL functionality is not required.
 Disabling anti\-replay is equivalent to setting \fBSSL_OP_NO_ANTI_REPLAY\fR.
@@ -636,8 +665,13 @@ default. Inverse of \fBSSL_OP_DISABLE_TLSEXT_CA_NAMES\fR: that is,
 by the negotiated ciphersuites and extensions. Equivalent to
 \&\fBSSL_OP_ENABLE_KTLS\fR.
 .Sp
-\&\fBStrictCertCheck\fR: Enable strict certificate checking. Equivalent to
-setting \fBSSL_CERT_FLAG_TLS_STRICT\fR with \fBSSL_CTX_set_cert_flags()\fR.
+\&\fBStrictCertCheck\fR: Enable strict certificate chain checking. This enforces
+that all certificates in the chain use configured signature algorithms (no
+SHA1 fallback), validates CA certificate parameters against the supported
+list, and for client authentication requires matching certificate types and
+issuer names. Equivalent to setting \fBSSL_CERT_FLAG_TLS_STRICT\fR with
+\&\fBSSL_CTX_set_cert_flags()\fR. See the \fB\-strict\fR command line option for full
+details.
 .Sp
 \&\fBTxCertificateCompression\fR: support sending compressed certificates, enabled by
 default. Inverse of \fBSSL_OP_NO_TX_CERTIFICATE_COMPRESSION\fR: that is,
@@ -678,13 +712,13 @@ not when renegotiating. Servers only.
 not require a certificate from the client post\-handshake. A certificate will
 not be requested during the initial handshake. The server application must
 provide a mechanism to request a certificate post\-handshake. Servers only.
-TLSv1.3 only.
+(D)TLSv1.3 only.
 .Sp
 \&\fBRequiresPostHandshake\fR configures the connection to support requests and
 requires a certificate from the client post\-handshake: an error occurs if the
 client does not present a certificate. A certificate will not be requested
 during the initial handshake. The server application must provide a mechanism
-to request a certificate post\-handshake. Servers only. TLSv1.3 only.
+to request a certificate post\-handshake. Servers only. (D)TLSv1.3 only.
 .IP "\fBClientCAFile\fR, \fBClientCAPath\fR" 4
 .IX Item "ClientCAFile, ClientCAPath"
 A file or directory of certificates in PEM format whose names are used as the
@@ -717,20 +751,19 @@ The order of operations is significant. This can be used to set either defaults
 or values which cannot be overridden. For example if an application calls:
 .PP
 .Vb 2
-\& SSL_CONF_cmd(ctx, "Protocol", "\-SSLv3");
+\& SSL_CONF_cmd(ctx, "Protocol", "\-TLSv1");
 \& SSL_CONF_cmd(ctx, userparam, uservalue);
 .Ve
 .PP
-it will disable SSLv3 support by default but the user can override it. If
+it will disable TLSv1 support by default but the user can override it. If
 however the call sequence is:
 .PP
-.Vb 2
+.Vb 4
 \& SSL_CONF_cmd(ctx, userparam, uservalue);
-\& SSL_CONF_cmd(ctx, "Protocol", "\-SSLv3");
+\& SSL_CONF_cmd(ctx, "Protocol", "\-TLSv1");
+\&TLSv1 is B<always> disabled and attempt to override this by the user are
+\&ignored.
 .Ve
-.PP
-SSLv3 is \fBalways\fR disabled and attempt to override this by the user are
-ignored.
 .PP
 By checking the return code of \fBSSL_CONF_cmd()\fR it is possible to query if a
 given \fBoption\fR is recognised, this is useful if \fBSSL_CONF_cmd()\fR values are
@@ -784,27 +817,27 @@ Set supported signature algorithms:
 .PP
 There are various ways to select the supported protocols.
 .PP
-This set the minimum protocol version to TLSv1, and so disables SSLv3.
+This sets the minimum protocol version to TLSv1.1, and so disables TLSv1.
 This is the recommended way to disable protocols.
 .PP
 .Vb 1
-\& SSL_CONF_cmd(ctx, "MinProtocol", "TLSv1");
+\& SSL_CONF_cmd(ctx, "MinProtocol", "TLSv1.1");
 .Ve
 .PP
-The following also disables SSLv3:
+The following also disables TLSv1:
 .PP
 .Vb 1
-\& SSL_CONF_cmd(ctx, "Protocol", "\-SSLv3");
+\& SSL_CONF_cmd(ctx, "Protocol", "\-TLSv1");
 .Ve
 .PP
 The following will first enable all protocols, and then disable
-SSLv3.
+TLSv1.
 If no protocol versions were disabled before this has the same effect as
-"\-SSLv3", but if some versions were disables this will re\-enable them before
-disabling SSLv3.
+"\-TLSv1", but if some versions were disables this will re\-enable them before
+disabling TLSv1.
 .PP
 .Vb 1
-\& SSL_CONF_cmd(ctx, "Protocol", "ALL,\-SSLv3");
+\& SSL_CONF_cmd(ctx, "Protocol", "ALL,\-TLSv1");
 .Ve
 .PP
 Only enable TLSv1.2:
@@ -869,12 +902,12 @@ added in OpenSSL 3.2.
 .PP
 \&\fBPreferNoDHEKEX\fR was added in OpenSSL 3.3.
 .PP
-OpenSSL 3.5 introduces support for post\-quantum (PQ) TLS key exchange via the
+OpenSSL 3.5 introduced support for post\-quantum (PQ) TLS key exchange via the
 \&\fBMLKEM512\fR, \fBMLKEM768\fR and \fBMLKEM1024\fR TLS groups.
 These are based on the underlying \fBML\-KEM\-512\fR, \fBML\-KEM\-768\fR and
 \&\fBML\-KEM\-1024\fR algorithms from FIPS 203.
 .PP
-OpenSSL 3.5 also introduces support for three \fBhybrid\fR ECDH PQ key exchange
+OpenSSL 3.5 also introduced support for three \fBhybrid\fR ECDH PQ key exchange
 TLS groups: \fBX25519MLKEM768\fR, \fBSecP256r1MLKEM768\fR and
 \&\fBSecP384r1MLKEM1024\fR.
 They offer CPU performance comparable to the associated ECDH group, though at
@@ -884,6 +917,10 @@ largely as a result of the high CPU cost of ECDH for the underlying \fBP\-384\fR
 group.
 Also its key exchange messages at close to 1700 bytes are larger than the
 roughly 1200 bytes for the first two groups.
+.PP
+OpenSSL 4.0 introduced the \fBcurveSM2\fR (also known as \f(CW\*(C`ECDHE over SM2\*(C'\fR) key
+exchange group as specified in RFC8998, and \fBcurveSM2MLKEM768\fR, which is a
+hybrid of the \fBcurveSM2\fR group with \fBML\-KEM\-768\fR.
 .PP
 As of OpenSSL 3.5 key exchange group names are case\-insensitive.
 .SH COPYRIGHT

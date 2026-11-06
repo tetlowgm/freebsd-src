@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "EVP_PKEY_KEYGEN 3ossl"
-.TH EVP_PKEY_KEYGEN 3ossl 2026-09-29 3.5.9 OpenSSL
+.TH EVP_PKEY_KEYGEN 3ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -127,6 +127,12 @@ function described in those manuals.
 parameters or key are written to \fI*ppkey\fR.  If \fI*ppkey\fR is NULL when this
 function is called, it will be allocated, and should be freed by the caller
 when no longer useful, using \fBEVP_PKEY_free\fR\|(3).
+.PP
+When a key is generated, \fBEVP_PKEY_generate()\fR does not associate it with \fIctx\fR
+or change \fIctx\fR into a context for operations using that key.  To use the
+generated key, create a new context with \fBEVP_PKEY_CTX_new_from_pkey\fR\|(3),
+passing \fI*ppkey\fR.  The generation context can be reused for further generation
+operations or freed.
 .PP
 \&\fBEVP_PKEY_paramgen()\fR and \fBEVP_PKEY_keygen()\fR do exactly the same thing as
 \&\fBEVP_PKEY_generate()\fR, after checking that the corresponding \fBEVP_PKEY_paramgen_init()\fR
@@ -215,7 +221,7 @@ equivalent to what some libraries call a "key pair". A private key can be used
 in functions which require the use of a public key or parameters.
 .SH EXAMPLES
 .IX Header "EXAMPLES"
-Generate a 2048 bit RSA key:
+Generate a 2048 bit RSA key, then initialize a context for encryption:
 .PP
 .Vb 2
 \& #include <openssl/evp.h>
@@ -224,7 +230,7 @@ Generate a 2048 bit RSA key:
 \& EVP_PKEY_CTX *ctx;
 \& EVP_PKEY *pkey = NULL;
 \&
-\& ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, NULL);
+\& ctx = EVP_PKEY_CTX_new_from_name(NULL, "RSA", NULL);
 \& if (!ctx)
 \&     /* Error occurred */
 \& if (EVP_PKEY_keygen_init(ctx) <= 0)
@@ -233,7 +239,15 @@ Generate a 2048 bit RSA key:
 \&     /* Error */
 \&
 \& /* Generate key */
-\& if (EVP_PKEY_keygen(ctx, &pkey) <= 0)
+\& if (EVP_PKEY_generate(ctx, &pkey) <= 0)
+\&     /* Error */
+\&
+\& /* ctx is still a generation context; pkey contains the generated key */
+\& EVP_PKEY_CTX_free(ctx);
+\& ctx = EVP_PKEY_CTX_new_from_pkey(NULL, pkey, NULL);
+\& if (!ctx)
+\&     /* Error occurred */
+\& if (EVP_PKEY_encrypt_init(ctx) <= 0)
 \&     /* Error */
 .Ve
 .PP
@@ -244,11 +258,10 @@ Generate a key from a set of parameters:
 \& #include <openssl/rsa.h>
 \&
 \& EVP_PKEY_CTX *ctx;
-\& ENGINE *eng;
 \& EVP_PKEY *pkey = NULL, *param;
 \&
-\& /* Assumed param, eng are set up already */
-\& ctx = EVP_PKEY_CTX_new(param, eng);
+\& /* Assumed param is set up already */
+\& ctx = EVP_PKEY_CTX_new(param, NULL);
 \& if (!ctx)
 \&     /* Error occurred */
 \& if (EVP_PKEY_keygen_init(ctx) <= 0)

@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "EVP_SIGNATURE-SLH-DSA 7ossl"
-.TH EVP_SIGNATURE-SLH-DSA 7ossl 2026-09-29 3.5.9 OpenSSL
+.TH EVP_SIGNATURE-SLH-DSA 7ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -153,7 +153,7 @@ To sign a message using an SLH\-DSA EVP_PKEY structure:
 \&        size_t sig_len;
 \&        unsigned char *sig = NULL;
 \&        const OSSL_PARAM params[] = {
-\&            OSSL_PARAM_octet_string("context\-string", (unsigned char *)"A context string", 33),
+\&            OSSL_PARAM_octet_string("context\-string", (unsigned char *)"A context string", 16),
 \&            OSSL_PARAM_END
 \&        };
 \&        EVP_PKEY_CTX *sctx = EVP_PKEY_CTX_new_from_pkey(NULL, pkey, NULL);

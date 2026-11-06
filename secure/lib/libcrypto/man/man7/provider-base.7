@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "PROVIDER-BASE 7ossl"
-.TH PROVIDER-BASE 7ossl 2026-09-29 3.5.9 OpenSSL
+.TH PROVIDER-BASE 7ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -542,8 +542,8 @@ for any third party provider. This string is for informational purposes only.
 This points to a string that is a build information associated with this provider.
 OpenSSL in\-built providers use OPENSSL_FULL_VERSION_STR, but this may be
 different for any third party provider.
-.IP """status"" (\fBOSSL_PROV_PARAM_STATUS\fR) <unsigned integer>" 4
-.IX Item """status"" (OSSL_PROV_PARAM_STATUS) <unsigned integer>"
+.IP """status"" (\fBOSSL_PROV_PARAM_STATUS\fR) <signed integer>" 4
+.IX Item """status"" (OSSL_PROV_PARAM_STATUS) <signed integer>"
 This returns 0 if the provider has entered an error state, otherwise it returns
 1.
 .PP

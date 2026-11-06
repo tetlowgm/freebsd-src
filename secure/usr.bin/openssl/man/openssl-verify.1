@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OPENSSL-VERIFY 1ossl"
-.TH OPENSSL-VERIFY 1ossl 2026-09-29 3.5.9 OpenSSL
+.TH OPENSSL-VERIFY 1ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -83,7 +83,6 @@ openssl\-verify \- certificate verification command
 [\fB\-no\-CApath\fR]
 [\fB\-CAstore\fR \fIuri\fR]
 [\fB\-no\-CAstore\fR]
-[\fB\-engine\fR \fIid\fR]
 [\fB\-allow_proxy_certs\fR]
 [\fB\-attime\fR \fItimestamp\fR]
 [\fB\-no_check_time\fR]
@@ -165,14 +164,6 @@ Names and values of these options are algorithm\-specific.
 .IX Item "-nameopt option"
 This specifies how the subject or issuer names are displayed.
 See \fBopenssl\-namedisplay\-options\fR\|(1) for details.
-.IP "\fB\-engine\fR \fIid\fR" 4
-.IX Item "-engine id"
-See "Engine Options" in \fBopenssl\fR\|(1).
-This option is deprecated.
-.Sp
-To load certificates or CRLs that require engine support, specify the
-\&\fB\-engine\fR option before any of the
-\&\fB\-trusted\fR, \fB\-untrusted\fR or \fB\-CRLfile\fR options.
 .IP "\fB\-CAfile\fR \fIfile\fR, \fB\-no\-CAfile\fR, \fB\-CApath\fR \fIdir\fR, \fB\-no\-CApath\fR, \fB\-CAstore\fR \fIuri\fR, \fB\-no\-CAstore\fR" 4
 .IX Item "-CAfile file, -no-CAfile, -CApath dir, -no-CApath, -CAstore uri, -no-CAstore"
 See "Trusted Certificate Options" in \fBopenssl\-verification\-options\fR\|(1) for details.
@@ -238,7 +229,7 @@ certificate chain to be determined.
 .IX Header "HISTORY"
 The \fB\-show_chain\fR option was added in OpenSSL 1.1.0.
 .PP
-The \fB\-engine option\fR was deprecated in OpenSSL 3.0.
+The \fB\-engine\fR option was removed in OpenSSL 4.0.
 .SH COPYRIGHT
 .IX Header "COPYRIGHT"
 Copyright 2000\-2026 The OpenSSL Project Authors. All Rights Reserved.

@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OPENSSL 1ossl"
-.TH OPENSSL 1ossl 2026-09-29 3.5.9 OpenSSL
+.TH OPENSSL 1ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -167,15 +167,15 @@ DSA Parameter Generation and Management. Superseded by
 .IP \fBec\fR 4
 .IX Item "ec"
 EC (Elliptic curve) key processing.
+.IP \fBech\fR 4
+.IX Item "ech"
+Encrypted Client Hello (ECH) admin. See \fBopenssl\-ech\fR\|(1).
 .IP \fBecparam\fR 4
 .IX Item "ecparam"
 EC parameter manipulation and generation.
 .IP \fBenc\fR 4
 .IX Item "enc"
 Encryption, decryption, and encoding.
-.IP \fBengine\fR 4
-.IX Item "engine"
-Engine (loadable module) information and manipulation.
 .IP \fBerrstr\fR 4
 .IX Item "errstr"
 Error Number to Error String Conversion.
@@ -522,8 +522,8 @@ The options below can be used to limit which protocol versions are used,
 and whether TCP (SSL and TLS) or UDP (DTLS) is used.
 Note that not all protocols and flags may be available, depending on how
 OpenSSL was built.
-.IP "\fB\-ssl3\fR, \fB\-tls1\fR, \fB\-tls1_1\fR, \fB\-tls1_2\fR, \fB\-tls1_3\fR, \fB\-no_ssl3\fR, \fB\-no_tls1\fR, \fB\-no_tls1_1\fR, \fB\-no_tls1_2\fR, \fB\-no_tls1_3\fR" 4
-.IX Item "-ssl3, -tls1, -tls1_1, -tls1_2, -tls1_3, -no_ssl3, -no_tls1, -no_tls1_1, -no_tls1_2, -no_tls1_3"
+.IP "\fB\-tls1\fR, \fB\-tls1_1\fR, \fB\-tls1_2\fR, \fB\-tls1_3\fR, \fB\-no_ssl3\fR, \fB\-no_tls1\fR, \fB\-no_tls1_1\fR, \fB\-no_tls1_2\fR, \fB\-no_tls1_3\fR" 4
+.IX Item "-tls1, -tls1_1, -tls1_2, -tls1_3, -no_ssl3, -no_tls1, -no_tls1_1, -no_tls1_2, -no_tls1_3"
 These options require or disable the use of the specified SSL or TLS protocols.
 When a specific TLS version is required, only that version will be offered or
 accepted.
@@ -531,57 +531,12 @@ Only one specific protocol can be given and it cannot be combined with any of
 the \fBno_\fR options.
 The \fBno_*\fR options do not work with \fBs_time\fR and \fBciphers\fR commands but work with
 \&\fBs_client\fR and \fBs_server\fR commands.
-.IP "\fB\-dtls\fR, \fB\-dtls1\fR, \fB\-dtls1_2\fR" 4
-.IX Item "-dtls, -dtls1, -dtls1_2"
+.IP "\fB\-dtls\fR, \fB\-dtls1\fR, \fB\-dtls1_2\fR, \fB\-dtls1_3\fR" 4
+.IX Item "-dtls, -dtls1, -dtls1_2, -dtls1_3"
 These options specify to use DTLS instead of TLS.
 With \fB\-dtls\fR, clients will negotiate any supported DTLS protocol version.
-Use the \fB\-dtls1\fR or \fB\-dtls1_2\fR options to support only DTLS1.0 or DTLS1.2,
-respectively.
-.SS "Engine Options"
-.IX Subsection "Engine Options"
-.IP "\fB\-engine\fR \fIid\fR" 4
-.IX Item "-engine id"
-Load the engine identified by \fIid\fR and use all the methods it implements
-(algorithms, key storage, etc.), unless specified otherwise in the
-command\-specific documentation or it is configured to do so, as described in
-"Engine Configuration" in \fBconfig\fR\|(5).
-.Sp
-The engine will be used for key ids specified with \fB\-key\fR and similar
-options when an option like \fB\-keyform engine\fR is given.
-.Sp
-A special case is the \f(CW\*(C`loader_attic\*(C'\fR engine, which
-is meant just for internal OpenSSL testing purposes and
-supports loading keys, parameters, certificates, and CRLs from files.
-When this engine is used, files with such credentials are read via this engine.
-Using the \f(CW\*(C`file:\*(C'\fR schema is optional; a plain file (path) name will do.
-.PP
-Options specifying keys, like \fB\-key\fR and similar, can use the generic
-OpenSSL engine key loading URI scheme \f(CW\*(C`org.openssl.engine:\*(C'\fR to retrieve
-private keys and public keys.  The URI syntax is as follows, in simplified
-form:
-.PP
-.Vb 1
-\&    org.openssl.engine:{engineid}:{keyid}
-.Ve
-.PP
-Where \f(CW\*(C`{engineid}\*(C'\fR is the identity/name of the engine, and \f(CW\*(C`{keyid}\*(C'\fR is a
-key identifier that\*(Aqs acceptable by that engine.  For example, when using an
-engine that interfaces against a PKCS#11 implementation, the generic key URI
-would be something like this (this happens to be an example for the PKCS#11
-engine that\*(Aqs part of OpenSC):
-.PP
-.Vb 1
-\&    \-key org.openssl.engine:pkcs11:label_some\-private\-key
-.Ve
-.PP
-As a third possibility, for engines and providers that have implemented
-their own \fBOSSL_STORE_LOADER\fR\|(3), \f(CW\*(C`org.openssl.engine:\*(C'\fR should not be
-necessary.  For a PKCS#11 implementation that has implemented such a loader,
-the PKCS#11 URI as defined in RFC 7512 should be possible to use directly:
-.PP
-.Vb 1
-\&    \-key pkcs11:object=some\-private\-key;pin\-value=1234
-.Ve
+Use the \fB\-dtls1\fR, \fB\-dtls1_2\fR or \fB\-dtls1_3\fR options to support only DTLS1.0,
+DTLS1.2 or DTLS1.3 respectively.
 .SS "Provider Options"
 .IX Subsection "Provider Options"
 .IP "\fB\-provider\fR \fIname\fR" 4
@@ -628,8 +583,8 @@ see \fBopenssl\-env\fR\|(7).
 For information about the use of environment variables in configuration,
 see "ENVIRONMENT" in \fBconfig\fR\|(5).
 .PP
-For information about specific commands, see \fBopenssl\-engine\fR\|(1),
-\&\fBopenssl\-rehash\fR\|(1), and \fBtsget\fR\|(1).
+For information about specific commands, see \fBopenssl\-rehash\fR\|(1)
+and \fBtsget\fR\|(1).
 .PP
 For information about querying or specifying CPU architecture flags, see
 \&\fBOPENSSL_armcap\fR\|(3), \fBOPENSSL_ia32cap\fR\|(3), \fBOPENSSL_ppccap\fR\|(3),
@@ -649,7 +604,6 @@ For information about querying or specifying CPU architecture flags, see
 \&\fBopenssl\-ec\fR\|(1),
 \&\fBopenssl\-ecparam\fR\|(1),
 \&\fBopenssl\-enc\fR\|(1),
-\&\fBopenssl\-engine\fR\|(1),
 \&\fBopenssl\-errstr\fR\|(1),
 \&\fBopenssl\-gendsa\fR\|(1),
 \&\fBopenssl\-genpkey\fR\|(1),
@@ -705,6 +659,10 @@ are obsolete since OpenSSL 3.0 and have no effect.
 The interactive mode, which could be invoked by running \f(CW\*(C`openssl\*(C'\fR
 with no further arguments, was removed in OpenSSL 3.0, and running
 that program with no arguments is now equivalent to \f(CW\*(C`openssl help\*(C'\fR.
+.PP
+The \fBengine\fR command, the whole engine support together with the
+\&\f(CW\*(C`org.openssl.engine\*(C'\fR URI scheme was removed in OpenSSL 4.0; use providers as
+a replacement.
 .SH COPYRIGHT
 .IX Header "COPYRIGHT"
 Copyright 2000\-2026 The OpenSSL Project Authors. All Rights Reserved.

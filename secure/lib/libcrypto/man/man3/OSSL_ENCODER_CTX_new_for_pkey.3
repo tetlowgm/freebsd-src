@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OSSL_ENCODER_CTX_NEW_FOR_PKEY 3ossl"
-.TH OSSL_ENCODER_CTX_NEW_FOR_PKEY 3ossl 2026-09-29 3.5.9 OpenSSL
+.TH OSSL_ENCODER_CTX_NEW_FOR_PKEY 3ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -122,9 +122,20 @@ zero).  This helps the caller to distinguish between an error when creating
 the \fBOSSL_ENCODER_CTX\fR and missing encoder implementation, and allows it to
 act accordingly.
 .PP
-Note that \fBOSSL_ENCODER_CTX_new_for_pkey()\fR finalises the OSSL_ENCODER_CTX;
-after that the OSSL_ENCODER_CTX_set_* and OSSL_ENCODER_CTX_add_* functions
-described in \fBOSSL_ENCODER_CTX\fR\|(3) shouldn\*(Aqt be called.
+Note that \fBOSSL_ENCODER_CTX_new_for_pkey()\fR freezes some fields of the
+OSSL_ENCODER_CTX, and as a result the functions
+\&\fBOSSL_ENCODER_CTX_add_encoder\fR\|(3),
+\&\fBOSSL_ENCODER_CTX_add_extra\fR\|(3),
+\&\fBOSSL_ENCODER_CTX_set_cleanup\fR\|(3),
+\&\fBOSSL_ENCODER_CTX_set_construct\fR\|(3),
+\&\fBOSSL_ENCODER_CTX_set_construct_data\fR\|(3),
+\&\fBOSSL_ENCODER_CTX_set_output_structure\fR\|(3),
+\&\fBOSSL_ENCODER_CTX_set_output_type\fR\|(3)
+and
+\&\fBOSSL_ENCODER_CTX_set_selection\fR\|(3)
+return an error if called on the resulting context.
+Note that \fBOSSL_ENCODER_CTX_set_params\fR\|(3) remains available to set encoder
+parameters.
 .PP
 \&\fBOSSL_ENCODER_CTX_set_cipher()\fR tells the implementation what cipher
 should be used to encrypt encoded keys.  The cipher is given by
@@ -186,7 +197,10 @@ and \fBOSSL_ENCODER_CTX_set_passphrase_cb()\fR all return 1 on success, or 0 on
 failure.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-\&\fBprovider\fR\|(7), \fBOSSL_ENCODER\fR\|(3), \fBOSSL_ENCODER_CTX\fR\|(3)
+\&\fBprovider\fR\|(7),
+\&\fBOSSL_ENCODER\fR\|(3),
+\&\fBOSSL_ENCODER_CTX\fR\|(3),
+\&\fBOSSL_ENCODER_CTX_set_params\fR\|(3).
 .SH HISTORY
 .IX Header "HISTORY"
 The functions described here were added in OpenSSL 3.0.

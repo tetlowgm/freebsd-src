@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OPENSSL-INFO 1ossl"
-.TH OPENSSL-INFO 1ossl 2026-09-29 3.5.9 OpenSSL
+.TH OPENSSL-INFO 1ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -70,7 +70,6 @@ openssl\-info \- print OpenSSL built\-in information
 \&\fBopenssl info\fR
 [\fB\-help\fR]
 [\fB\-configdir\fR]
-[\fB\-enginesdir\fR]
 [\fB\-modulesdir\fR ]
 [\fB\-dsoext\fR]
 [\fB\-dirnamesep\fR]
@@ -94,13 +93,9 @@ Print out a usage message.
 .IP \fB\-configdir\fR 4
 .IX Item "-configdir"
 Outputs the default directory for OpenSSL configuration files.
-.IP \fB\-enginesdir\fR 4
-.IX Item "-enginesdir"
-Outputs the default directory for OpenSSL engine modules.
 .IP \fB\-modulesdir\fR 4
 .IX Item "-modulesdir"
-Outputs the default directory for OpenSSL dynamically loadable modules
-other than engine modules.
+Outputs the default directory for OpenSSL dynamically loadable modules.
 .IP \fB\-dsoext\fR 4
 .IX Item "-dsoext"
 Outputs the DSO extension OpenSSL uses.
@@ -129,9 +124,11 @@ Outputs the Windows install context.
 This command was added in OpenSSL 3.0.
 .PP
 The \fB\-windowscontext\fR option was added in OpenSSL 3.4.
+.PP
+The \fB\-enginesdir\fR option was removed in OpenSSL 4.0.
 .SH COPYRIGHT
 .IX Header "COPYRIGHT"
-Copyright 2019\-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019\-2026 The OpenSSL Project Authors. All Rights Reserved.
 .PP
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

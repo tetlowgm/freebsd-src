@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OSSL_PROVIDER 3ossl"
-.TH OSSL_PROVIDER 3ossl 2026-09-29 3.5.9 OpenSSL
+.TH OSSL_PROVIDER 3ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -185,6 +185,11 @@ configuration file.
 \&\fBOSSL_PROVIDER_unload()\fR unloads the given provider.
 For a provider added with \fBOSSL_PROVIDER_add_builtin()\fR, this simply
 runs its teardown function.
+It is not necessary to explicitly unload providers before calling
+\&\fBOSSL_LIB_CTX_free\fR\|(3), as freeing a library context automatically
+deactivates and frees all providers associated with it.
+\&\fBOSSL_PROVIDER_unload()\fR must not be called after \fBOSSL_LIB_CTX_free\fR\|(3)
+has been called on the associated library context.
 .PP
 \&\fBOSSL_PROVIDER_available()\fR checks if a named provider is available
 for use.
@@ -339,7 +344,7 @@ The
 were added in OpenSSL 3.5.
 .SH COPYRIGHT
 .IX Header "COPYRIGHT"
-Copyright 2019\-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019\-2026 The OpenSSL Project Authors. All Rights Reserved.
 .PP
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OSSL_DECODER_CTX 3ossl"
-.TH OSSL_DECODER_CTX 3ossl 2026-09-29 3.5.9 OpenSSL
+.TH OSSL_DECODER_CTX 3ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -196,6 +196,8 @@ a decoder, to be used to attempt to decode some encoded input.
 added decoders, and adds them as well.  This is used to build decoder
 chains.
 .PP
+\&\fBOSSL_DECODER_CTX_set_selection()\fR sets what the input is expected to contain.
+.PP
 \&\fBOSSL_DECODER_CTX_set_input_type()\fR sets the starting input type.  This limits
 the decoder chains to be considered, as explained in the general description
 above.
@@ -227,13 +229,6 @@ decode instance \fIdecoder_inst\fR that the constructor got and an object
 \&\fIreference\fR, unpacks the object which it refers to, and exports it by
 creating an \fBOSSL_PARAM\fR\|(3) array that it then passes to \fIexport_cb\fR,
 along with \fIexport_arg\fR.
-.PP
-Note that functions \fBOSSL_DECODER_CTX_set_selection()\fR,
-\&\fBOSSL_DECODER_CTX_set_output_type()\fR, \fBOSSL_DECODER_CTX_set_output_structure()\fR,
-\&\fBOSSL_DECODER_CTX_add_encoder()\fR, \fBOSSL_DECODER_CTX_add_extra()\fR,
-\&\fBOSSL_DECODER_CTX_set_construct()\fR, \fBOSSL_DECODER_CTX_set_construct_data()\fR, and
-\&\fBOSSL_DECODER_CTX_set_cleanup()\fR shouldn\*(Aqt be used after the context is finalised,
-in particular after calling the function \fBOSSL_DECODER_CTX_new_for_pkey()\fR.
 .SS Constructor
 .IX Subsection "Constructor"
 A \fBOSSL_DECODER_CONSTRUCT\fR gets the following arguments:
@@ -280,9 +275,19 @@ NULL if none is available.
 valid, or 0 if one of them was invalid or caused some other failure in the
 implementation.
 .PP
-\&\fBOSSL_DECODER_CTX_add_decoder()\fR, \fBOSSL_DECODER_CTX_add_extra()\fR,
-\&\fBOSSL_DECODER_CTX_set_construct()\fR, \fBOSSL_DECODER_CTX_set_construct_data()\fR and
-\&\fBOSSL_DECODER_CTX_set_cleanup()\fR return 1 on success, or 0 on failure.
+\&\fBOSSL_DECODER_CTX_add_decoder()\fR,
+\&\fBOSSL_DECODER_CTX_add_extra()\fR,
+\&\fBOSSL_DECODER_CTX_set_cleanup()\fR,
+\&\fBOSSL_DECODER_CTX_set_construct()\fR,
+\&\fBOSSL_DECODER_CTX_set_construct_data()\fR,
+\&\fBOSSL_DECODER_CTX_set_input_structure()\fR,
+\&\fBOSSL_DECODER_CTX_set_input_type()\fR,
+\&\fBOSSL_DECODER_CTX_set_params()\fR,
+and
+\&\fBOSSL_DECODER_CTX_set_selection()\fR
+return 1 on success, or 0 on failure.
+They always fail for decoder contexts created in a frozen state via
+\&\fBOSSL_DECODER_CTX_new_for_pkey\fR\|(3).
 .PP
 \&\fBOSSL_DECODER_CTX_get_construct()\fR, \fBOSSL_DECODER_CTX_get_construct_data()\fR and
 \&\fBOSSL_DECODER_CTX_get_cleanup()\fR return the current pointers to the

@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OPENSSL-CMP 1ossl"
-.TH OPENSSL-CMP 1ossl 2026-09-29 3.5.9 OpenSSL
+.TH OPENSSL-CMP 1ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -130,6 +130,8 @@ Server authentication options:
 [\fB\-expect_sender\fR \fIname\fR]
 [\fB\-ignore_keyusage\fR]
 [\fB\-unprotected_errors\fR]
+[\fB\-nonmatched_error_nonces\fR]
+[\fB\-ta_in_ip_extracerts\fR]
 [\fB\-no_cache_extracerts\fR]
 [\fB\-srvcertout\fR \fIfilename\fR]
 [\fB\-extracertsout\fR \fIfilename\fR]
@@ -159,9 +161,8 @@ Credentials format options:
 .PP
 [\fB\-certform\fR \fIPEM|DER\fR]
 [\fB\-crlform\fR \fIPEM|DER\fR]
-[\fB\-keyform\fR \fIPEM|DER|P12|ENGINE\fR]
+[\fB\-keyform\fR \fIPEM|DER|P12\fR]
 [\fB\-otherpass\fR \fIarg\fR]
-[\fB\-engine\fR \fIid\fR]
 [\fB\-provider\fR \fIname\fR]
 [\fB\-provider\-path\fR \fIpath\fR]
 [\fB\-provparam\fR \fI[name:]key=value\fR]
@@ -180,7 +181,7 @@ TLS connection options:
 [\fB\-tls_keypass\fR \fIarg\fR]
 [\fB\-tls_extra\fR \fIfilenames\fR|\fIuris\fR]
 [\fB\-tls_trusted\fR \fIfilenames\fR|\fIuris\fR]
-[\fB\-tls_host\fR \fIname\fR]
+[\fB\-tls_host\fR \fIhost\fR]
 .PP
 Client\-side debugging options:
 .PP
@@ -571,17 +572,22 @@ Reason numbers defined in RFC 5280 are:
 .IP "\fB\-server\fR \fI[http[s]://][userinfo@]host[:port][/path][?query][#fragment]\fR" 4
 .IX Item "-server [http[s]://][userinfo@]host[:port][/path][?query][#fragment]"
 The \fIhost\fR domain name or IP address and optionally \fIport\fR
-of the CMP server to connect to using HTTP(S).
-IP address may be for v4 or v6, such as \f(CW127.0.0.1\fR or \f(CW\*(C`[::1]\*(C'\fR for localhost.
-If the host string is an IPv6 address, it must be enclosed in \f(CW\*(C`[\*(C'\fR and \f(CW\*(C`]\*(C'\fR.
+of the CMP server to connect to via HTTP(S).
+An IP address may be for v4 or v6, such as \f(CW127.0.0.1\fR or \f(CW\*(C`[::1]\*(C'\fR for \f(CW\*(C`localhost\*(C'\fR.
+If the \fIhost\fR string is an IPv6 address, it must be enclosed in \f(CW\*(C`[\*(C'\fR and \f(CW\*(C`]\*(C'\fR.
+.Sp
+For TLS connections, the name verified in server certificates is \fIhost\fR
+unless the \fB\-tls_host\fR option is used to specify a different name.
+If \fIhost\fR is a DNS name, it is also used for
+TLS Server Name Indication (SNI) according to RFC 3546 section 3.1.
 .Sp
 This option excludes \fI\-port\fR and \fI\-use_mock_srv\fR.
 It is ignored if \fI\-rspin\fR is given with enough filename arguments.
 .Sp
 If the scheme \f(CW\*(C`https\*(C'\fR is given, the \fB\-tls_used\fR option is implied.
 When TLS is used, the default port is 443, otherwise 80.
-The optional userinfo and fragment components are ignored.
-Any given query component is handled as part of the path component.
+The optional userinfo component is ignored.
+Any given query and fragment components are handled as part of the path component.
 If a path is included it provides the default value for the \fB\-path\fR option.
 .IP "\fB\-proxy\fR \fI[http[s]://][userinfo@]host[:port][/path][?query][#fragment]\fR" 4
 .IX Item "-proxy [http[s]://][userinfo@]host[:port][/path][?query][#fragment]"
@@ -592,6 +598,7 @@ The proxy port defaults to 80 or 443 if the scheme is \f(CW\*(C`https\*(C'\fR; a
 the optional \f(CW\*(C`http://\*(C'\fR or \f(CW\*(C`https://\*(C'\fR prefix is ignored (note that using TLS
 may be required by \fB\-tls_used\fR or \fB\-server\fR with the prefix \f(CW\*(C`https\*(C'\fR),
 as well as any path, userinfo, and query, and fragment components.
+.Sp
 Defaults to the environment variable \f(CW\*(C`http_proxy\*(C'\fR if set, else \f(CW\*(C`HTTP_PROXY\*(C'\fR
 in case no TLS is used, otherwise \f(CW\*(C`https_proxy\*(C'\fR if set, else \f(CW\*(C`HTTPS_PROXY\*(C'\fR.
 This option is ignored if \fI\-server\fR is not given.
@@ -740,6 +747,26 @@ appendix D.4 shows PKIConf message having protection
 .RE
 .RS 4
 .RE
+.IP \fB\-nonmatched_error_nonces\fR 4
+.IX Item "-nonmatched_error_nonces"
+Accept missing or non\-matching transactionID or recipNonce values in error messages.
+This can be helpful in case the server cannot provide a proper error message,
+for instance if it was unable to parse the ASN.1 encoding of a request message.
+.IP \fB\-ta_in_ip_extracerts\fR 4
+.IX Item "-ta_in_ip_extracerts"
+This is a quirk option added to support 3GPP TS 33.310.
+\&\fBWARNING:\fR This leads to behavior violating RFCs 4210 and 9810.
+.Sp
+It allows using self\-issued certificates from the extraCerts in an IP message
+as non\-authenticated trust anchors when validating the CMP message protection certificate
+in this and any subsequent responses from the server in the same transaction,
+but only if these extraCerts can also be used as trust anchors for validating
+the newly enrolled certificate received in the IP message.
+.Sp
+Note that using this option is dangerous as the to\-be\-trusted certificates
+obtained this way have not been authenticated (at least not at CMP level).
+Taking them over as initial trust anchors
+implements a form of trust\-on\-first\-use (TOFU).
 .IP \fB\-no_cache_extracerts\fR 4
 .IX Item "-no_cache_extracerts"
 Do not cache certificates in the extraCerts field of CMP messages received.
@@ -927,8 +954,8 @@ File format to use when saving a CRL to a file.
 Default value is DER.
 DER format is preferred because it enables more efficient storage
 of large CRLs.
-.IP "\fB\-keyform\fR \fIPEM|DER|P12|ENGINE\fR" 4
-.IX Item "-keyform PEM|DER|P12|ENGINE"
+.IP "\fB\-keyform\fR \fIPEM|DER|P12\fR" 4
+.IX Item "-keyform PEM|DER|P12"
 The format of the key input; unspecified by default.
 See "Format Options" in \fBopenssl\fR\|(1) for details.
 .IP "\fB\-otherpass\fR \fIarg\fR" 4
@@ -943,26 +970,6 @@ If not given here, the password will be prompted for if needed.
 .Sp
 For more information about the format of \fIarg\fR see
 \&\fBopenssl\-passphrase\-options\fR\|(1).
-.IP "\fB\-engine\fR \fIid\fR" 4
-.IX Item "-engine id"
-See "Engine Options" in \fBopenssl\fR\|(1).
-This option is deprecated.
-.Sp
-As an alternative to using this combination:
-.Sp
-.Vb 1
-\&    \-engine {engineid} \-key {keyid} \-keyform ENGINE
-.Ve
-.Sp
-\&... it\*(Aqs also possible to just give the key ID in URI form to \fB\-key\fR,
-like this:
-.Sp
-.Vb 1
-\&    \-key org.openssl.engine:{engineid}:{keyid}
-.Ve
-.Sp
-This applies to all options specifying keys: \fB\-key\fR, \fB\-newkey\fR, and
-\&\fB\-tls_key\fR.
 .SS "Provider options"
 .IX Subsection "Provider options"
 .IP "\fB\-provider\fR \fIname\fR" 4
@@ -985,7 +992,7 @@ See "Random State Options" in \fBopenssl\fR\|(1) for details.
 .IX Subsection "TLS connection options"
 .IP \fB\-tls_used\fR 4
 .IX Item "-tls_used"
-Make the CMP client use TLS (regardless if other TLS\-related options are set)
+Require the CMP client to use TLS (regardless if other TLS\-related options are set)
 for message exchange with the server via HTTP.
 This option is not supported with the \fI\-port\fR option.
 It is implied if the \fB\-server\fR option is given with the scheme \f(CW\*(C`https\*(C'\fR.
@@ -1024,11 +1031,10 @@ Each source may contain multiple certificates.
 The certificate verification options
 \&\fB\-verify_hostname\fR, \fB\-verify_ip\fR, and \fB\-verify_email\fR
 have no effect on the certificate verification enabled via this option.
-.IP "\fB\-tls_host\fR \fIname\fR" 4
-.IX Item "-tls_host name"
-Address to be checked during hostname validation.
-This may be a DNS name or an IP address.
-If not given it defaults to the \fB\-server\fR address.
+.IP "\fB\-tls_host\fR \fIhost\fR" 4
+.IX Item "-tls_host host"
+Hostname or IP address to be checked in the TLS server certificate.
+If not given it defaults to the host part of the \fB\-server\fR option URL argument.
 .SS "Client\-side options for debugging and offline scenarios"
 .IX Subsection "Client-side options for debugging and offline scenarios"
 .IP \fB\-batch\fR 4
@@ -1476,8 +1482,6 @@ and the above transaction using a general message reduces to
 .IX Header "HISTORY"
 The \fBcmp\fR application was added in OpenSSL 3.0.
 .PP
-The \fB\-engine\fR option was deprecated in OpenSSL 3.0.
-.PP
 The \fB\-oldwithold\fR, \fB\-newwithnew\fR, \fB\-newwithold\fR, \fB\-oldwithnew\fR,
 The \fB\-srvcertout\fR, and \fB\-serial\fR option were added in OpenSSL 3.2, as well
 as an extension of \fB\-cacertsout\fR to use when getting CA certificates.
@@ -1489,8 +1493,14 @@ as well as support for delayed delivery of all types of response messages.
 The \fB\-template\fR, \fB\-crlcert\fR, \fB\-oldcrl\fR, \fB\-crlout\fR, \fB\-crlform\fR
 and \fB\-rsp_crl\fR options were added in OpenSSL 3.4.
 .PP
-\&\fB\-centralkeygen\fR, b<\-newkeyout>, \fB\-rsp_key\fR and
+\&\fB\-centralkeygen\fR, \fB\-newkeyout\fR, \fB\-rsp_key\fR and
 \&\fB\-rsp_keypass\fR were added in OpenSSL 3.5.
+.PP
+The \fB\-ta_in_ip_extracerts\fR quirk option was added in OpenSSL 4.0.
+.PP
+The \fB\-engine\fR option was removed in OpenSSL 4.0.
+.PP
+The \fB\-nonmatched_error_nonces\fR option was added in OpenSSL 4.1.
 .SH COPYRIGHT
 .IX Header "COPYRIGHT"
 Copyright 2007\-2026 The OpenSSL Project Authors. All Rights Reserved.

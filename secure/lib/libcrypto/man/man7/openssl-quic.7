@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OPENSSL-QUIC 7ossl"
-.TH OPENSSL-QUIC 7ossl 2026-09-29 3.5.9 OpenSSL
+.TH OPENSSL-QUIC 7ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -611,6 +611,9 @@ or allow them to be handled using \fBSSL_accept_stream\fR\|(3).
 .IX Item "SSL_set_default_stream_mode"
 Used to configure or disable default stream mode; see the MODES OF OPERATION
 section for details.
+.IP \fBSSL_get_peer_addr\fR\|(3) 4
+.IX Item "SSL_get_peer_addr"
+Used to obtain the peer address from a QUIC connection or stream.
 .PP
 The following BIO APIs are not specific to QUIC but have been added to
 facilitate QUIC\-specific requirements and are closely associated with its use:

@@ -58,17 +58,17 @@
 .\" ========================================================================
 .\"
 .IX Title "EVP_SKEY 3ossl"
-.TH EVP_SKEY 3ossl 2026-09-29 3.5.9 OpenSSL
+.TH EVP_SKEY 3ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
 .nh
 .SH NAME
-EVP_SKEY, EVP_SKEY_generate,
-EVP_SKEY_import, EVP_SKEY_import_raw_key, EVP_SKEY_up_ref,
-EVP_SKEY_export, EVP_SKEY_get0_raw_key, EVP_SKEY_get0_key_id,
-EVP_SKEY_get0_skeymgmt_name, EVP_SKEY_get0_provider_name,
-EVP_SKEY_free, EVP_SKEY_is_a, EVP_SKEY_to_provider
+EVP_SKEY, EVP_SKEY_generate, EVP_SKEY_import, EVP_SKEY_import_raw_key,
+EVP_SKEY_import_SKEYMGMT, EVP_SKEY_up_ref, EVP_SKEY_export,
+EVP_SKEY_get0_raw_key, EVP_SKEY_get0_key_id, EVP_SKEY_get0_skeymgmt_name,
+EVP_SKEY_get0_provider_name, EVP_SKEY_free, EVP_SKEY_is_a, EVP_SKEY_to_provider,
+EVP_SKEY_get0_local_keyid, EVP_SKEY_get0_algorithm_id
 \&\- opaque symmetric key allocation and handling functions
 .SH SYNOPSIS
 .IX Header "SYNOPSIS"
@@ -85,6 +85,8 @@ EVP_SKEY_free, EVP_SKEY_is_a, EVP_SKEY_to_provider
 \& EVP_SKEY *EVP_SKEY_import_raw_key(OSSL_LIB_CTX *libctx, const char *skeymgmtname,
 \&                                   unsigned char *key, size_t len,
 \&                                   const char *propquery);
+\& EVP_SKEY *EVP_SKEY_import_SKEYMGMT(OSSL_LIB_CTX *libctx, EVP_SKEYMGMT *skeymgmt,
+\&                                    int selection, const OSSL_PARAM *params);
 \& int EVP_SKEY_export(const EVP_SKEY *skey, int selection,
 \&                     OSSL_CALLBACK *export_cb, void *export_cbarg);
 \& int EVP_SKEY_get0_raw_key(const EVP_SKEY *skey, const unsigned char **key,
@@ -99,6 +101,13 @@ EVP_SKEY_free, EVP_SKEY_is_a, EVP_SKEY_to_provider
 \& int EVP_SKEY_is_a(const EVP_SKEY *skey, const char *name);
 \& EVP_SKEY *EVP_SKEY_to_provider(EVP_SKEY *skey, OSSL_LIB_CTX *libctx,
 \&                                OSSL_PROVIDER *prov, const char *propquery);
+\&
+\& int EVP_SKEY_get0_local_keyid(const EVP_SKEY *skey,
+\&                               const unsigned char **id, size_t *len);
+\& int EVP_SKEY_get0_algorithm_id(const EVP_SKEY *skey,
+\&                                 const unsigned char **oid, size_t *oid_len,
+\&                                 const unsigned char **params,
+\&                                 size_t *params_len);
 .Ve
 .SH DESCRIPTION
 .IX Header "DESCRIPTION"
@@ -121,6 +130,10 @@ The \fBEVP_SKEY_import_raw_key()\fR function is a helper that creates an \fBEVP_
 object containing the raw byte representation of the symmetric keys from the
 buffer \fIkey\fR having length \fIlen\fR. The \fIskeymgmtname\fR defines the name of the
 target \fBEVP_SKEYMGMT\fR for the newly created key.
+.PP
+The \fBEVP_SKEY_import_SKEYMGMT()\fR function is a helper that creates an \fBEVP_SKEY\fR
+object containing the representation of the symmetric keys specific to the
+particular \fBEVP_SKEYMGMT\fR.
 .PP
 The \fBEVP_SKEY_export()\fR function extracts values from a key \fIskey\fR using the
 \&\fIselection\fR.  \fIselection\fR is described below. It uses a callback \fIexport_cb\fR
@@ -150,6 +163,40 @@ count is zero, frees it. If \fIkey\fR is NULL, nothing is done.
 \&\fBEVP_SKEY_to_provider()\fR simplifies the task of importing a \fIskey\fR into a
 different provider identified by \fIprov\fR. If \fIprov\fR is NULL, the default
 provider for the key type identified via \fIskey\fR is used.
+.SS Metadata
+.IX Subsection "Metadata"
+An \fBEVP_SKEY\fR object can carry optional metadata alongside the cryptographic
+key material. This metadata is managed by the provider through the
+\&\fBEVP_SKEYMGMT\fR import/export mechanism and stored in the provider\-side key
+data.
+.PP
+The friendly name (alias) is accessible via \fBEVP_SKEY_get0_key_id()\fR, which
+dispatches to the provider\*(Aqs \fBOSSL_FUNC_skeymgmt_get_key_id\fR function.
+The built\-in providers return the value of \fBOSSL_SKEY_PARAM_ALIAS\fR if it
+was set during import.
+.PP
+\&\fBEVP_SKEY_get0_local_keyid()\fR retrieves the local key identifier from \fIskey\fR.
+On success, \fI*id\fR is set to a pointer to the identifier bytes and \fI*len\fR
+is set to the length. The returned pointer is valid for the lifetime of
+\&\fIskey\fR. Returns 1 on success, 0 on error.
+.PP
+\&\fBEVP_SKEY_get0_algorithm_id()\fR retrieves the algorithm identifier from \fIskey\fR.
+It can return both the DER\-encoded algorithm OID (via \fIoid\fR and \fIoid_len\fR)
+and the DER\-encoded algorithm parameters (via \fIparams\fR and \fIparams_len\fR).
+Either output pair may be NULL if the caller does not need that part.
+The returned pointers are valid for the lifetime of \fIskey\fR.
+Returns 1 on success, 0 on error.
+.PP
+These metadata fields are populated on obtaining the key object (e.g. when
+parsing PKCS#12 files).  For PKCS#12 files the friendly name and local key ID
+correspond to PKCS#12 bag attributes (\fBNID_friendlyName\fR and
+\&\fBNID_localKeyID\fR), while the algorithm OID and parameters are extracted from
+the PKCS8 \fBAlgorithmIdentifier\fR.
+.PP
+The implementation is in general provider\-dependent. If the corresponding
+callback is not implemented for the EVP_SKEYMGMT, 0 is returned. However, as
+metadata is completely optional, the success doesn\*(Aqt indicate that the data is
+available.
 .SS Selections
 .IX Subsection "Selections"
 The following constants can be used for \fIselection\fR:
@@ -172,8 +219,9 @@ The \fBEVP_SKEY_to_provider()\fR function will fail and return NULL if the origi
 key \fIskey\fR cannot be exported from its provider.
 .SH "RETURN VALUES"
 .IX Header "RETURN VALUES"
-\&\fBEVP_SKEY_generate()\fR, \fBEVP_SKEY_import()\fR and \fBEVP_SKEY_import_raw_key()\fR return
-either the newly allocated \fBEVP_SKEY\fR structure or NULL if an error occurred.
+\&\fBEVP_SKEY_generate()\fR, \fBEVP_SKEY_import()\fR, \fBEVP_SKEY_import_raw_key()\fR, and
+\&\fBEVP_SKEY_import_SKEYMGMT()\fR return either the newly allocated \fBEVP_SKEY\fR
+structure or NULL if an error occurred.
 .PP
 \&\fBEVP_SKEY_get0_key_id()\fR returns either a valid pointer or NULL.
 .PP
@@ -189,6 +237,9 @@ otherwise 0.
 .PP
 \&\fBEVP_SKEY_to_provider()\fR returns a new \fBEVP_SKEY\fR suitable for operations with
 the \fIprov\fR provider or NULL in case of failure.
+.PP
+\&\fBEVP_SKEY_get0_local_keyid()\fR and \fBEVP_SKEY_get0_algorithm_id()\fR return 1 on
+success or 0 on error.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 \&\fBEVP_SKEYMGMT\fR\|(3), \fBprovider\fR\|(7), \fBOSSL_PARAM\fR\|(3)
@@ -200,6 +251,11 @@ The \fBEVP_SKEY\fR API and functions \fBEVP_SKEY_export()\fR,
 \&\fBEVP_SKEY_get0_key_id()\fR, \fBEVP_SKEY_get0_provider_name()\fR,
 \&\fBEVP_SKEY_get0_skeymgmt_name()\fR, \fBEVP_SKEY_is_a()\fR, \fBEVP_SKEY_to_provider()\fR
 were introduced in OpenSSL 3.5.
+.PP
+The \fBEVP_SKEY_import_SKEYMGMT()\fR function was introduced in OpenSSL 4.0.
+.PP
+The \fBEVP_SKEY_get0_local_keyid()\fR and \fBEVP_SKEY_get0_algorithm_id()\fR
+functions were added in OpenSSL 4.1.
 .SH COPYRIGHT
 .IX Header "COPYRIGHT"
 Copyright 2025\-2026 The OpenSSL Project Authors. All Rights Reserved.

@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "PROVIDER-DIGEST 7ossl"
-.TH PROVIDER-DIGEST 7ossl 2026-09-29 3.5.9 OpenSSL
+.TH PROVIDER-DIGEST 7ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -89,6 +89,10 @@ provider\-digest \- The digest library <\-> provider functions
 \&                            size_t outsz);
 \& int OSSL_FUNC_digest_digest(void *provctx, const unsigned char *in, size_t inl,
 \&                             unsigned char *out, size_t *outl, size_t outsz);
+\&
+\& /* Digest state serialization */
+\& int OSSL_FUNC_digest_serialize(void *dctx, unsigned char *out, size_t *outl);
+\& int OSSL_FUNC_digest_deserialize(void *dctx, const unsigned char *in, size_t inl);
 \&
 \& /* Digest parameter descriptors */
 \& const OSSL_PARAM *OSSL_FUNC_digest_gettable_params(void *provctx);
@@ -146,6 +150,9 @@ macros in \fBopenssl\-core_dispatch.h\fR\|(7), as follows:
 \& OSSL_FUNC_digest_update               OSSL_FUNC_DIGEST_UPDATE
 \& OSSL_FUNC_digest_final                OSSL_FUNC_DIGEST_FINAL
 \& OSSL_FUNC_digest_digest               OSSL_FUNC_DIGEST_DIGEST
+\&
+\& OSSL_FUNC_digest_serialize            OSSL_FUNC_DIGEST_SERIALIZE
+\& OSSL_FUNC_digest_deserialize          OSSL_FUNC_DIGEST_DESERIALIZE
 \&
 \& OSSL_FUNC_digest_get_params           OSSL_FUNC_DIGEST_GET_PARAMS
 \& OSSL_FUNC_digest_get_ctx_params       OSSL_FUNC_DIGEST_GET_CTX_PARAMS
@@ -213,6 +220,25 @@ passed in the \fIprovctx\fR parameter (see \fBprovider\fR\|(7)).
 \&\fIinl\fR bytes at \fIin\fR should be digested and the result should be stored at
 \&\fIout\fR. The length of the digest should be stored in \fI*outl\fR which should not
 exceed \fIoutsz\fR bytes.
+.SS "Digest State Serialization Functions"
+.IX Subsection "Digest State Serialization Functions"
+\&\fBOSSL_FUNC_digest_serialize()\fR serializes the state of the digest context \fIdctx\fR.
+If \fIout\fR is NULL, then the maximum necessary size for the output buffer is
+written to \fI*outl\fR.
+If \fIout\fR is not NULL, then \fI*outl\fR is assumed to contain the length of the
+\&\fIout\fR buffer. If the call is successful, the serialized data is written
+to \fIout\fR and the amount of data written is stored in \fI*outl\fR.
+.PP
+\&\fBOSSL_FUNC_digest_deserialize()\fR deserializes the data from \fIin\fR of size \fIinlen\fR
+into the digest context \fIdctx\fR.
+The context \fIdctx\fR should be initialized before calling this function.
+After a successful deserialization, the context is ready to be used for
+any subsequent digest operations.
+.PP
+The content of the state and its validity (over time, process lifetime, etc) are
+completely in control of the provider. The documentation for each provider
+should state what guarantees it can offer in terms of recovering the state of a
+serialized blob.
 .SS "Digest Parameters"
 .IX Subsection "Digest Parameters"
 See \fBOSSL_PARAM\fR\|(3) for further details on the parameters structure used by
@@ -307,9 +333,11 @@ See "FIPS indicators" in \fBfips_module\fR\|(7) for more information.
 \&\fBOSSL_FUNC_digest_newctx()\fR and \fBOSSL_FUNC_digest_dupctx()\fR should return the newly created
 provider side digest context, or NULL on failure.
 .PP
-\&\fBOSSL_FUNC_digest_init()\fR, \fBOSSL_FUNC_digest_update()\fR, \fBOSSL_FUNC_digest_final()\fR, \fBOSSL_FUNC_digest_digest()\fR,
-\&\fBOSSL_FUNC_digest_set_params()\fR and \fBOSSL_FUNC_digest_get_params()\fR should return 1 for success or
-0 on error.
+\&\fBOSSL_FUNC_digest_init()\fR, \fBOSSL_FUNC_digest_update()\fR, \fBOSSL_FUNC_digest_final()\fR,
+\&\fBOSSL_FUNC_digest_digest()\fR, \fBOSSL_FUNC_digest_get_params()\fR,
+\&\fBOSSL_FUNC_digest_set_ctx_params()\fR, \fBOSSL_FUNC_digest_get_ctx_params()\fR,
+\&\fBOSSL_FUNC_digest_serialize()\fR, and \fBOSSL_FUNC_digest_deserialize()\fR should return 1 for
+success or 0 on error.
 .PP
 \&\fBOSSL_FUNC_digest_size()\fR should return the digest size.
 .PP
@@ -329,13 +357,13 @@ produces larger digests is unusable with those API calls.
 \&\fBEVP_MD\-MDC2\fR\|(7), \fBEVP_MD\-RIPEMD160\fR\|(7), \fBEVP_MD\-SHA1\fR\|(7),
 \&\fBEVP_MD\-SHA2\fR\|(7), \fBEVP_MD\-SHA3\fR\|(7), \fBEVP_MD\-KECCAK\fR\|(7)
 \&\fBEVP_MD\-SHAKE\fR\|(7), \fBEVP_MD\-SM3\fR\|(7), \fBEVP_MD\-WHIRLPOOL\fR\|(7),
-\&\fBEVP_MD\-NULL\fR\|(7),
+\&\fBEVP_MD\-NULL\fR\|(7), \fBEVP_MD\-ML\-DSA\-MU\fR\|(7),
 \&\fBlife_cycle\-digest\fR\|(7), \fBEVP_DigestInit\fR\|(3)
 .SH HISTORY
 .IX Header "HISTORY"
 The provider DIGEST interface was introduced in OpenSSL 3.0.
 \&\fBOSSL_FUNC_digest_copyctx()\fR was added in 3.5 version.
-The "fips\-indicator" context parameter was added in OpenSSL 3.5.9.
+The "fips\-indicator" context parameter was added in OpenSSL 4.1.
 .SH COPYRIGHT
 .IX Header "COPYRIGHT"
 Copyright 2019\-2026 The OpenSSL Project Authors. All Rights Reserved.

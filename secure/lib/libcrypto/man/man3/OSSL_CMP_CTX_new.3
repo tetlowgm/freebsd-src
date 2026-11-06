@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OSSL_CMP_CTX_NEW 3ossl"
-.TH OSSL_CMP_CTX_NEW 3ossl 2026-09-29 3.5.9 OpenSSL
+.TH OSSL_CMP_CTX_NEW 3ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -376,6 +376,11 @@ revocation responses (RP) with rejection.
 \&\fBWARNING:\fR This setting leads to unspecified behavior and it is meant
 exclusively to allow interoperability with server implementations violating
 RFC 9810.
+.IP \fBOSSL_CMP_OPT_NONMATCHED_ERROR_NONCES\fR 4
+.IX Item "OSSL_CMP_OPT_NONMATCHED_ERROR_NONCES"
+Accept missing or non\-matching transactionID or recipNonce in error messages.
+This can be helpful in case the server cannot provide a proper error message,
+for instance if it was unable to parse the ASN.1 encoding of a request message.
 .IP \fBOSSL_CMP_OPT_IGNORE_KEYUSAGE\fR 4
 .IX Item "OSSL_CMP_OPT_IGNORE_KEYUSAGE"
 Ignore key usage restrictions in the signer\*(Aqs certificate when
@@ -383,13 +388,18 @@ validating signature\-based protection in received CMP messages.
 Else, \*(AqdigitalSignature\*(Aq must be allowed by CMP signer certificates.
 .IP \fBOSSL_CMP_OPT_PERMIT_TA_IN_EXTRACERTS_FOR_IR\fR 4
 .IX Item "OSSL_CMP_OPT_PERMIT_TA_IN_EXTRACERTS_FOR_IR"
-Allow retrieving a trust anchor from extraCerts and using that
-to validate the certificate chain of an IP message.
 This is a quirk option added to support 3GPP TS 33.310.
+It leads to behavior violating RFCs 4210 and 9810.
+It allows using self\-issued certificates from the extraCerts in an IP message
+as trust anchors when validating the CMP message protection certificate
+in this and any subsequent responses from the server in the same transaction,
+but only if these extraCerts can also be used as trust anchors for validating
+the newly enrolled certificate received in the IP message.
 .Sp
-Note that using this option is dangerous as the certificate obtained
-this way has not been authenticated (at least not at CMP level).
-Taking it over as a trust anchor implements trust\-on\-first\-use (TOFU).
+Note that using this option is dangerous as the to\-be\-trusted certificates
+obtained this way have not been authenticated (at least not at CMP level).
+Taking them over as initial trust anchors
+implements a form of trust\-on\-first\-use (TOFU).
 .IP \fBOSSL_CMP_OPT_NO_CACHE_EXTRACERTS\fR 4
 .IX Item "OSSL_CMP_OPT_NO_CACHE_EXTRACERTS"
 Do not cache certificates received in the extraCerts CMP message field.
@@ -879,7 +889,7 @@ Perform a Certification Request transaction, making use of the new credentials:
 .Vb 4
 \&    OSSL_CMP_CTX_set1_cert(cmp_ctx, initialCert);
 \&    OSSL_CMP_CTX_set1_pkey(cmp_ctx, initialKey);
-\&    OSSL_CMP_CTX_set0_newPkey(cmp_ctx, 1, curentKey);
+\&    OSSL_CMP_CTX_set0_newPkey(cmp_ctx, 1, currentKey);
 \&    currentCert = OSSL_CMP_exec_CR_ses(cmp_ctx);
 .Ve
 .PP
@@ -917,7 +927,7 @@ the id\-it\-signKeyPairTypes OID and prints info on the General Response content
 \&\fBERR_print_errors_cb\fR\|(3), \fBOSSL_HTTP_open\fR\|(3)
 .SH HISTORY
 .IX Header "HISTORY"
-The OpenSSL CMP support was added in OpenSSL 3.0.
+The OpenSSL CMP functions were added in OpenSSL 3.0.
 .PP
 \&\fBOSSL_CMP_CTX_get0_trustedStore()\fR was renamed to \fBOSSL_CMP_CTX_get0_trusted()\fR and
 \&\fBOSSL_CMP_CTX_set0_trustedStore()\fR was renamed to \fBOSSL_CMP_CTX_set0_trusted()\fR,
@@ -930,11 +940,13 @@ in OpenSSL 3.2.
 \&\fBOSSL_CMP_CTX_get0_libctx()\fR, \fBOSSL_CMP_CTX_get0_propq()\fR, and
 \&\fBOSSL_CMP_CTX_get0_validatedSrvCert()\fR were added in OpenSSL 3.2.
 .PP
-\&\fBOSSL_CMP_CTX_get0_geninfo_ITAVs()\fR and
-the \fBOSSL_CMP_OPT_NO_CACHE_EXTRACERTS\fR option were added in OpenSSL 3.3.
+The \fBOSSL_CMP_OPT_NO_CACHE_EXTRACERTS\fR option as well as
+\&\fBOSSL_CMP_CTX_get0_geninfo_ITAVs()\fR were added in OpenSSL 3.3.
 .PP
 Support for central key generation, requested via \fBOSSL_CRMF_POPO_NONE\fR,
 was added in OpenSSL 3.5.
+.PP
+The \fBOSSL_CMP_OPT_NONMATCHED_ERROR_NONCES\fR option was added in OpenSSL 4.1.
 .SH COPYRIGHT
 .IX Header "COPYRIGHT"
 Copyright 2007\-2026 The OpenSSL Project Authors. All Rights Reserved.

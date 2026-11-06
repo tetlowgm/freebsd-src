@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OPENSSL-GENDSA 1ossl"
-.TH OPENSSL-GENDSA 1ossl 2026-09-29 3.5.9 OpenSSL
+.TH OPENSSL-GENDSA 1ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -87,7 +87,6 @@ openssl\-gendsa \- generate a DSA private key from a set of parameters
 [\fB\-quiet\fR]
 [\fB\-rand\fR \fIfiles\fR]
 [\fB\-writerand\fR \fIfile\fR]
-[\fB\-engine\fR \fIid\fR]
 [\fB\-provider\fR \fIname\fR]
 [\fB\-provider\-path\fR \fIpath\fR]
 [\fB\-provparam\fR \fI[name:]key=value\fR]
@@ -127,10 +126,6 @@ be handy during batch scripts and pipelines.
 .IP "\fB\-rand\fR \fIfiles\fR, \fB\-writerand\fR \fIfile\fR" 4
 .IX Item "-rand files, -writerand file"
 See "Random State Options" in \fBopenssl\fR\|(1) for details.
-.IP "\fB\-engine\fR \fIid\fR" 4
-.IX Item "-engine id"
-See "Engine Options" in \fBopenssl\fR\|(1).
-This option is deprecated.
 .IP \fIparamfile\fR 4
 .IX Item "paramfile"
 The DSA parameter file to use. The parameters in this file determine
@@ -161,7 +156,7 @@ much quicker that RSA key generation for example.
 \&\fBopenssl\-rsa\fR\|(1)
 .SH HISTORY
 .IX Header "HISTORY"
-The \fB\-engine\fR option was deprecated in OpenSSL 3.0.
+The \fB\-engine\fR option was removed in OpenSSL 4.0.
 .SH COPYRIGHT
 .IX Header "COPYRIGHT"
 Copyright 2000\-2023 The OpenSSL Project Authors. All Rights Reserved.

@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OPENSSL-PKEYUTL 1ossl"
-.TH OPENSSL-PKEYUTL 1ossl 2026-09-29 3.5.9 OpenSSL
+.TH OPENSSL-PKEYUTL 1ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -76,7 +76,7 @@ openssl\-pkeyutl \- asymmetric key command
 [\fB\-secret\fR \fIfile\fR]
 [\fB\-sigfile\fR \fIfile\fR]
 [\fB\-inkey\fR \fIfilename\fR|\fIuri\fR]
-[\fB\-keyform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR|\fBENGINE\fR]
+[\fB\-keyform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR]
 [\fB\-passin\fR \fIarg\fR]
 [\fB\-pubin\fR]
 [\fB\-certin\fR]
@@ -88,7 +88,7 @@ openssl\-pkeyutl \- asymmetric key command
 [\fB\-decrypt\fR]
 [\fB\-derive\fR]
 [\fB\-peerkey\fR \fIfile\fR]
-[\fB\-peerform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR|\fBENGINE\fR]
+[\fB\-peerform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR]
 [\fB\-encap\fR]
 [\fB\-decap\fR]
 [\fB\-kdf\fR \fIalgorithm\fR]
@@ -98,8 +98,6 @@ openssl\-pkeyutl \- asymmetric key command
 [\fB\-pkeyopt_passin\fR \fIopt\fR[:\fIpassarg\fR]]
 [\fB\-hexdump\fR]
 [\fB\-asn1parse\fR]
-[\fB\-engine\fR \fIid\fR]
-[\fB\-engine_impl\fR]
 [\fB\-rand\fR \fIfiles\fR]
 [\fB\-writerand\fR \fIfile\fR]
 [\fB\-provider\fR \fIname\fR]
@@ -136,6 +134,10 @@ For EdDSA (the Ed25519 and Ed448 algorithms) this option
 is implied since OpenSSL 3.5, and required in earlier versions.
 .Sp
 The \fB\-digest\fR option implies \fB\-rawin\fR since OpenSSL 3.5.
+.Sp
+When the input is read from a file (\fB\-in\fR \fIfilename\fR), the command may
+use memory\-mapped I/O on supported platforms for better performance and
+to handle large files without loading the entire file into memory.
 .IP "\fB\-digest\fR \fIalgorithm\fR" 4
 .IX Item "-digest algorithm"
 This option can only be used with \fB\-sign\fR and \fB\-verify\fR.
@@ -166,8 +168,8 @@ Signature file, required and allowed for \fB\-verify\fR operations only.
 .IP "\fB\-inkey\fR \fIfilename\fR|\fIuri\fR" 4
 .IX Item "-inkey filename|uri"
 The input key, by default it should be a private key.
-.IP "\fB\-keyform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR|\fBENGINE\fR" 4
-.IX Item "-keyform DER|PEM|P12|ENGINE"
+.IP "\fB\-keyform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR" 4
+.IX Item "-keyform DER|PEM|P12"
 The key format; unspecified by default.
 See \fBopenssl\-format\-options\fR\|(1) for details.
 .IP "\fB\-passin\fR \fIarg\fR" 4
@@ -232,8 +234,8 @@ Derive a shared secret using own private (EC)DH key and peer key.
 File containing the peer public or private (EC)DH key
 to use with the key derivation (agreement) operation.
 Its type must match the type of the own private key given with \fB\-inkey\fR.
-.IP "\fB\-peerform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR|\fBENGINE\fR" 4
-.IX Item "-peerform DER|PEM|P12|ENGINE"
+.IP "\fB\-peerform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR" 4
+.IX Item "-peerform DER|PEM|P12"
 The peer key format; unspecified by default.
 See \fBopenssl\-format\-options\fR\|(1) for details.
 .IP \fB\-encap\fR 4
@@ -315,14 +317,6 @@ Parse the ASN.1 output data to check its DER encoding and print any errors.
 When combined with the \fB\-verifyrecover\fR option, this may be useful in case
 an ASN.1 DER\-encoded structure had been signed directly (without hashing it)
 and when checking a signature in PKCS#1 v1.5 format, which has a DER encoding.
-.IP "\fB\-engine\fR \fIid\fR" 4
-.IX Item "-engine id"
-See "Engine Options" in \fBopenssl\fR\|(1).
-This option is deprecated.
-.IP \fB\-engine_impl\fR 4
-.IX Item "-engine_impl"
-When used with the \fB\-engine\fR option, it specifies to also use
-engine \fIid\fR for crypto operations.
 .IP "\fB\-rand\fR \fIfiles\fR, \fB\-writerand\fR \fIfile\fR" 4
 .IX Item "-rand files, -writerand file"
 See "Random State Options" in \fBopenssl\fR\|(1) for details.
@@ -731,7 +725,12 @@ types, \fB\-digest\fR is not supported.
 Also since OpenSSL 3.5, the \fB\-kemop\fR option is no longer required for any of
 the supported algorithms, the only supported \fBmode\fR is now the default.
 .PP
-The \fB\-engine\fR option was deprecated in OpenSSL 3.0.
+The \fB\-engine\fR option was removed in OpenSSL 4.0.
+.PP
+Since OpenSSL 4.1, when reading raw input from a file (\fB\-in\fR \fIfilename\fR) for
+oneshot sign/verify (such as Ed25519, Ed448, and ML\-DSA), the command uses
+memory\-mapped I/O on supported platforms, allowing large files to be processed
+without loading the entire file into memory.
 .SH COPYRIGHT
 .IX Header "COPYRIGHT"
 Copyright 2006\-2026 The OpenSSL Project Authors. All Rights Reserved.

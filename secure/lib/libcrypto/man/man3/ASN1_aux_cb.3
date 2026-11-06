@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "ASN1_AUX_CB 3ossl"
-.TH ASN1_AUX_CB 3ossl 2026-09-29 3.5.9 OpenSSL
+.TH ASN1_AUX_CB 3ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -253,6 +253,15 @@ a value exists.
 Invoked in order to obtain the property query string associated with an
 \&\fBASN1_VALUE\fR if any. A pointer to the property query string should be stored in
 \&\fI*exarg\fR if such a value exists.
+.IP \fBASN1_OP_GET0_STREAM_CONTENT\fR 4
+.IX Item "ASN1_OP_GET0_STREAM_CONTENT"
+Invoked while setting up indefinite length streaming, after
+\&\fBASN1_OP_STREAM_PRE\fR, in order to obtain the content octet string of the
+\&\fBASN1_VALUE\fR being streamed. A pointer to the \fBASN1_STRING\fR should be stored
+in \fI*exarg\fR if such a value exists. The caller marks that string for
+indefinite length encoding and records the position of the content in it on
+every encoding pass, so it must remain valid for as long as the streaming
+\&\fBBIO\fR is in use.
 .PP
 An \fBASN1_PRINT_ARG\fR object is used during processing of \fBASN1_OP_PRINT_PRE\fR
 and \fBASN1_OP_PRINT_POST\fR callback operations. It contains the following
@@ -278,7 +287,9 @@ The \fBBIO\fR to stream through
 The \fBBIO\fR with filters appended
 .IP \fIboundary\fR 4
 .IX Item "boundary"
-The streaming I/O boundary.
+The streaming I/O boundary. This field is no longer used: the position of the
+content is taken from the content octet string obtained with
+\&\fBASN1_OP_GET0_STREAM_CONTENT\fR.
 .SH "RETURN VALUES"
 .IX Header "RETURN VALUES"
 In general the callbacks return zero on error and a positive value on
@@ -309,6 +320,8 @@ negative) as an error.
 .IX Header "HISTORY"
 The \fBASN1_aux_const_cb()\fR callback and the \fBASN1_OP_GET0_LIBCTX\fR and
 \&\fBASN1_OP_GET0_PROPQ\fR operation types were added in OpenSSL 3.0.
+.PP
+The \fBASN1_OP_GET0_STREAM_CONTENT\fR operation type was added in OpenSSL 4.1.
 .SH COPYRIGHT
 .IX Header "COPYRIGHT"
 Copyright 2021\-2026 The OpenSSL Project Authors. All Rights Reserved.

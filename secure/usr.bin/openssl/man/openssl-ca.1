@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OPENSSL-CA 1ossl"
-.TH OPENSSL-CA 1ossl 2026-09-29 3.5.9 OpenSSL
+.TH OPENSSL-CA 1ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -97,7 +97,7 @@ openssl\-ca \- sample minimal CA application
 [\fB\-md\fR \fIarg\fR]
 [\fB\-policy\fR \fIarg\fR]
 [\fB\-keyfile\fR \fIfilename\fR|\fIuri\fR]
-[\fB\-keyform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR|\fBENGINE\fR]
+[\fB\-keyform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR]
 [\fB\-key\fR \fIarg\fR]
 [\fB\-passin\fR \fIarg\fR]
 [\fB\-cert\fR \fIfile\fR]
@@ -115,9 +115,8 @@ openssl\-ca \- sample minimal CA application
 [\fB\-preserveDN\fR]
 [\fB\-noemailDN\fR]
 [\fB\-batch\fR]
-[\fB\-msie_hack\fR]
+[\fB\-extfile\fR \fIfile\fR]
 [\fB\-extensions\fR \fIsection\fR]
-[\fB\-extfile\fR \fIsection\fR]
 [\fB\-subj\fR \fIarg\fR]
 [\fB\-utf8\fR]
 [\fB\-sigopt\fR \fInm\fR:\fIv\fR]
@@ -127,7 +126,6 @@ openssl\-ca \- sample minimal CA application
 [\fB\-multivalue\-rdn\fR]
 [\fB\-rand\fR \fIfiles\fR]
 [\fB\-writerand\fR \fIfile\fR]
-[\fB\-engine\fR \fIid\fR]
 [\fB\-provider\fR \fIname\fR]
 [\fB\-provider\-path\fR \fIpath\fR]
 [\fB\-provparam\fR \fI[name:]key=value\fR]
@@ -217,8 +215,8 @@ See \fBopenssl\-format\-options\fR\|(1) for details.
 .IX Item "-keyfile filename|uri"
 The CA private key to sign certificate requests with.
 This must match with \fB\-cert\fR.
-.IP "\fB\-keyform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR|\fBENGINE\fR" 4
-.IX Item "-keyform DER|PEM|P12|ENGINE"
+.IP "\fB\-keyform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR" 4
+.IX Item "-keyform DER|PEM|P12"
 The format of the private key input file; unspecified by default.
 See \fBopenssl\-format\-options\fR\|(1) for details.
 .IP "\fB\-sigopt\fR \fInm\fR:\fIv\fR" 4
@@ -265,6 +263,14 @@ Don\*(Aqt output the text form of a certificate to the output file.
 .IX Item "-dateopt"
 Specify the date output format. Values are: rfc_822 and iso_8601.
 Defaults to rfc_822.
+.Sp
+Note that despite its name, the rfc_822 format does not conform to RFC 822
+or its successors RFC 2822 and RFC 5322. It outputs dates in the format
+"Mmm DD HH:MM:SS YYYY GMT" (e.g., "Jul 31 22:20:50 2017 GMT"). The month
+appears before the day, unlike all three RFCs, which put the day first.
+The 4\-digit year differs from RFC 822 (which used 2\-digit years), and the
+timezone name "GMT" is obsolete per RFC 2822 and RFC 5322 (which require
+numeric offsets such as "+0000").
 .IP "\fB\-startdate\fR \fIdate\fR, \fB\-not_before\fR \fIdate\fR" 4
 .IX Item "-startdate date, -not_before date"
 This allows the start date to be explicitly set. The format of the
@@ -301,12 +307,6 @@ This option defines the CA "policy" to use. This is a section in
 the configuration file which decides which fields should be mandatory
 or match the CA certificate. Check out the \fBPOLICY FORMAT\fR section
 for more information.
-.IP \fB\-msie_hack\fR 4
-.IX Item "-msie_hack"
-This is a deprecated option to make this command work with very old versions
-of the IE certificate enrollment control "certenr3". It used UniversalStrings
-for almost everything. Since the old control has various security bugs
-its use is strongly discouraged.
 .IP \fB\-preserveDN\fR 4
 .IX Item "-preserveDN"
 Normally the DN order of a certificate is the same as the order of the
@@ -336,9 +336,9 @@ See the \fBx509v3_config\fR\|(5) manual page for details of the
 extension section format.
 .IP "\fB\-extfile\fR \fIfile\fR" 4
 .IX Item "-extfile file"
-An additional configuration file to read certificate extensions from
-(using the default section unless the \fB\-extensions\fR option is also
-used).
+An additional configuration \fIfile\fR to read certificate extensions from
+(using its unnamed (\f(CW\*(C`default\*(C'\fR) section unless the \fB\-extensions\fR option is
+also used).
 .IP "\fB\-subj\fR \fIarg\fR" 4
 .IX Item "-subj arg"
 Supersedes subject name given in the request.
@@ -376,10 +376,6 @@ This option has been deprecated and has no effect.
 .IP "\fB\-rand\fR \fIfiles\fR, \fB\-writerand\fR \fIfile\fR" 4
 .IX Item "-rand files, -writerand file"
 See "Random State Options" in \fBopenssl\fR\|(1) for details.
-.IP "\fB\-engine\fR \fIid\fR" 4
-.IX Item "-engine id"
-See "Engine Options" in \fBopenssl\fR\|(1).
-This option is deprecated.
 .IP "\fB\-provider\fR \fIname\fR" 4
 .IX Item "-provider name"
 .PD 0
@@ -444,7 +440,7 @@ in delta CRLs which are not currently implemented.
 .IX Item "-crl_hold instruction"
 This sets the CRL revocation reason code to \fBcertificateHold\fR and the hold
 instruction to \fIinstruction\fR which must be an OID. Although any OID can be
-used only \fBholdInstructionNone\fR (the use of which is discouraged by RFC2459)
+used, only \fBholdInstructionNone\fR (the use of which is deprecated in RFC 5280),
 \&\fBholdInstructionCallIssuer\fR or \fBholdInstructionReject\fR will normally be used.
 .IP "\fB\-crl_compromise\fR \fItime\fR" 4
 .IX Item "-crl_compromise time"
@@ -657,14 +653,6 @@ Sign a certificate request:
 \& openssl ca \-in req.pem \-out newcert.pem
 .Ve
 .PP
-Sign an SM2 certificate request:
-.PP
-.Vb 3
-\& openssl ca \-in sm2.csr \-out sm2.crt \-md sm3 \e
-\&         \-sigopt "distid:1234567812345678" \e
-\&         \-vfyopt "distid:1234567812345678"
-.Ve
-.PP
 Sign a certificate request, using CA extensions:
 .PP
 .Vb 1
@@ -794,7 +782,7 @@ nevertheless some people are using it for this purpose at least internally.
 When doing so, specific care should be taken to
 properly secure the private key(s) used for signing certificates.
 It is advisable to keep them in a secure HW storage such as a smart card or HSM
-and access them via a suitable engine or crypto provider.
+and access them via a suitable crypto provider.
 .PP
 This command is effectively a single user command: no locking
 is done on the various files and attempts to run more than one \fBopenssl ca\fR
@@ -842,10 +830,16 @@ The \fB\-section\fR option was added in OpenSSL 3.0.0.
 The \fB\-multivalue\-rdn\fR option has become obsolete in OpenSSL 3.0.0 and
 has no effect.
 .PP
-The \fB\-engine\fR option was deprecated in OpenSSL 3.0.
-.PP
 Since OpenSSL 3.2, generated certificates bear X.509 version 3,
 and key identifier extensions are included by default.
+.PP
+The \fB\-engine\fR option was removed in OpenSSL 4.0.
+.PP
+The \fB\-msie\-hack\fR option was removed in OpenSSL 4.0.
+.PP
+As of OpenSSL 4.0, the \fBca\fR utility no longer has specialised built\-in logic
+to add the SKID or AKID extensions, they are handled through configuration
+files and command\-line options just like any other extension.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 \&\fBopenssl\fR\|(1),
@@ -857,7 +851,7 @@ and key identifier extensions are included by default.
 \&\fBx509v3_config\fR\|(5)
 .SH COPYRIGHT
 .IX Header "COPYRIGHT"
-Copyright 2000\-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000\-2026 The OpenSSL Project Authors. All Rights Reserved.
 .PP
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

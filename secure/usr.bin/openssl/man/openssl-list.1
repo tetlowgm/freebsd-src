@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OPENSSL-LIST 1ossl"
-.TH OPENSSL-LIST 1ossl 2026-09-29 3.5.9 OpenSSL
+.TH OPENSSL-LIST 1ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -100,7 +100,6 @@ openssl\-list \- list algorithms and features
 [\fB\-public\-key\-methods\fR]
 [\fB\-store\-loaders\fR]
 [\fB\-providers\fR]
-[\fB\-engines\fR]
 [\fB\-disabled\fR]
 [\fB\-objects\fR]
 [\fB\-options\fR \fIcommand\fR]
@@ -276,14 +275,9 @@ Display a list of all loaded providers with their names, version and status.
 .Sp
 In verbose mode, the full version and all provider parameters will additionally
 be displayed.
-.IP \fB\-engines\fR 4
-.IX Item "-engines"
-This option is deprecated.
-.Sp
-Display a list of loaded engines.
 .IP \fB\-disabled\fR 4
 .IX Item "-disabled"
-Display a list of disabled features, those that were compiled out
+Display a list of disabled features, protocols, and algorithms, those that were compiled out
 of the installation.
 .IP \fB\-objects\fR 4
 .IX Item "-objects"
@@ -333,13 +327,15 @@ or like this if it\*(Aqs labeled with multiple names:
 In both cases, \f(CW\*(C`bar\*(C'\fR is the name of the provider.
 .SH HISTORY
 .IX Header "HISTORY"
-The \fB\-engines\fR, \fB\-digest\-commands\fR, and \fB\-cipher\-commands\fR options
+The \fB\-digest\-commands\fR, and \fB\-cipher\-commands\fR options
 were deprecated in OpenSSL 3.0.
 .PP
 The \fB\-skey\-managers\fR option was added in OpenSSL 3.5.
+.PP
+The \fB\-engines\fR option was removed in OpenSSL 4.0.
 .SH COPYRIGHT
 .IX Header "COPYRIGHT"
-Copyright 2016\-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016\-2026 The OpenSSL Project Authors. All Rights Reserved.
 .PP
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

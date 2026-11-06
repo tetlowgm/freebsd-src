@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OPENSSL_INIT_CRYPTO 3ossl"
-.TH OPENSSL_INIT_CRYPTO 3ossl 2026-09-29 3.5.9 OpenSSL
+.TH OPENSSL_INIT_CRYPTO 3ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -66,7 +66,7 @@
 .SH NAME
 OPENSSL_INIT_new, OPENSSL_INIT_set_config_filename,
 OPENSSL_INIT_set_config_appname, OPENSSL_INIT_set_config_file_flags,
-OPENSSL_INIT_free, OPENSSL_init_crypto, OPENSSL_cleanup, OPENSSL_atexit,
+OPENSSL_INIT_free, OPENSSL_init_crypto, OPENSSL_cleanup,
 OPENSSL_thread_stop_ex, OPENSSL_thread_stop \- OpenSSL initialisation
 and deinitialisation functions
 .SH SYNOPSIS
@@ -76,7 +76,6 @@ and deinitialisation functions
 \&
 \& void OPENSSL_cleanup(void);
 \& int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings);
-\& int OPENSSL_atexit(void (*handler)(void));
 \& void OPENSSL_thread_stop_ex(OSSL_LIB_CTX *ctx);
 \& void OPENSSL_thread_stop(void);
 \&
@@ -98,8 +97,7 @@ application is multi\-threaded), and these resources must be freed prior to the
 thread closing.
 .PP
 As of version 1.1.0 OpenSSL will automatically allocate all resources that it
-needs so no explicit initialisation is required. Similarly it will also
-automatically deinitialise as required.
+needs so no explicit initialisation is required.
 .PP
 However, there may be situations when explicit initialisation is desirable or
 needed, for example when some nondefault initialisation is required. The
@@ -169,57 +167,13 @@ option.
 .IX Item "OPENSSL_INIT_ASYNC"
 With this option the library with automatically initialise the libcrypto async
 sub\-library (see \fBASYNC_start_job\fR\|(3)). This is a default option.
-.IP OPENSSL_INIT_ENGINE_RDRAND 4
-.IX Item "OPENSSL_INIT_ENGINE_RDRAND"
-With this option the library will automatically load and initialise the
-RDRAND engine (if available). This not a default option and is deprecated
-in OpenSSL 3.0.
-.IP OPENSSL_INIT_ENGINE_DYNAMIC 4
-.IX Item "OPENSSL_INIT_ENGINE_DYNAMIC"
-With this option the library will automatically load and initialise the
-dynamic engine. This not a default option and is deprecated
-in OpenSSL 3.0.
-.IP OPENSSL_INIT_ENGINE_OPENSSL 4
-.IX Item "OPENSSL_INIT_ENGINE_OPENSSL"
-With this option the library will automatically load and initialise the
-openssl engine. This not a default option and is deprecated
-in OpenSSL 3.0.
-.IP OPENSSL_INIT_ENGINE_CRYPTODEV 4
-.IX Item "OPENSSL_INIT_ENGINE_CRYPTODEV"
-With this option the library will automatically load and initialise the
-cryptodev engine (if available). This not a default option and is deprecated
-in OpenSSL 3.0.
-.IP OPENSSL_INIT_ENGINE_CAPI 4
-.IX Item "OPENSSL_INIT_ENGINE_CAPI"
-With this option the library will automatically load and initialise the
-CAPI engine (if available). This not a default option and is deprecated
-in OpenSSL 3.0.
-.IP OPENSSL_INIT_ENGINE_PADLOCK 4
-.IX Item "OPENSSL_INIT_ENGINE_PADLOCK"
-With this option the library will automatically load and initialise the
-padlock engine (if available). This not a default option and is deprecated
-in OpenSSL 3.0.
-.IP OPENSSL_INIT_ENGINE_AFALG 4
-.IX Item "OPENSSL_INIT_ENGINE_AFALG"
-With this option the library will automatically load and initialise the
-AFALG engine. This not a default option and is deprecated
-in OpenSSL 3.0.
-.IP OPENSSL_INIT_ENGINE_ALL_BUILTIN 4
-.IX Item "OPENSSL_INIT_ENGINE_ALL_BUILTIN"
-With this option the library will automatically load and initialise all the
-built in engines listed above with the exception of the openssl and afalg
-engines. This not a default option and is deprecated
-in OpenSSL 3.0.
 .IP OPENSSL_INIT_ATFORK 4
 .IX Item "OPENSSL_INIT_ATFORK"
 With this option the library will register its fork handlers.
 See \fBOPENSSL_fork_prepare\fR\|(3) for details.
 .IP OPENSSL_INIT_NO_ATEXIT 4
 .IX Item "OPENSSL_INIT_NO_ATEXIT"
-By default OpenSSL will attempt to clean itself up when the process exits via an
-"atexit" handler. Using this option suppresses that behaviour. This means that
-the application will have to clean up OpenSSL explicitly using
-\&\fBOPENSSL_cleanup()\fR.
+The option has no effect in 4.0 and later.
 .PP
 Multiple options may be combined together in a single call to
 \&\fBOPENSSL_init_crypto()\fR. For example:
@@ -229,17 +183,28 @@ Multiple options may be combined together in a single call to
 \&                     | OPENSSL_INIT_NO_ADD_ALL_DIGESTS, NULL);
 .Ve
 .PP
-The \fBOPENSSL_cleanup()\fR function deinitialises OpenSSL (both libcrypto
-and libssl). All resources allocated by OpenSSL are freed. Typically there
-should be no need to call this function directly as it is initiated
-automatically on application exit. This is done via the standard C library
-\&\fBatexit()\fR function. In the event that the application will close in a manner
-that will not call the registered \fBatexit()\fR handlers then the application should
-call \fBOPENSSL_cleanup()\fR directly. Developers of libraries using OpenSSL
-are discouraged from calling this function and should instead, typically, rely
-on auto\-deinitialisation. This is to avoid error conditions where both an
-application and a library it depends on both use OpenSSL, and the library
-deinitialises it before the application has finished using it.
+The \fBOPENSSL_cleanup()\fR function requests deinitialization of OpenSSL
+(both libcrypto and libssl). OpenSSL installs a global destructor
+function at initialization time if the toolchain supports this. This
+destructor is run after exit and after subordinate library destructors
+have run. By default the destructor does nothing. If deinitialization
+has been requested by a call to \fBOPENSSL_cleanup()\fR, then the destructor
+frees all global resources allocated by OpenSSL.
+.PP
+If the toolchain building OpenSSL does not support a global
+destructor, by default OPENSSL_cleanup will do nothing, as this is the
+safest option, allowing the operating system to then reap all library
+resources on process exit. Note, this may, on some leak detection
+tools (like valgrind) result in reports that indicate reachable memory
+remains on exit in certain configurations.  As these are not formally
+leaks, it is recommended that reachable memory reports be suppressed
+when running such tools.
+.PP
+If OpenSSL is compiled with the compile time option of DO_NOT_SKIP_OPENSSL_CLEANUP
+\&\fBOPENSSL_cleanup()\fR will deinitialize the library immediately when called. This
+is not normally recommended unless you are certain that the global resources
+will not be used by something after the point at which \fBOPENSSL_cleanup()\fR is
+called.
 .PP
 Once \fBOPENSSL_cleanup()\fR has been called the library cannot be reinitialised.
 Attempts to call \fBOPENSSL_init_crypto()\fR will fail and an ERR_R_INIT_FAIL error
@@ -247,12 +212,6 @@ will be added to the error stack. Note that because initialisation has failed
 OpenSSL error strings will not be available, only an error code. This code can
 be put through the openssl errstr command line application to produce a human
 readable error (see \fBopenssl\-errstr\fR\|(1)).
-.PP
-The \fBOPENSSL_atexit()\fR function enables the registration of a
-function to be called during \fBOPENSSL_cleanup()\fR. Stop handlers are
-called after deinitialisation of resources local to a thread, but before other
-process wide resources are freed. In the event that multiple stop handlers are
-registered, no guarantees are made about the order of execution.
 .PP
 The \fBOPENSSL_thread_stop_ex()\fR function deallocates resources associated
 with the current thread for the given OSSL_LIB_CTX \fBctx\fR. The \fBctx\fR parameter
@@ -275,9 +234,9 @@ the NOTES section below.
 default OSSL_LIB_CTX is always used.
 .PP
 The \fBOPENSSL_INIT_LOAD_CONFIG\fR flag will load a configuration file, as with
-\&\fBCONF_modules_load_file\fR\|(3) with NULL filename and application name and the
-\&\fBCONF_MFLAGS_IGNORE_MISSING_FILE\fR, \fBCONF_MFLAGS_IGNORE_RETURN_CODES\fR  and
-\&\fBCONF_MFLAGS_DEFAULT_SECTION\fR flags.
+\&\fBCONF_modules_load_file\fR\|(3) with, by default, NULL filename and application
+name and the \fBCONF_MFLAGS_IGNORE_MISSING_FILE\fR,
+\&\fBCONF_MFLAGS_IGNORE_RETURN_CODES\fR and \fBCONF_MFLAGS_DEFAULT_SECTION\fR flags.
 The filename, application name, and flags can be customized by providing a
 non\-null \fBOPENSSL_INIT_SETTINGS\fR object.
 The object can be allocated via \fBOPENSSL_INIT_new()\fR.
@@ -317,16 +276,24 @@ Thread cleanup does not unwind an OpenSSL function interrupted by cancellation
 or thread exit; see \fBopenssl\-threads\fR\|(7).
 .SH "RETURN VALUES"
 .IX Header "RETURN VALUES"
-The functions OPENSSL_init_crypto, \fBOPENSSL_atexit()\fR and
+The functions OPENSSL_init_crypto, and
 \&\fBOPENSSL_INIT_set_config_appname()\fR return 1 on success or 0 on error.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 \&\fBOPENSSL_init_ssl\fR\|(3), \fBopenssl\-threads\fR\|(7)
 .SH HISTORY
 .IX Header "HISTORY"
-The \fBOPENSSL_init_crypto()\fR, \fBOPENSSL_cleanup()\fR, \fBOPENSSL_atexit()\fR,
+The \fBOPENSSL_init_crypto()\fR, \fBOPENSSL_cleanup()\fR
 \&\fBOPENSSL_thread_stop()\fR, \fBOPENSSL_INIT_new()\fR, \fBOPENSSL_INIT_set_config_appname()\fR
 and \fBOPENSSL_INIT_free()\fR functions were added in OpenSSL 1.1.0.
+.PP
+\&\fBOPENSSL_INIT_ENGINE_RDRAND\fR, \fBOPENSSL_INIT_ENGINE_DYNAMIC\fR,
+\&\fBOPENSSL_INIT_ENGINE_OPENSSL\fR, \fBOPENSSL_INIT_ENGINE_CRYPTODEV\fR,
+\&\fBOPENSSL_INIT_ENGINE_CAPI\fR, \fBOPENSSL_INIT_ENGINE_PADLOCK\fR,
+\&\fBOPENSSL_INIT_ENGINE_AFALG\fR \fBOPENSSL_init_crypto()\fR \fIopts\fR were removed in
+OpenSSL 4.0.
+.PP
+\&\fBOPENSSL_INIT_ENGINE_ALL_BUILTIN\fR is defined to 0 since OpenSSL 4.0.
 .SH COPYRIGHT
 .IX Header "COPYRIGHT"
 Copyright 2016\-2026 The OpenSSL Project Authors. All Rights Reserved.

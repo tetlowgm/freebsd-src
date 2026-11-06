@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "SSL_GET_ERROR 3ossl"
-.TH SSL_GET_ERROR 3ossl 2026-09-29 3.5.9 OpenSSL
+.TH SSL_GET_ERROR 3ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -76,17 +76,10 @@ SSL_get_error \- obtain result code for TLS/SSL I/O operation
 .IX Header "DESCRIPTION"
 \&\fBSSL_get_error()\fR returns a result code (suitable for the C "switch"
 statement) for a preceding call to \fBSSL_connect()\fR, \fBSSL_accept()\fR, \fBSSL_do_handshake()\fR,
-\&\fBSSL_read_ex()\fR, \fBSSL_read()\fR, \fBSSL_peek_ex()\fR, \fBSSL_peek()\fR, \fBSSL_shutdown()\fR,
-\&\fBSSL_write_ex()\fR or \fBSSL_write()\fR on \fBssl\fR.  The value returned by that TLS/SSL I/O
+\&\fBSSL_read_ex()\fR, \fBSSL_read()\fR, \fBSSL_read_early_data()\fR, \fBSSL_peek_ex()\fR, \fBSSL_peek()\fR,
+\&\fBSSL_write_ex()\fR, \fBSSL_write()\fR, \fBSSL_write_early_data()\fR, \fBSSL_sendfile()\fR
+or \fBSSL_shutdown()\fR on \fBssl\fR. The value returned by that TLS/SSL I/O
 function must be passed to \fBSSL_get_error()\fR in parameter \fBret\fR.
-.PP
-In addition to \fBssl\fR and \fBret\fR, \fBSSL_get_error()\fR inspects the
-current thread\*(Aqs OpenSSL error queue.  Thus, \fBSSL_get_error()\fR must be
-used in the same thread that performed the TLS/SSL I/O operation, and no
-other OpenSSL function calls should appear in between.  The current
-thread\*(Aqs error queue must be empty before the TLS/SSL I/O operation is
-attempted, or \fBSSL_get_error()\fR will not work reliably.  Emptying the
-current thread\*(Aqs error queue is done with \fBERR_clear_error\fR\|(3).
 .SH NOTES
 .IX Header "NOTES"
 Some TLS implementations do not send a close_notify alert on shutdown.
@@ -188,10 +181,10 @@ The TLS/SSL I/O function should be called again later.
 Details depend on the application.
 .IP SSL_ERROR_WANT_ASYNC 4
 .IX Item "SSL_ERROR_WANT_ASYNC"
-The operation did not complete because an asynchronous engine is still
+The job did not complete because an asynchronous provider is still
 processing data. This will only occur if the mode has been set to SSL_MODE_ASYNC
 using \fBSSL_CTX_set_mode\fR\|(3) or \fBSSL_set_mode\fR\|(3) and an asynchronous capable
-engine is being used. An application can determine whether the engine has
+provider is being used. An application can determine whether the job has
 completed its processing using \fBselect()\fR or \fBpoll()\fR on the asynchronous wait file
 descriptor. This file descriptor is available by calling
 \&\fBSSL_get_all_async_fds\fR\|(3) or \fBSSL_get_changed_async_fds\fR\|(3). The TLS/SSL I/O
@@ -238,9 +231,13 @@ such as \fBERR_print_errors\fR\|(3) and \fBERR_peek_last_error_all\fR\|(3).
 .IX Header "HISTORY"
 The SSL_ERROR_WANT_ASYNC error code was added in OpenSSL 1.1.0.
 The SSL_ERROR_WANT_CLIENT_HELLO_CB error code was added in OpenSSL 1.1.1.
+.PP
+Since OpenSSL 4.0 \fBSSL_get_error()\fR no longer depends on the state of the
+error stack, so it is no longer necessary to empty the error queue
+before the TLS/SSL I/O operations.
 .SH COPYRIGHT
 .IX Header "COPYRIGHT"
-Copyright 2000\-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000\-2026 The OpenSSL Project Authors. All Rights Reserved.
 .PP
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

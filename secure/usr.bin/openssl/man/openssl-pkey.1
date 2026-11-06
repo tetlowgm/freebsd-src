@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OPENSSL-PKEY 1ossl"
-.TH OPENSSL-PKEY 1ossl 2026-09-29 3.5.9 OpenSSL
+.TH OPENSSL-PKEY 1ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -69,7 +69,6 @@ openssl\-pkey \- public or private key processing command
 .IX Header "SYNOPSIS"
 \&\fBopenssl\fR \fBpkey\fR
 [\fB\-help\fR]
-[\fB\-engine\fR \fIid\fR]
 [\fB\-provider\fR \fIname\fR]
 [\fB\-provider\-path\fR \fIpath\fR]
 [\fB\-provparam\fR \fI[name:]key=value\fR]
@@ -77,11 +76,12 @@ openssl\-pkey \- public or private key processing command
 [\fB\-check\fR]
 [\fB\-pubcheck\fR]
 [\fB\-in\fR \fIfilename\fR|\fIuri\fR]
-[\fB\-inform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR|\fBENGINE\fR]
+[\fB\-inform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR]
 [\fB\-passin\fR \fIarg\fR]
 [\fB\-pubin\fR]
 [\fB\-out\fR \fIfilename\fR]
 [\fB\-outform\fR \fBDER\fR|\fBPEM\fR]
+[\fB\-encopt\fR \fIopt\fR:\fIvalue\fR]
 [\fB\-\fR\f(BIcipher\fR]
 [\fB\-passout\fR \fIarg\fR]
 [\fB\-traditional\fR]
@@ -102,10 +102,6 @@ converted between various forms and their components printed.
 .IP \fB\-help\fR 4
 .IX Item "-help"
 Print out a usage message.
-.IP "\fB\-engine\fR \fIid\fR" 4
-.IX Item "-engine id"
-See "Engine Options" in \fBopenssl\fR\|(1).
-This option is deprecated.
 .IP "\fB\-provider\fR \fIname\fR" 4
 .IX Item "-provider name"
 .PD 0
@@ -134,8 +130,8 @@ or standard input if this option is not specified.
 .Sp
 If the key input is encrypted and \fB\-passin\fR is not given
 a pass phrase will be prompted for.
-.IP "\fB\-inform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR|\fBENGINE\fR" 4
-.IX Item "-inform DER|PEM|P12|ENGINE"
+.IP "\fB\-inform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR" 4
+.IX Item "-inform DER|PEM|P12"
 The key input format; unspecified by default.
 See \fBopenssl\-format\-options\fR\|(1) for details.
 .IP "\fB\-passin\fR \fIarg\fR" 4
@@ -166,11 +162,26 @@ When password input is interrupted, the output file is not touched.
 .IX Item "-outform DER|PEM"
 The key output format; the default is \fBPEM\fR.
 See \fBopenssl\-format\-options\fR\|(1) for details.
+.IP "\fB\-encopt\fR \fIopt\fR:\fIvalue\fR" 4
+.IX Item "-encopt opt:value"
+Set the private key encoder parameter \fIopt\fR to \fIvalue\fR.
+In order to set multiple parameters, multiple \fB\-encopt\fR options can be
+specified, each specifying a single parameter.
+The precise set of supported parameters depends on the public key algorithm
+involved and its implementation.
+This is primarily applicable to \fBML\-DSA\fR and \fBML\-KEM\fR, whose private key
+encoding to a \fBPKCS#8\fR object can take a number of different forms.
+The \f(CW\*(C`output_formats\*(C'\fR parameter can be used to select the preferred output
+forms.
+See \fBEVP_PKEY\-ML\-DSA\fR\|(7) and \fBEVP_PKEY\-ML\-KEM\fR\|(7) for details.
 .IP \fB\-\fR\f(BIcipher\fR 4
 .IX Item "-cipher"
-Encrypt the PEM encoded private key with the supplied cipher. Any algorithm
-name accepted by \fBEVP_get_cipherbyname()\fR is acceptable such as \fBaes128\fR.
-Encryption is not supported for DER output.
+Encrypt the PEM encoded private key with the supplied cipher. This option is
+specified by prepending a hyphen to the cipher name (e.g., \fB\-aes\-256\-cbc\fR
+or \fB\-aes128\fR), not as an argument to a \f(CW\*(C`\-cipher\*(C'\fR flag.
+In \fBDER\fR output form encryption is supported only in the default \fBPKCS#8\fR
+form and is not available when the \fB\-traditional\fR option is used.
+Use \f(CW\*(C`openssl list \-cipher\-algorithms\*(C'\fR to see the available ciphers.
 .IP "\fB\-passout\fR \fIarg\fR" 4
 .IX Item "-passout arg"
 The password source for the output file.
@@ -180,8 +191,9 @@ see \fBopenssl\-passphrase\-options\fR\|(1).
 .IP \fB\-traditional\fR 4
 .IX Item "-traditional"
 Normally a private key is written using standard format: this is PKCS#8 form
-with the appropriate encryption algorithm (if any). If the \fB\-traditional\fR
-option is specified then the older "traditional" format is used instead.
+with the appropriate encryption algorithm (if any).
+If the \fB\-traditional\fR option is specified then the older "traditional" format
+is used instead, and in \fBDER\fR output form encryption is not available.
 .IP \fB\-pubout\fR 4
 .IX Item "-pubout"
 By default the private and public key is output;
@@ -206,12 +218,9 @@ This cannot be combined with encoded output in DER format.
 This option only applies to elliptic\-curve based keys.
 .Sp
 This specifies how the points on the elliptic curve are converted
-into octet strings. Possible values are: \fBcompressed\fR (the default
-value), \fBuncompressed\fR and \fBhybrid\fR. For more information regarding
+into octet strings. Possible values are: \fBuncompressed\fR (the default
+value), \fBcompressed\fR and \fBhybrid\fR. For more information regarding
 the point conversion forms please read the X9.62 standard.
-\&\fBNote\fR Due to patent issues the \fBcompressed\fR option is disabled
-by default for binary curves and can be enabled by defining
-the preprocessor macro \fBOPENSSL_EC_BIN_PT_COMP\fR at compile time.
 .IP "\fB\-ec_param_enc\fR \fIarg\fR" 4
 .IX Item "-ec_param_enc arg"
 This option only applies to elliptic curve based public and private keys.
@@ -283,10 +292,17 @@ To change the EC point conversion form to \fBcompressed\fR:
 \&\fBopenssl\-gendsa\fR\|(1)
 .SH HISTORY
 .IX Header "HISTORY"
-The \fB\-engine\fR option was deprecated in OpenSSL 3.0.
+The \fB\-engine\fR option was removed in OpenSSL 4.0.
+.PP
+The \fB\-encopt\fR option was added in OpenSSL 4.0.
+.PP
+As of OpenSSL 4.0 the \fB\-pass\fR and \fB\-\fR\f(BIcipher\fR options apply when private
+keys are output in both \fBPEM\fR and \fBDER\fR (except with \fB\-traditional\fR) forms.
+Previously, these private key encryption options were rejected in combination
+with the \fBDER\fR output form.
 .SH COPYRIGHT
 .IX Header "COPYRIGHT"
-Copyright 2006\-2023 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006\-2026 The OpenSSL Project Authors. All Rights Reserved.
 .PP
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

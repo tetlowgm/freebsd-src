@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "BIO_SET_FLAGS 3ossl"
-.TH BIO_SET_FLAGS 3ossl 2026-09-29 3.5.9 OpenSSL
+.TH BIO_SET_FLAGS 3ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -166,12 +166,19 @@ the retry\-direction bits.
 Set if the last I/O operation on the \fBBIO\fR should be retried at a later time.
 If this bit is not set then the condition is treated as an error.
 This flag is normally set by the \fBBIO\fR implementation.
+.PP
+The following flag can be used only with the \fBbase64 encoding BIO\fR.
+The result of using this flag with other BIOs is unpredictable.
 .IP \fBBIO_FLAGS_BASE64_NO_NL\fR 4
 .IX Item "BIO_FLAGS_BASE64_NO_NL"
 When set on a base64 filter \fBBIO\fR this flag disables the generation of
 newline characters in the encoded output and causes newlines to be ignored
 in the input.  See also \fBBIO_f_base64\fR\|(3).
 The flag has no effect on any other built\-in \fBBIO\fR types.
+.PP
+The following flags can be used only with the \fBmemory buffer BIO\fR and
+\&\fBsecure memory buffer BIO\fR. The result of using these flags with other BIOs
+is unpredictable.
 .IP \fBBIO_FLAGS_MEM_RDONLY\fR 4
 .IX Item "BIO_FLAGS_MEM_RDONLY"
 When set on a memory \fBBIO\fR this flag indicates that the underlying buffer is
@@ -185,12 +192,8 @@ resets the current read position.
 The flag has no effect on any other built\-in \fBBIO\fR types.
 .IP \fBBIO_FLAGS_IN_EOF\fR 4
 .IX Item "BIO_FLAGS_IN_EOF"
-This flag may be used by a \fBBIO\fR implementation to indicate that the end
-of the input stream has been reached.  However, \fBBIO\fR types are not
-required to use this flag to signal end\-of\-file conditions; they may rely
-on other mechanisms such as system calls or by querying the next \fBBIO\fR in a
-chain.  Applications must therefore not test this flag directly to
-determine whether EOF has been reached, and must use \fBBIO_eof()\fR instead.
+This flag is for internal use only. It should not be used outside BIO
+implementations.
 .PP
 A range of additional flag values is reserved for internal use by OpenSSL
 to track kernel TLS (KTLS) state.  This range and the corresponding flag
@@ -228,7 +231,7 @@ The functions and macros described here have been available in OpenSSL since
 at least 1.1.0 (\fBBIO_FLAGS_IN_EOF\fR since 1.1.1).
 .SH COPYRIGHT
 .IX Header "COPYRIGHT"
-Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2025\-2026 The OpenSSL Project Authors. All Rights Reserved.
 .PP
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

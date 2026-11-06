@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OPENSSL-PKCS12 1ossl"
-.TH OPENSSL-PKCS12 1ossl 2026-09-29 3.5.9 OpenSSL
+.TH OPENSSL-PKCS12 1ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -79,7 +79,6 @@ openssl\-pkcs12 \- PKCS#12 file command
 [\fB\-nocerts\fR]
 [\fB\-noout\fR]
 [\fB\-legacy\fR]
-[\fB\-engine\fR \fIid\fR]
 [\fB\-provider\fR \fIname\fR]
 [\fB\-provider\-path\fR \fIpath\fR]
 [\fB\-provparam\fR \fI[name:]key=value\fR]
@@ -212,10 +211,6 @@ in the build. The default algorithm for private key encryption is 3DES_CBC.
 If the legacy option is not specified, then the legacy provider is not loaded
 and the default encryption algorithm for both certificates and private keys is
 AES_256_CBC with PBKDF2 for key derivation.
-.IP "\fB\-engine\fR \fIid\fR" 4
-.IX Item "-engine id"
-See "Engine Options" in \fBopenssl\fR\|(1).
-This option is deprecated.
 .IP "\fB\-provider\fR \fIname\fR" 4
 .IX Item "-provider name"
 .PD 0
@@ -294,19 +289,15 @@ by default.
 .IX Item "-in filename|uri"
 This specifies the input filename or URI.
 Standard input is used by default.
-With the \fB\-export\fR option this is a file with certificates and a key,
-or a URI that refers to a key accessed via an engine.
+With the \fB\-export\fR option this is a file with certificates and a key.
 The order of credentials in a file doesn\*(Aqt matter but one private key and
 its corresponding certificate should be present. If additional
 certificates are present they will also be included in the PKCS#12 output file.
 .IP "\fB\-inkey\fR \fIfilename\fR|\fIuri\fR" 4
 .IX Item "-inkey filename|uri"
-The private key input for PKCS12 output.
+The input filename for the private key for PKCS12 output.
 If this option is not specified then the input file (\fB\-in\fR argument) must
 contain a private key.
-If no engine is used, the argument is taken as a file.
-If the \fB\-engine\fR option is used or the URI has prefix \f(CW\*(C`org.openssl.engine:\*(C'\fR
-then the rest of the URI is taken as key identifier for the given engine.
 .IP "\fB\-certfile\fR \fIfilename\fR" 4
 .IX Item "-certfile filename"
 An input file with extra certificates to be added to the PKCS#12 output
@@ -414,9 +405,9 @@ This option is included for compatibility with previous versions, it used
 to be needed to use MAC iterations counts but they are now used by default.
 .IP \fB\-macsaltlen\fR 4
 .IX Item "-macsaltlen"
-This option specifies the salt length in bytes for the MAC. The salt length 
-should be at least 16 bytes as per NIST SP 800\-132. The default value 
-is 8 bytes for backwards compatibility.
+This option specifies the salt length in bytes for the MAC. The salt
+length should be at least 16 bytes as per NIST SP 800\-132, which is
+the default value.
 .IP \fB\-nomac\fR 4
 .IX Item "-nomac"
 Do not attempt to provide the MAC integrity. This can be useful with the FIPS
@@ -435,6 +426,10 @@ trusted certificates and keypairs, use of this option implies the setting of the
 Although there are a large number of options most of them are very rarely
 used. For PKCS#12 file parsing only \fB\-in\fR and \fB\-out\fR need to be used
 for PKCS#12 file creation \fB\-export\fR and \fB\-name\fR are also used.
+.PP
+When loading using \fB\-in\fR, An error will occur if the PKCS12 macdata contains
+PBMAC1 and the related PBKDF2 parameters are missing, or if the associated
+key length is not in the range 1 to 64.
 .PP
 If none of the \fB\-clcerts\fR, \fB\-cacerts\fR or \fB\-nocerts\fR options are present
 then all certificates will be output in the order they appear in the input
@@ -522,8 +517,10 @@ PEM file containing a key, with default algorithms as in the legacy provider:
 \&\fBossl_store\-file\fR\|(7)
 .SH HISTORY
 .IX Header "HISTORY"
-The \fB\-engine\fR option was deprecated in OpenSSL 3.0.
 The \fB\-nodes\fR option was deprecated in OpenSSL 3.0, too; use \fB\-noenc\fR instead.
+The \fB\-macsaltlen\fR option default changed from 8 to 16 bytes in OpenSSL 3.6.
+.PP
+The \fB\-engine\fR option was removed in OpenSSL 4.0.
 .SH COPYRIGHT
 .IX Header "COPYRIGHT"
 Copyright 2000\-2026 The OpenSSL Project Authors. All Rights Reserved.

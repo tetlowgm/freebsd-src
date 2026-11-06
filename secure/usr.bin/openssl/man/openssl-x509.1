@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OPENSSL-X509 1ossl"
-.TH OPENSSL-X509 1ossl 2026-09-29 3.5.9 OpenSSL
+.TH OPENSSL-X509 1ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -78,7 +78,7 @@ openssl\-x509 \- Certificate display and signing command
 [\fB\-inform\fR \fBDER\fR|\fBPEM\fR]
 [\fB\-vfyopt\fR \fInm\fR:\fIv\fR]
 [\fB\-key\fR \fIfilename\fR|\fIuri\fR]
-[\fB\-keyform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR|\fBENGINE\fR]
+[\fB\-keyform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR]
 [\fB\-signkey\fR \fIfilename\fR|\fIuri\fR]
 [\fB\-out\fR \fIfilename\fR]
 [\fB\-outform\fR \fBDER\fR|\fBPEM\fR]
@@ -108,6 +108,7 @@ openssl\-x509 \- Certificate display and signing command
 [\fB\-purpose\fR]
 [\fB\-pubkey\fR]
 [\fB\-modulus\fR]
+[\fB\-multi\fR]
 [\fB\-checkend\fR \fInum\fR]
 [\fB\-checkhost\fR \fIhost\fR]
 [\fB\-checkemail\fR \fIhost\fR]
@@ -131,7 +132,7 @@ openssl\-x509 \- Certificate display and signing command
 [\fB\-CA\fR \fIfilename\fR|\fIuri\fR]
 [\fB\-CAform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR]
 [\fB\-CAkey\fR \fIfilename\fR|\fIuri\fR]
-[\fB\-CAkeyform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR|\fBENGINE\fR]
+[\fB\-CAkeyform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR]
 [\fB\-CAserial\fR \fIfilename\fR]
 [\fB\-CAcreateserial\fR]
 [\fB\-trustout\fR]
@@ -142,7 +143,6 @@ openssl\-x509 \- Certificate display and signing command
 [\fB\-addreject\fR \fIarg\fR]
 [\fB\-rand\fR \fIfiles\fR]
 [\fB\-writerand\fR \fIfile\fR]
-[\fB\-engine\fR \fIid\fR]
 [\fB\-provider\fR \fIname\fR]
 [\fB\-provider\-path\fR \fIpath\fR]
 [\fB\-provparam\fR \fI[name:]key=value\fR]
@@ -242,8 +242,8 @@ Start date and end date can also be explicitly supplied with options
 .IP "\fB\-signkey\fR \fIfilename\fR|\fIuri\fR" 4
 .IX Item "-signkey filename|uri"
 This option is an alias of \fB\-key\fR.
-.IP "\fB\-keyform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR|\fBENGINE\fR" 4
-.IX Item "-keyform DER|PEM|P12|ENGINE"
+.IP "\fB\-keyform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR" 4
+.IX Item "-keyform DER|PEM|P12"
 The key input format; unspecified by default.
 See \fBopenssl\-format\-options\fR\|(1) for details.
 .IP "\fB\-out\fR \fIfilename\fR" 4
@@ -267,6 +267,14 @@ but are described in the "Trust Settings" section.
 .IX Item "-dateopt"
 Specify the date output format. Values are: rfc_822 and iso_8601.
 Defaults to rfc_822.
+.Sp
+Note that despite its name, the rfc_822 format does not conform to RFC 822
+or its successors RFC 2822 and RFC 5322. It outputs dates in the format
+"Mmm DD HH:MM:SS YYYY GMT" (e.g., "Jul 31 22:20:50 2017 GMT"). The month
+appears before the day, unlike all three RFCs, which put the day first.
+The 4\-digit year differs from RFC 822 (which used 2\-digit years), and the
+timezone name "GMT" is obsolete per RFC 2822 and RFC 5322 (which require
+numeric offsets such as "+0000").
 .IP \fB\-text\fR 4
 .IX Item "-text"
 Prints out the certificate in text form. Full details are printed including the
@@ -357,12 +365,20 @@ Prints the certificate\*(Aqs SubjectPublicKeyInfo block in PEM format.
 .IX Item "-modulus"
 This option prints out the value of the modulus of the public key
 contained in the certificate.
+.IP \fB\-multi\fR 4
+.IX Item "-multi"
+This option prints selected information about all certificates
+contained in the input.
 .SS "Certificate Checking Options"
 .IX Subsection "Certificate Checking Options"
 .IP "\fB\-checkend\fR \fIarg\fR" 4
 .IX Item "-checkend arg"
-Checks if the certificate expires within the next \fIarg\fR seconds and exits
-nonzero if yes it will expire or zero if not.
+Without \fB\-multi\fR checks if the certificate expires within the next
+\&\fIarg\fR seconds and exits nonzero if it will expire or zero if not.
+.Sp
+With \fB\-multi\fR checks if any certificate in the input will expire
+within the next \fIarg\fR seconds and exits nonzero if any will expire
+or zero if none will.
 .IP "\fB\-checkhost\fR \fIhost\fR" 4
 .IX Item "-checkhost host"
 Check that the certificate matches the specified host.
@@ -372,6 +388,15 @@ Check that the certificate matches the specified email address.
 .IP "\fB\-checkip\fR \fIipaddr\fR" 4
 .IX Item "-checkip ipaddr"
 Check that the certificate matches the specified IP address.
+.Sp
+Certificate checking is done with X.509 certificate verification,
+which will fail when encountering an error. As such, when combining
+the \fB\-checkhost\fR, \fB\-checkemail\fR, and \fB\-checkip\fR flags, verify will
+indicate success if all checks pass, and will indicate failure if they
+do not. A diagnostic message of only the first encountered failed
+check that stops certificate verification will be printed in the
+failing case. If a specific diagnostic message is needed for
+individual checks they should be tried individually.
 .SS "Certificate Output Options"
 .IX Subsection "Certificate Output Options"
 .IP "\fB\-set_serial\fR \fIn\fR" 4
@@ -451,7 +476,7 @@ instead of the key contained in the input
 or given with the \fB\-key\fR (or \fB\-signkey\fR) option.
 If the input contains no public key but a private key, its public part is used.
 .Sp
-This option can be used in conjunction with b<\-new> and \fB\-set_subject\fR
+This option can be used in conjunction with \fB\-new\fR and \fB\-set_subject\fR
 to directly generate a certificate containing any desired public key.
 .Sp
 This option is also useful for creating self\-issued certificates that are not
@@ -468,19 +493,44 @@ neither subject identifier nor authority key identifier extensions are included.
 .IP "\fB\-extfile\fR \fIfilename\fR" 4
 .IX Item "-extfile filename"
 Configuration file containing certificate and request X.509 extensions to add.
+.Sp
+When both of the \fB\-extfile\fR \fIfilename\fR and \fB\-extensions\fR \fIsection\fR options
+are given, the extensions to add are taken from the named \fIsection\fR of the
+file named \fIfilename\fR.
+This file must exist, be readable, and all the listed extensions must be valid.
+.Sp
+If only the \fB\-extfile\fR \fIfilename\fR option is given, the section name to use is
+taken from the value of the variable named \f(CW\*(C`extensions\*(C'\fR in the file\*(Aqs unnamed
+section (also called its \fBdefault\fR section, see \fBconfig\fR\|(5)).
+If no \fBextensions\fR setting is found, the file\*(Aqs \fBdefault\fR (unnamed) section
+itself is instead used as the list of extensions to add.
+As before, the file must be readable and all the extensions must be valid.
+.Sp
+Prior to OpenSSL 4.0, the \fB\-extensions\fR option required that the \fB\-extfile\fR
+option be also specified.
+As of OpenSSL 4.0 the default configuration file is used instead as described
+below.
+.Sp
+If only the \fB\-extensions\fR \fIsection\fR option is given, the named \fIsection\fR of
+the default configuration file, whether from the \f(CW\*(C`OPENSSL_CONF\*(C'\fR environment
+variable, or the built\-in default, is used as list of extensions to add.
+As before, the file must be readable and all the extensions must be valid.
+.Sp
+If neither of the options are given, an attempt is made to open the default
+configuration file (as detailed above).
+If the file does not exist or cannot be opened, no extensions are added.
+If the unnamed section (\fBdefault\fR, see \fBconfig\fR\|(5)) of the file does not list
+an \fBextensions\fR variable, no extensions are added.
+Otherwise, the section named by the \fBextensions\fR variable is taken to be the
+list of extensions to add.
+The extensions listed there must all be valid.
 .IP "\fB\-extensions\fR \fIsection\fR" 4
 .IX Item "-extensions section"
 The section in the extfile to add X.509 extensions from.
-If this option is not
-specified then the extensions should either be contained in the unnamed
-(default) section or the default section should contain a variable called
-"extensions" which contains the section to use.
+See the description of \fB\-extfile\fR above for details.
 .Sp
 See the \fBx509v3_config\fR\|(5) manual page for details of the
 extension section format.
-.Sp
-Unless specified otherwise,
-key identifier extensions are included as described in \fBx509v3_config\fR\|(5).
 .IP "\fB\-sigopt\fR \fInm\fR:\fIv\fR" 4
 .IX Item "-sigopt nm:v"
 Pass options to the signature algorithm during sign operations.
@@ -520,8 +570,8 @@ See \fBopenssl\-format\-options\fR\|(1) for details.
 Sets the CA private key to sign a certificate with.
 The private key must match the public key of the certificate given with \fB\-CA\fR.
 If this option is not provided then the key must be present in the \fB\-CA\fR input.
-.IP "\fB\-CAkeyform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR|\fBENGINE\fR" 4
-.IX Item "-CAkeyform DER|PEM|P12|ENGINE"
+.IP "\fB\-CAkeyform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR" 4
+.IX Item "-CAkeyform DER|PEM|P12"
 The format for the CA key; unspecified by default.
 See \fBopenssl\-format\-options\fR\|(1) for details.
 .IP "\fB\-CAserial\fR \fIfilename\fR" 4
@@ -602,10 +652,6 @@ It accepts the same values as the \fB\-addtrust\fR option.
 .IP "\fB\-rand\fR \fIfiles\fR, \fB\-writerand\fR \fIfile\fR" 4
 .IX Item "-rand files, -writerand file"
 See "Random State Options" in \fBopenssl\fR\|(1) for details.
-.IP "\fB\-engine\fR \fIid\fR" 4
-.IX Item "-engine id"
-See "Engine Options" in \fBopenssl\fR\|(1).
-This option is deprecated.
 .IP "\fB\-provider\fR \fIname\fR" 4
 .IX Item "-provider name"
 .PD 0
@@ -765,6 +811,14 @@ Set a certificate to be trusted for SSL client use and change set its alias to
 \& openssl x509 \-in cert.pem \-addtrust clientAuth \e
 \&        \-setalias "Steve\*(Aqs Class 1 CA" \-out trust.pem
 .Ve
+.PP
+Check if any certificates in a chain are due to expire within the next 30 days
+(returns zero if none will expire, nonzero if any will expire):
+.PP
+.Vb 2
+\& openssl x509 \-in chain.pem \-multi \-checkend $[3600*24*30] \e
+\&        && echo \*(Aqperform renewal\*(Aq || echo \*(Aqrenewal unnecessary\*(Aq
+.Ve
 .SH NOTES
 .IX Header "NOTES"
 The conversion to UTF8 format used with the name options assumes that
@@ -791,6 +845,7 @@ dates rather than an offset from the current time.
 \&\fBopenssl\-genrsa\fR\|(1),
 \&\fBopenssl\-gendsa\fR\|(1),
 \&\fBopenssl\-verify\fR\|(1),
+\&\fBconfig\fR\|(5),
 \&\fBx509v3_config\fR\|(5)
 .SH HISTORY
 .IX Header "HISTORY"
@@ -803,15 +858,23 @@ form must have their links rebuilt using \fBopenssl\-rehash\fR\|(1) or similar.
 The \fB\-signkey\fR option has been renamed to \fB\-key\fR in OpenSSL 3.0,
 keeping the old name as an alias.
 .PP
-The \fB\-engine\fR option was deprecated in OpenSSL 3.0.
-.PP
 The \fB\-C\fR option was removed in OpenSSL 3.0.
 .PP
 Since OpenSSL 3.2, generated certificates bear X.509 version 3,
 and key identifier extensions are included by default.
+.PP
+The \fB\-engine\fR option was removed in OpenSSL 4.0.
+.PP
+OpenSSL 4.0 added support for specifying extensions to add via the default
+configuration file.
+See \fB\-extfile\fR above for details.
+.PP
+As of OpenSSL 4.0, the \fBx509\fR utility no longer has specialised built\-in logic
+to add the SKID or AKID extensions, they are handled through configuration
+files and command\-line options just like any other extension.
 .SH COPYRIGHT
 .IX Header "COPYRIGHT"
-Copyright 2000\-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000\-2026 The OpenSSL Project Authors. All Rights Reserved.
 .PP
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OPENSSL-RSA 1ossl"
-.TH OPENSSL-RSA 1ossl 2026-09-29 3.5.9 OpenSSL
+.TH OPENSSL-RSA 1ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -69,7 +69,7 @@ openssl\-rsa \- RSA key processing command
 .IX Header "SYNOPSIS"
 \&\fBopenssl\fR \fBrsa\fR
 [\fB\-help\fR]
-[\fB\-inform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR|\fBENGINE\fR]
+[\fB\-inform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR]
 [\fB\-outform\fR \fBDER\fR|\fBPEM\fR]
 [\fB\-in\fR \fIfilename\fR|\fIuri\fR]
 [\fB\-passin\fR \fIarg\fR]
@@ -99,7 +99,6 @@ openssl\-rsa \- RSA key processing command
 [\fB\-pvk\-strong\fR]
 [\fB\-pvk\-weak\fR]
 [\fB\-pvk\-none\fR]
-[\fB\-engine\fR \fIid\fR]
 [\fB\-provider\fR \fIname\fR]
 [\fB\-provider\-path\fR \fIpath\fR]
 [\fB\-provparam\fR \fI[name:]key=value\fR]
@@ -113,8 +112,8 @@ various forms and their components printed out.
 .IP \fB\-help\fR 4
 .IX Item "-help"
 Print out a usage message.
-.IP "\fB\-inform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR|\fBENGINE\fR" 4
-.IX Item "-inform DER|PEM|P12|ENGINE"
+.IP "\fB\-inform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR" 4
+.IX Item "-inform DER|PEM|P12"
 The key input format; unspecified by default.
 See \fBopenssl\-format\-options\fR\|(1) for details.
 .IP "\fB\-outform\fR \fBDER\fR|\fBPEM\fR" 4
@@ -185,10 +184,6 @@ Enable \*(AqWeak\*(Aq PVK encoding level.
 .IP \fB\-pvk\-none\fR 4
 .IX Item "-pvk-none"
 Don\*(Aqt enforce PVK encoding.
-.IP "\fB\-engine\fR \fIid\fR" 4
-.IX Item "-engine id"
-See "Engine Options" in \fBopenssl\fR\|(1).
-This option is deprecated.
 .IP "\fB\-provider\fR \fIname\fR" 4
 .IX Item "-provider name"
 .PD 0
@@ -258,7 +253,7 @@ without having to manually edit them.
 \&\fBopenssl\-gendsa\fR\|(1)
 .SH HISTORY
 .IX Header "HISTORY"
-The \fB\-engine\fR option was deprecated in OpenSSL 3.0.
+The \fB\-engine\fR option was removed in OpenSSL 4.0.
 .SH COPYRIGHT
 .IX Header "COPYRIGHT"
 Copyright 2000\-2023 The OpenSSL Project Authors. All Rights Reserved.

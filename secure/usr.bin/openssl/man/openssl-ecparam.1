@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OPENSSL-ECPARAM 1ossl"
-.TH OPENSSL-ECPARAM 1ossl 2026-09-29 3.5.9 OpenSSL
+.TH OPENSSL-ECPARAM 1ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -83,7 +83,6 @@ openssl\-ecparam \- EC parameter manipulation and generation
 [\fB\-param_enc\fR \fIarg\fR]
 [\fB\-no_seed\fR]
 [\fB\-genkey\fR]
-[\fB\-engine\fR \fIid\fR]
 [\fB\-rand\fR \fIfiles\fR]
 [\fB\-writerand\fR \fIfile\fR]
 [\fB\-provider\fR \fIname\fR]
@@ -148,9 +147,6 @@ This specifies how the points on the elliptic curve are converted
 into octet strings. Possible values are: \fBcompressed\fR, \fBuncompressed\fR (the
 default value) and \fBhybrid\fR. For more information regarding
 the point conversion forms please read the X9.62 standard.
-\&\fBNote\fR Due to patent issues the \fBcompressed\fR option is disabled
-by default for binary curves and can be enabled by defining
-the preprocessor macro \fBOPENSSL_EC_BIN_PT_COMP\fR at compile time.
 .IP "\fB\-param_enc\fR \fIarg\fR" 4
 .IX Item "-param_enc arg"
 This specifies how the elliptic curve parameters are encoded.
@@ -167,10 +163,6 @@ is included in the ECParameters structure (see RFC 3279).
 .IP \fB\-genkey\fR 4
 .IX Item "-genkey"
 This option will generate an EC private key using the specified parameters.
-.IP "\fB\-engine\fR \fIid\fR" 4
-.IX Item "-engine id"
-See "Engine Options" in \fBopenssl\fR\|(1).
-This option is deprecated.
 .IP "\fB\-rand\fR \fIfiles\fR, \fB\-writerand\fR \fIfile\fR" 4
 .IX Item "-rand files, -writerand file"
 See "Random State Options" in \fBopenssl\fR\|(1) for details.
@@ -238,12 +230,12 @@ To print out the EC parameters to standard output:
 \&\fBopenssl\-dsaparam\fR\|(1)
 .SH HISTORY
 .IX Header "HISTORY"
-The \fB\-engine\fR option was deprecated in OpenSSL 3.0.
-.PP
 The \fB\-C\fR option was removed in OpenSSL 3.0.
+.PP
+The \fB\-engine\fR option was removed in OpenSSL 4.0.
 .SH COPYRIGHT
 .IX Header "COPYRIGHT"
-Copyright 2003\-2021 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2003\-2026 The OpenSSL Project Authors. All Rights Reserved.
 .PP
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

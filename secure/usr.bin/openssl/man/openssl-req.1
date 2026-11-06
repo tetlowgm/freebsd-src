@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OPENSSL-REQ 1ossl"
-.TH OPENSSL-REQ 1ossl 2026-09-29 3.5.9 OpenSSL
+.TH OPENSSL-REQ 1ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -87,9 +87,8 @@ openssl\-req \- PKCS#10 certificate request and certificate generating command
 [\fB\-noenc\fR]
 [\fB\-nodes\fR]
 [\fB\-key\fR \fIfilename\fR|\fIuri\fR]
-[\fB\-keyform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR|\fBENGINE\fR]
+[\fB\-keyform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR]
 [\fB\-keyout\fR \fIfilename\fR]
-[\fB\-keygen_engine\fR \fIid\fR]
 [\fB\-\fR\f(BIdigest\fR]
 [\fB\-config\fR \fIfilename\fR]
 [\fB\-section\fR \fIname\fR]
@@ -120,7 +119,6 @@ openssl\-req \- PKCS#10 certificate request and certificate generating command
 [\fB\-nameopt\fR \fIoption\fR]
 [\fB\-rand\fR \fIfiles\fR]
 [\fB\-writerand\fR \fIfile\fR]
-[\fB\-engine\fR \fIid\fR]
 [\fB\-provider\fR \fIname\fR]
 [\fB\-provider\-path\fR \fIpath\fR]
 [\fB\-provparam\fR \fI[name:]key=value\fR]
@@ -239,10 +237,11 @@ any necessary parameters should be specified via the \fB\-pkeyopt\fR option.
 .Sp
 \&\fBdsa:\fR\fIfilename\fR generates a DSA key using the parameters
 in the file \fIfilename\fR. \fBec:\fR\fIfilename\fR generates EC key (usable both with
-ECDSA or ECDH algorithms), \fBgost2001:\fR\fIfilename\fR generates GOST R
-34.10\-2001 key (requires \fBgost\fR engine configured in the configuration
-file). If just \fBgost2001\fR is specified a parameter set should be
-specified by \fB\-pkeyopt\fR \fIparamset:X\fR
+ECDSA or ECDH algorithms), \fBgost2001:\fR\fIfilename\fR, \fBgost2012_256:\fR\fIfilename\fR
+and \fBgost2012_512:\fR\fIfilename\fR generate GOST R 34.10\-2001 and GOST R 34.10\-2012
+keys with a 256 and 512 bit modulus respectively (these require the \fBgostprov\fR
+provider). If just \fBgost2001\fR is specified, a parameter set should be specified
+by \fB\-pkeyopt\fR \fIparamset:X\fR.
 .IP "\fB\-pkeyopt\fR \fIopt\fR:\fIvalue\fR" 4
 .IX Item "-pkeyopt opt:value"
 Set the public key algorithm option \fIopt\fR to \fIvalue\fR. The precise set of
@@ -259,8 +258,8 @@ the new certificate or certificate request, resulting in a self\-signature.
 For certificate signing this option is overridden by the \fB\-CA\fR option.
 .Sp
 This option also accepts PKCS#8 format private keys for PEM format files.
-.IP "\fB\-keyform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR|\fBENGINE\fR" 4
-.IX Item "-keyform DER|PEM|P12|ENGINE"
+.IP "\fB\-keyform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR" 4
+.IX Item "-keyform DER|PEM|P12"
 The format of the private key; unspecified by default.
 See \fBopenssl\-format\-options\fR\|(1) for details.
 .IP "\fB\-keyout\fR \fIfilename\fR" 4
@@ -336,14 +335,14 @@ X.509 extensions to be added can be specified in the configuration file,
 possibly using the \fB\-config\fR and \fB\-extensions\fR options,
 and/or using the \fB\-addext\fR option.
 .Sp
-Unless \fB\-x509v1\fR is given, generated certificates bear X.509 version 3.
-Unless specified otherwise,
-key identifier extensions are included as described in \fBx509v3_config\fR\|(5).
+Unless \fB\-x509v1\fR is given, generated certificates bear X.509 version 3
+even if no extensions are added.
 .IP \fB\-x509v1\fR 4
 .IX Item "-x509v1"
 Request generation of certificates with X.509 version 1.
 This implies \fB\-x509\fR.
-If X.509 extensions are given, anyway X.509 version 3 is set.
+If X.509 extensions are added, X.509 version 3 is used regardless of this
+option.
 .IP "\fB\-CA\fR \fIfilename\fR|\fIuri\fR" 4
 .IX Item "-CA filename|uri"
 Specifies the "CA" certificate to be used for signing a new certificate
@@ -401,22 +400,50 @@ The main use of this option is to allow a certificate request to supply
 values for certain extensions such as subjectAltName.
 .IP "\fB\-extensions\fR \fIsection\fR, \fB\-reqexts\fR \fIsection\fR" 4
 .IX Item "-extensions section, -reqexts section"
-Can be used to override the name of the configuration file section
-from which X.509 extensions are included
-in the certificate (when \fB\-x509\fR is in use) or certificate request.
+Can be used to override the name of the configuration file section from which
+X.509 extensions are included in certificates (when \fB\-x509\fR is in use) or
+certificate requests.
 This allows several different sections to be used in the same configuration
 file to specify requests for a variety of purposes.
+.Sp
+When signing a new CSR or X.509 certificate, if neither the \fB\-extensions\fR
+option nor its alias \fB\-reqexts\fR are specified, the name of the extension
+section is taken from \f(CW\*(C`req\*(C'\fR section of the configuration file.
+Specifically, from the value of that section\*(Aqs \f(CW\*(C`req_extensions\*(C'\fR variable (for
+a CSR) or its \f(CW\*(C`x509_extensions\*(C'\fR variable (for a certificate).
+If there is no setting for the variable (name/value assignment, see
+\&\fBconfig\fR\|(5)) in question, the configuration file does not add any extensions.
+The \fB\-section\fR option can be used to override \f(CW\*(C`req\*(C'\fR with a custom section in
+which to look for the above \f(CW\*(C`req_extensions\*(C'\fR and \f(CW\*(C`x509_extensions\*(C'\fR variables.
+.Sp
+OpenSSL 4.0 removed built\-in generation of the \fBsubjectKeyIdentifier\fR and
+\&\fBauthorityKeyIdentifier\fR extensions when generating certificates.
+Any desired extensions need to be listed either in the configuration file or
+via the \fB\-addext\fR option described below.
 .IP "\fB\-addext\fR \fIext\fR" 4
 .IX Item "-addext ext"
-Add a specific extension to the certificate (if \fB\-x509\fR is in use)
-or certificate request.  The argument must have the form of
-a \f(CW\*(C`key=value\*(C'\fR pair as it would appear in a config file.
+Add a specific extension to the certificate (if \fB\-x509\fR is in use) or
+certificate request.
+The argument must have the form of a \f(CW\*(C`key=value\*(C'\fR pair as it would appear in a
+configuration file.
 .Sp
-If an extension is added using this option that has the same OID as one
-defined in the extension section of the config file, it overrides that one.
+Each extension can appear at most once in a certificate or certificate request.
+Extensions listed via the option on the command\-line override any corresponding
+extensions in the configuration file.
 .Sp
-This option can be given multiple times.
-Doing so, the same key must not be given more than once.
+This option can be given multiple times, but any given extension can be
+specified through this option at most once.
+.Sp
+To drop any unwanted \fBsubjectKeyIdentifier\fR or \fBauthorityKeyIdentifier\fR
+extensions that may be added by default via the configuration file use either
+or both of the options below:
+.Sp
+.Vb 2
+\&  \-addext subjectKeyIdentifier=none
+\&  \-addext authorityKeyIdentifier=none
+.Ve
+.Sp
+These work as expected even if the extensions were not there to begin with.
 .IP \fB\-precert\fR 4
 .IX Item "-precert"
 A poison extension will be added to the certificate, making it a
@@ -454,10 +481,6 @@ Print extra details about the operations being performed.
 Print fewer details about the operations being performed, which may be
 handy during batch scripts or pipelines (specifically "progress dots"
 during key generation are suppressed).
-.IP "\fB\-keygen_engine\fR \fIid\fR" 4
-.IX Item "-keygen_engine id"
-Specifies an engine (by its unique \fIid\fR string) which would be used
-for key generation operations.
 .IP "\fB\-nameopt\fR \fIoption\fR" 4
 .IX Item "-nameopt option"
 This specifies how the subject or issuer names are displayed.
@@ -465,10 +488,6 @@ See \fBopenssl\-namedisplay\-options\fR\|(1) for details.
 .IP "\fB\-rand\fR \fIfiles\fR, \fB\-writerand\fR \fIfile\fR" 4
 .IX Item "-rand files, -writerand file"
 See "Random State Options" in \fBopenssl\fR\|(1) for details.
-.IP "\fB\-engine\fR \fIid\fR" 4
-.IX Item "-engine id"
-See "Engine Options" in \fBopenssl\fR\|(1).
-This option is deprecated.
 .IP "\fB\-provider\fR \fIname\fR" 4
 .IX Item "-provider name"
 .PD 0
@@ -556,7 +575,7 @@ several values:
 .RE
 .RS 4
 .Sp
-Note that \fButf8only\fR is the PKIX recommendation in RFC2459 after 2003, and the
+Note that \fButf8only\fR is the PKIX recommendation in RFC 5280, and the
 default \fBstring_mask\fR; \fBdefault\fR is not the default option. The \fBnombstr\fR
 value is a workaround for some software that has problems with variable\-sized
 BMPStrings and UTF8Strings.
@@ -680,19 +699,6 @@ Generate a self\-signed root certificate:
 .PP
 .Vb 1
 \& openssl req \-x509 \-newkey rsa:2048 \-keyout key.pem \-out req.pem
-.Ve
-.PP
-Create an SM2 private key and then generate a certificate request from it:
-.PP
-.Vb 2
-\& openssl ecparam \-genkey \-name SM2 \-out sm2.key
-\& openssl req \-new \-key sm2.key \-out sm2.csr \-sm3 \-sigopt "distid:1234567812345678"
-.Ve
-.PP
-Examine and verify an SM2 certificate request:
-.PP
-.Vb 1
-\& openssl req \-verify \-in sm2.csr \-sm3 \-vfyopt "distid:1234567812345678"
 .Ve
 .PP
 Example of a file pointed to by the \fBoid_file\fR option:
@@ -863,8 +869,7 @@ The \fB\-section\fR option was added in OpenSSL 3.0.0.
 The \fB\-multivalue\-rdn\fR option has become obsolete in OpenSSL 3.0.0 and
 has no effect.
 .PP
-The \fB\-engine\fR option was deprecated in OpenSSL 3.0.
-The <\-nodes> option was deprecated in OpenSSL 3.0, too; use \fB\-noenc\fR instead.
+The <\-nodes> option was deprecated in OpenSSL 3.0; use \fB\-noenc\fR instead.
 .PP
 The \fB\-reqexts\fR option has been made an alias of \fB\-extensions\fR in OpenSSL 3.2.
 .PP
@@ -873,9 +878,15 @@ generated certificates bear X.509 version 3 unless \fB\-x509v1\fR is given,
 and key identifier extensions are included by default.
 .PP
 Since OpenSSL 3.3, the \fB\-verify\fR option will exit with 1 on failure.
+.PP
+The \fB\-engine\fR option was removed in OpenSSL 4.0.
+.PP
+As of OpenSSL 4.0, the \fBreq\fR utility no longer has specialised built\-in logic
+to add the SKID or AKID extensions, they are handled through configuration
+files and command\-line options just like any other extension.
 .SH COPYRIGHT
 .IX Header "COPYRIGHT"
-Copyright 2000\-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000\-2026 The OpenSSL Project Authors. All Rights Reserved.
 .PP
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

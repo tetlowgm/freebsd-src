@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "RSA_SET_METHOD 3ossl"
-.TH RSA_SET_METHOD 3ossl 2026-09-29 3.5.9 OpenSSL
+.TH RSA_SET_METHOD 3ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -99,47 +99,37 @@ Applications should instead use the OSSL_PROVIDER APIs.
 .PP
 An \fBRSA_METHOD\fR specifies the functions that OpenSSL uses for RSA
 operations. By modifying the method, alternative implementations such as
-hardware accelerators may be used. IMPORTANT: See the NOTES section for
-important information about how these RSA API functions are affected by the
-use of \fBENGINE\fR API calls.
+hardware accelerators may be used.
 .PP
 Initially, the default RSA_METHOD is the OpenSSL internal implementation,
 as returned by \fBRSA_PKCS1_OpenSSL()\fR.
 .PP
 \&\fBRSA_set_default_method()\fR makes \fBmeth\fR the default method for all RSA
 structures created later.
-\&\fBNB\fR: This is true only whilst no ENGINE has
-been set as a default for RSA, so this function is no longer recommended.
-This function is not thread\-safe and should not be called at the same time
+\&\fBNB\fR: This function is not thread\-safe and should not be called at the same time
 as other OpenSSL functions.
 .PP
 \&\fBRSA_get_default_method()\fR returns a pointer to the current default
-RSA_METHOD. However, the meaningfulness of this result is dependent on
-whether the ENGINE API is being used, so this function is no longer
-recommended.
+RSA_METHOD.
 .PP
 \&\fBRSA_set_method()\fR selects \fBmeth\fR to perform all operations using the key
-\&\fBrsa\fR. This will replace the RSA_METHOD used by the RSA key and if the
-previous method was supplied by an ENGINE, the handle to that ENGINE will
-be released during the change. It is possible to have RSA keys that only
-work with certain RSA_METHOD implementations (e.g. from an ENGINE module
-that supports embedded hardware\-protected keys), and in such cases
+\&\fBrsa\fR. This will replace the RSA_METHOD used by the RSA key.
+It is possible to have RSA keys that only
+work with certain RSA_METHOD implementations, and in such cases
 attempting to change the RSA_METHOD for the key can have unexpected
 results.
 .PP
 \&\fBRSA_get_method()\fR returns a pointer to the RSA_METHOD being used by \fBrsa\fR.
-This method may or may not be supplied by an ENGINE implementation, but if
-it is, the return value can only be guaranteed to be valid as long as the
+The return value can only be guaranteed to be valid as long as the
 RSA key itself is valid and does not have its implementation changed by
 \&\fBRSA_set_method()\fR.
 .PP
 \&\fBRSA_flags()\fR returns the \fBflags\fR that are set for \fBrsa\fR\*(Aqs current
 RSA_METHOD. See the BUGS section.
 .PP
-\&\fBRSA_new_method()\fR allocates and initializes an RSA structure so that
-\&\fBengine\fR will be used for the RSA operations. If \fBengine\fR is NULL, the
-default ENGINE for RSA operations is used, and if no default ENGINE is set,
-the RSA_METHOD controlled by \fBRSA_set_default_method()\fR is used.
+\&\fBRSA_new_method()\fR allocates and initializes an RSA structure.
+\&\fBengine\fR must be NULL and the RSA_METHOD controlled by \fBRSA_set_default_method()\fR
+is used.
 .PP
 \&\fBRSA_flags()\fR returns the \fBflags\fR that are set for \fBrsa\fR\*(Aqs current method.
 .PP

@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "EVP_ENCRYPTINIT 3ossl"
-.TH EVP_ENCRYPTINIT 3ossl 2026-09-29 3.5.9 OpenSSL
+.TH EVP_ENCRYPTINIT 3ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -288,8 +288,6 @@ EVP_CIPHER_CTX_mode
 \& int EVP_CIPHER_CTX_get_tag_length(const EVP_CIPHER_CTX *ctx);
 \& int EVP_CIPHER_CTX_get_type(const EVP_CIPHER_CTX *ctx);
 \& int EVP_CIPHER_CTX_get_mode(const EVP_CIPHER_CTX *ctx);
-\& int EVP_CIPHER_CTX_get_num(const EVP_CIPHER_CTX *ctx);
-\& int EVP_CIPHER_CTX_set_num(EVP_CIPHER_CTX *ctx, int num);
 \& int EVP_CIPHER_CTX_is_encrypting(const EVP_CIPHER_CTX *ctx);
 \&
 \& int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type);
@@ -313,9 +311,18 @@ EVP_CIPHER_CTX_mode
 \& #define EVP_CIPHER_CTX_key_length EVP_CIPHER_CTX_get_key_length
 \& #define EVP_CIPHER_CTX_iv_length EVP_CIPHER_CTX_get_iv_length
 \& #define EVP_CIPHER_CTX_tag_length EVP_CIPHER_CTX_get_tag_length
-\& #define EVP_CIPHER_CTX_num EVP_CIPHER_CTX_get_num
 \& #define EVP_CIPHER_CTX_type EVP_CIPHER_CTX_get_type
 \& #define EVP_CIPHER_CTX_mode EVP_CIPHER_CTX_get_mode
+.Ve
+.PP
+The following functions and alias have been deprecated since OpenSSL 4.1, and
+can be hidden entirely by defining \fBOPENSSL_API_COMPAT\fR with a suitable version
+value, see \fBopenssl_user_macros\fR\|(7):
+.PP
+.Vb 3
+\& int EVP_CIPHER_CTX_get_num(const EVP_CIPHER_CTX *ctx);
+\& int EVP_CIPHER_CTX_set_num(EVP_CIPHER_CTX *ctx, int num);
+\& #define EVP_CIPHER_CTX_num EVP_CIPHER_CTX_get_num
 .Ve
 .PP
 The following function has been deprecated since OpenSSL 3.0, and can be
@@ -437,9 +444,8 @@ For \fBEVP_CIPH_GCM_MODE\fR the IV will be generated internally if it is not
 specified.
 .IP \fBEVP_EncryptInit_ex()\fR 4
 .IX Item "EVP_EncryptInit_ex()"
-This legacy function is similar to \fBEVP_EncryptInit_ex2()\fR when \fIimpl\fR is NULL.
-The implementation of the \fItype\fR from the \fIimpl\fR engine will be used if it
-exists.
+This legacy function is the same as \fBEVP_EncryptInit_ex2()\fR except \fBparams\fR will
+be NULL. \fIimpl\fR \fBmust\fR be NULL.
 .IP \fBEVP_EncryptUpdate()\fR 4
 .IX Item "EVP_EncryptUpdate()"
 Encrypts \fIinl\fR bytes from the buffer \fIin\fR and writes the encrypted version to
@@ -803,6 +809,10 @@ cached value.
 Gets 1 if the cipher algorithm \fIcipher\fR supports the gettable EVP_CIPHER_CTX
 parameter \fBOSSL_CIPHER_PARAM_RANDOM_KEY\fR. Only DES and 3DES set this to 1,
 all other OpenSSL ciphers return 0.
+.IP """encrypt\-then\-mac"" (\fBOSSL_CIPHER_PARAM_ENCRYPT_THEN_MAC\fR) <integer>" 4
+.IX Item """encrypt-then-mac"" (OSSL_CIPHER_PARAM_ENCRYPT_THEN_MAC) <integer>"
+Gets 1 if the cipher algorithm \fIcipher\fR supports TLS Encrypt\-then\-MAC,
+otherwise it gets 0.
 .IP """decrypt\-only"" (\fBOSSL_CIPHER_PARAM_DECRYPT_ONLY) <integer\fR" 4
 .IX Item """decrypt-only"" (OSSL_CIPHER_PARAM_DECRYPT_ONLY) <integer"
 Gets 1 if the cipher algorithm \fIcipher\fR implementation supports only
@@ -823,6 +833,7 @@ Gets or sets the cipher specific "num" parameter for the cipher context \fIctx\f
 Built\-in ciphers typically use this to track how much of the current underlying
 block has been "used" already.
 See also \fBEVP_CIPHER_CTX_get_num()\fR and \fBEVP_CIPHER_CTX_set_num()\fR.
+This parameter was deprecated in OpenSSL 4.1.
 .IP """keylen"" (\fBOSSL_CIPHER_PARAM_KEYLEN\fR) <unsigned integer>" 4
 .IX Item """keylen"" (OSSL_CIPHER_PARAM_KEYLEN) <unsigned integer>"
 Gets or sets the key length for the cipher context \fIctx\fR.
@@ -1242,13 +1253,22 @@ See "Gettable EVP_CIPHER parameters" "tls\-multi".
 .IP EVP_CIPH_RAND_KEY 4
 .IX Item "EVP_CIPH_RAND_KEY"
 See "Gettable EVP_CIPHER parameters" "has\-randkey".
+.IP EVP_CIPH_FLAG_ENC_THEN_MAC 4
+.IX Item "EVP_CIPH_FLAG_ENC_THEN_MAC"
+See "Gettable EVP_CIPHER parameters" "encrypt\-then\-mac".
+.IP "EVP_CIPH_STREAM_CIPHER, EVP_CIPH_ECB_MODE EVP_CIPH_CBC_MODE, EVP_CIPH_CFB_MODE, EVP_CIPH_OFB_MODE, EVP_CIPH_CTR_MODE, EVP_CIPH_GCM_MODE, EVP_CIPH_CCM_MODE, EVP_CIPH_XTS_MODE, EVP_CIPH_WRAP_MODE, EVP_CIPH_OCB_MODE, EVP_CIPH_SIV_MODE" 4
+.IX Item "EVP_CIPH_STREAM_CIPHER, EVP_CIPH_ECB_MODE EVP_CIPH_CBC_MODE, EVP_CIPH_CFB_MODE, EVP_CIPH_OFB_MODE, EVP_CIPH_CTR_MODE, EVP_CIPH_GCM_MODE, EVP_CIPH_CCM_MODE, EVP_CIPH_XTS_MODE, EVP_CIPH_WRAP_MODE, EVP_CIPH_OCB_MODE, EVP_CIPH_SIV_MODE"
+See "Gettable EVP_CIPHER parameters" "mode".
 .PP
-\&\fBEVP_CIPHER_flags()\fR uses the following flags for legacy purposes only:
+\&\fBEVP_CIPHER_flags()\fR also uses the flag \fBEVP_CIPH_FLAG_CUSTOM_CIPHER\fR to indicate
+that the cipher supports any input length when used with the \fBEVP_Cipher()\fR
+function. See \fBEVP_Cipher()\fR for more details.
+.PP
+The following flags are defined for legacy purposes and are not returned by
+\&\fBEVP_CIPHER_flags()\fR:
 .IP EVP_CIPH_VARIABLE_LENGTH 4
 .IX Item "EVP_CIPH_VARIABLE_LENGTH"
 .PD 0
-.IP EVP_CIPH_FLAG_CUSTOM_CIPHER 4
-.IX Item "EVP_CIPH_FLAG_CUSTOM_CIPHER"
 .IP EVP_CIPH_ALWAYS_CALL_INIT 4
 .IX Item "EVP_CIPH_ALWAYS_CALL_INIT"
 .IP EVP_CIPH_CTRL_INIT 4
@@ -1260,8 +1280,6 @@ See "Gettable EVP_CIPHER parameters" "has\-randkey".
 .IP EVP_CIPH_FLAG_DEFAULT_ASN1 4
 .IX Item "EVP_CIPH_FLAG_DEFAULT_ASN1"
 .PD
-See \fBEVP_CIPHER_meth_set_flags\fR\|(3) for further information related to the above
-flags.
 .SH "RETURN VALUES"
 .IX Header "RETURN VALUES"
 \&\fBEVP_CIPHER_fetch()\fR returns a pointer to a \fBEVP_CIPHER\fR for success
@@ -1350,7 +1368,8 @@ for failure.
 A return value of 0 means that the callback was not called for any names.
 .PP
 \&\fBEVP_CIPHER_get_params()\fR, \fBEVP_CIPHER_CTX_get_params()\fR and
-\&\fBEVP_CIPHER_CTX_set_params()\fR return 1 for success and 0 for failure.
+\&\fBEVP_CIPHER_CTX_set_params()\fR return a positive value for success and 0 or a negative value for
+failure.
 .SH "CIPHER LISTING"
 .IX Header "CIPHER LISTING"
 All algorithms have a fixed key length unless otherwise stated.
@@ -1789,6 +1808,9 @@ disappeared.  \fBEVP_CIPHER_CTX_init()\fR remains as an alias for
 .PP
 The \fBEVP_CIPHER_CTX_cipher()\fR function was deprecated in OpenSSL 3.0; use
 \&\fBEVP_CIPHER_CTX_get0_cipher()\fR instead.
+.PP
+The \fBEVP_CIPHER_CTX_get_num()\fR, \fBEVP_CIPHER_CTX_set_num()\fR functions and the
+\&\fBEVP_CIPHER_CTX_num()\fR macro were deprecated in OpenSSL 4.1.
 .PP
 The \fBEVP_EncryptInit_ex2()\fR, \fBEVP_DecryptInit_ex2()\fR, \fBEVP_CipherInit_ex2()\fR,
 \&\fBEVP_CIPHER_fetch()\fR, \fBEVP_CIPHER_free()\fR, \fBEVP_CIPHER_up_ref()\fR,

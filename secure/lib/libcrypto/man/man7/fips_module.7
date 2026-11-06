@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "FIPS_MODULE 7ossl"
-.TH FIPS_MODULE 7ossl 2026-09-29 3.5.9 OpenSSL
+.TH FIPS_MODULE 7ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -78,18 +78,27 @@ For information related to installing the FIPS module see
 <https://github.com/openssl/openssl/blob/master/README\-FIPS.md>.
 .PP
 Note that the old functions \fBFIPS_mode()\fR and \fBFIPS_mode_set()\fR are no longer
-present so you must remove them from your application if you use them.
+present so you should remove them from your application if you use them. A
+convenience define \fBFIPS_mode()\fR to EVP_default_properties_is_fips_enabled(NULL)
+is provided in the openssl/evp.h header. This is a hint of intent, but not
+proof. If you are looking to validate whether the default configuration is using
+a validated module, many additional checks are needed; please consult the
+security policy of the module you are using. Most applications should load the
+default library context and use it as is, without ever using \fBFIPS_mode()\fR or
+checking \fBEVP_default_properties_is_fips_enabled()\fR. This enables your
+application to work unmodified with all the different types of cryptographic
+providers available to OpenSSL. There are many alternative third\-party providers
+that implement FIPS cryptography. For example, the wolfCrypt and SymCrypt
+providers can be used with OpenSSL at run time to also provide FIPS
+cryptography.
 .PP
 Applications written to use the OpenSSL 3.0 FIPS module should not use any
 legacy APIs or features that avoid the FIPS module. Specifically this includes:
 .IP \(bu 4
 Low level cryptographic APIs (use the high level APIs, such as EVP, instead)
 .IP \(bu 4
-Engines
-.IP \(bu 4
 Any functions that create or modify custom "METHODS" (for example
-\&\fBEVP_MD_meth_new()\fR, \fBEVP_CIPHER_meth_new()\fR, \fBEVP_PKEY_meth_new()\fR, \fBRSA_meth_new()\fR,
-\&\fBEC_KEY_METHOD_new()\fR, etc.)
+\&\fBRSA_meth_new()\fR, \fBEC_KEY_METHOD_new()\fR, etc.)
 .PP
 All of the above APIs are deprecated in OpenSSL 3.0 \- so a simple rule is to
 avoid using all deprecated functions. See \fBossl\-guide\-migration\fR\|(7) for a list of

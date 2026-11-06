@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "SSL_NEW 3ossl"
-.TH SSL_NEW 3ossl 2026-09-29 3.5.9 OpenSSL
+.TH SSL_NEW 3ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -148,6 +148,8 @@ The subset of settings in \fIs\fR that are duplicated are:
 .IX Item "any configured custom extensions"
 .IP "any client certificate types configured via SSL_set1_client_certificate_types" 4
 .IX Item "any client certificate types configured via SSL_set1_client_certificate_types"
+.IP "any Encrypted Client Hello (ECH) settings (see \fBSSL_set1_echstore\fR\|(3))." 4
+.IX Item "any Encrypted Client Hello (ECH) settings (see SSL_set1_echstore)."
 .IP "type of server certificate set via \fBSSL_set1_server_cert_type\fR\|(3)." 4
 .IX Item "type of server certificate set via SSL_set1_server_cert_type."
 .IP "type of client certificate set via \fBSSL_set1_client_cert_type\fR\|(3)." 4

@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OPENSSL-FIPSINSTALL 1ossl"
-.TH OPENSSL-FIPSINSTALL 1ossl 2026-09-29 3.5.9 OpenSSL
+.TH OPENSSL-FIPSINSTALL 1ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -114,6 +114,7 @@ openssl\-fipsinstall \- perform FIPS configuration installation
 [\fB\-corrupt_desc\fR \fIselftest_description\fR]
 [\fB\-corrupt_type\fR \fIselftest_type\fR]
 [\fB\-config\fR \fIparent_config\fR]
+[\fB\-defer_tests\fR]
 .SH DESCRIPTION
 .IX Header "DESCRIPTION"
 This command is used to generate a FIPS module configuration file.
@@ -400,6 +401,11 @@ A previous call to this application needs to generate the extra configuration
 data that is included by the base \f(CW\*(C`parent_config\*(C'\fR configuration file.
 See \fBconfig\fR\|(5) for further information on how to set up a provider section.
 All other options are ignored if \*(Aq\-config\*(Aq is used.
+.IP \fB\-defer_tests\fR 4
+.IX Item "-defer_tests"
+Configure the module to not run all self\-tests at startup and allow tests
+execution to be deferred to the first time the algorithm to be tested is
+invoked.
 .SH NOTES
 .IX Header "NOTES"
 Self tests results are logged by default if the options \fB\-quiet\fR and \fB\-noout\fR
@@ -492,9 +498,13 @@ The following options were added in OpenSSL 3.4:
 \&\fB\-x963kdf_key_check\fR,
 \&\fB\-x942kdf_key_check\fR,
 \&\fB\-ecdh_cofactor_check\fR
+.PP
+The following options was added in OpenSSL 4.0:
+.PP
+\&\fB\-defer_tests\fR
 .SH COPYRIGHT
 .IX Header "COPYRIGHT"
-Copyright 2019\-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019\-2026 The OpenSSL Project Authors. All Rights Reserved.
 .PP
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

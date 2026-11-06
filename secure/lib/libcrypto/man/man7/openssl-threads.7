@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OPENSSL-THREADS 7ossl"
-.TH OPENSSL-THREADS 7ossl 2026-09-29 3.5.9 OpenSSL
+.TH OPENSSL-THREADS 7ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -144,6 +144,14 @@ to create per\-connection \fBSSL\fR objects by calling \fBSSL_new\fR\|(3).
 In this specific case, and probably for factory methods in general, it is
 not safe to modify the factory object after it has been used to create
 other objects.
+.PP
+An \fBSSL\fR connection object created by \fBSSL_new\fR\|(3) should only be used
+by a single thread at a time.
+While it is possible for one thread to use an \fBSSL\fR object and then pass
+it to another thread, the application must ensure that no two threads
+are using the same \fBSSL\fR object concurrently.
+Each thread handling TLS connections in parallel should create its own
+\&\fBSSL\fR object from the shared \fBSSL_CTX\fR.
 .SH "THREAD CANCELLATION"
 .IX Header "THREAD CANCELLATION"
 Thread safety does not imply cancellation safety.

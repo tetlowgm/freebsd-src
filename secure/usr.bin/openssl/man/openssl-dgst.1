@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OPENSSL-DGST 1ossl"
-.TH OPENSSL-DGST 1ossl 2026-09-29 3.5.9 OpenSSL
+.TH OPENSSL-DGST 1ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -80,18 +80,18 @@ openssl\-dgst \- perform digest operations
 [\fB\-r\fR]
 [\fB\-out\fR \fIfilename\fR]
 [\fB\-sign\fR \fIfilename\fR|\fIuri\fR]
-[\fB\-keyform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR|\fBENGINE\fR]
+[\fB\-keyform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR]
 [\fB\-passin\fR \fIarg\fR]
 [\fB\-verify\fR \fIfilename\fR]
 [\fB\-prverify\fR \fIfilename\fR]
 [\fB\-signature\fR \fIfilename\fR]
 [\fB\-sigopt\fR \fInm\fR:\fIv\fR]
 [\fB\-hmac\fR \fIkey\fR]
+[\fB\-hmac\-env\fR \fIvar\fR]
+[\fB\-hmac\-stdin\fR]
 [\fB\-mac\fR \fIalg\fR]
 [\fB\-macopt\fR \fInm\fR:\fIv\fR]
 [\fB\-fips\-fingerprint\fR]
-[\fB\-engine\fR \fIid\fR]
-[\fB\-engine_impl\fR \fIid\fR]
 [\fB\-rand\fR \fIfiles\fR]
 [\fB\-writerand\fR \fIfile\fR]
 [\fB\-provider\fR \fIname\fR]
@@ -166,12 +166,13 @@ Filename to output to, or standard output by default.
 Digitally sign the digest using the given private key.
 .Sp
 Note that for algorithms that only support one\-shot signing
-(such as Ed25519, ED448, ML\-DSA\-44, ML\-DSA\-65 andML\-DSA\-87) the digest must not
+(such as Ed25519, ED448, ML\-DSA\-44, ML\-DSA\-65 and ML\-DSA\-87) the digest must not
 be set. For these algorithms the input is buffered (and not digested) before
-signing. For these algorithms, if the input is larger than 16MB an error
-will occur.
-.IP "\fB\-keyform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR|\fBENGINE\fR" 4
-.IX Item "-keyform DER|PEM|P12|ENGINE"
+signing. When the input is from a file, memory\-mapped I/O is used on
+supported platforms (Unix\e\-like), allowing large files without a size limit; when
+input is from stdin or on unsupported platforms, input is limited to 16MB.
+.IP "\fB\-keyform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR" 4
+.IX Item "-keyform DER|PEM|P12"
 The format of the key to sign with; unspecified by default.
 See \fBopenssl\-format\-options\fR\|(1) for details.
 .IP "\fB\-sigopt\fR \fInm\fR:\fIv\fR" 4
@@ -187,6 +188,10 @@ see \fBopenssl\-passphrase\-options\fR\|(1).
 .IX Item "-verify filename"
 Verify the signature using the public key in "filename".
 The output is either "Verified OK" or "Verification Failure".
+For one\-shot verification algorithms (e.g. Ed25519, Ed448), when the input
+is from a file, memory\-mapped I/O is used on supported platforms (Unix\e\-like),
+allowing large files; when input is from stdin or on unsupported platforms,
+input is limited to 16MB.
 .IP "\fB\-prverify\fR \fIfilename\fR" 4
 .IX Item "-prverify filename"
 Verify the signature using the private key in "filename".
@@ -197,15 +202,42 @@ The actual signature to verify.
 .IX Item "-hmac key"
 Create a hashed MAC using "key".
 .Sp
+Cannot be used together with \-mac option.
+If multiple \-hmac, \-hmac\-env or \-hmac\-stdin options are specified, the last
+one is applied.
+.Sp
+The \fBopenssl\-mac\fR\|(1) command should be preferred to using this command line
+option.
+.IP "\fB\-hmac\-env\fR \fIvar\fR" 4
+.IX Item "-hmac-env var"
+Create a hashed MAC using a key from the environment variable "var".
+.Sp
+Cannot be used together with \-mac option.
+If multiple \-hmac, \-hmac\-env or \-hmac\-stdin options are specified, the last
+one is applied.
+.Sp
+The \fBopenssl\-mac\fR\|(1) command should be preferred to using this command line
+option.
+.IP \fB\-hmac\-stdin\fR 4
+.IX Item "-hmac-stdin"
+Create a hashed MAC using a key obtained from the standard input. Only the
+first line from stdin is read, and the \e0 character also terminates the key.
+.Sp
+Cannot be used together with \-mac option.
+If multiple \-hmac, \-hmac\-env or \-hmac\-stdin options are specified, the last
+one is applied.
+.Sp
 The \fBopenssl\-mac\fR\|(1) command should be preferred to using this command line
 option.
 .IP "\fB\-mac\fR \fIalg\fR" 4
 .IX Item "-mac alg"
 Create MAC (keyed Message Authentication Code). The most popular MAC
 algorithm is HMAC (hash\-based MAC), but there are other MAC algorithms
-which are not based on hash, for instance \fBgost\-mac\fR algorithm,
-supported by the \fBgost\fR engine. MAC keys and other options should be set
-via \fB\-macopt\fR parameter.
+which are not based on a digest algorithm, for instance the \fBgost\-mac\fR
+algorithm, supported by the \fBgostprov\fR provider. MAC keys and other options
+should be set via \fB\-macopt\fR parameter.
+.Sp
+Cannot be used together with \-hmac, \-hmac\-env and \-hmac\-stdin.
 .Sp
 The \fBopenssl\-mac\fR\|(1) command should be preferred to using this command line
 option.
@@ -224,8 +256,33 @@ the MAC algorithm for example exactly 32 chars for gost\-mac.
 Specifies MAC key in hexadecimal form (two hex digits per byte).
 Key length must conform to any restrictions of the MAC algorithm
 for example exactly 32 chars for gost\-mac.
+.IP \fBkeyenv:\fR\fIvar\fR 4
+.IX Item "keyenv:var"
+Read the MAC key as an alphanumeric string from the environment variable
+(use if the key contains printable characters only).
+The the key length must conform to any restrictions of the MAC algorithm.
+A key must be specified for every MAC algorithm.
+.IP \fBkeyenvhex:\fR\fIvar\fR 4
+.IX Item "keyenvhex:var"
+Read the MAC key in hexadecimal form (two hex digits per byte)
+from the environment variable.
+The key length must conform to any restrictions of the MAC algorithm.
+A key must be specified for every MAC algorithm.
+.IP \fBkeyfile:\fR\fIfilename\fR 4
+.IX Item "keyfile:filename"
+Read the MAC key from the specified file. The key is read as binary data.
+The key length must conform to any restrictions of the MAC algorithm.
+A key must be specified for every MAC algorithm.
+.IP \fBkeystdin\fR 4
+.IX Item "keystdin"
+Read the MAC key from the standard input. Only the first line from stdin is
+read, and the \e0 character also terminates the key.
+The key length must conform to any restrictions of the MAC algorithm.
+A key must be specified for every MAC algorithm.
 .RE
 .RS 4
+.Sp
+If multiple MAC key options are specified, the last one is applied.
 .Sp
 The \fBopenssl\-mac\fR\|(1) command should be preferred to using this command line
 option.
@@ -236,17 +293,6 @@ Compute HMAC using a specific key for certain OpenSSL\-FIPS operations.
 .IP "\fB\-rand\fR \fIfiles\fR, \fB\-writerand\fR \fIfile\fR" 4
 .IX Item "-rand files, -writerand file"
 See "Random State Options" in \fBopenssl\fR\|(1) for details.
-.IP "\fB\-engine\fR \fIid\fR" 4
-.IX Item "-engine id"
-See "Engine Options" in \fBopenssl\fR\|(1).
-This option is deprecated.
-.Sp
-The engine is not used for digests unless the \fB\-engine_impl\fR option is
-used or it is configured to do so, see "Engine Configuration Module" in \fBconfig\fR\|(5).
-.IP "\fB\-engine_impl\fR \fIid\fR" 4
-.IX Item "-engine_impl id"
-When used with the \fB\-engine\fR option, it specifies to also use
-engine \fIid\fR for digest operations.
 .IP "\fB\-provider\fR \fIname\fR" 4
 .IX Item "-provider name"
 .PD 0
@@ -323,10 +369,17 @@ The \fBopenssl\-mac\fR\|(1) command is preferred over the \fB\-hmac\fR, \fB\-mac
 The default digest was changed from MD5 to SHA256 in OpenSSL 1.1.0.
 The FIPS\-related options were removed in OpenSSL 1.1.0.
 .PP
-The \fB\-engine\fR and \fB\-engine_impl\fR options were deprecated in OpenSSL 3.0.
+The \fB\-engine\fR and \fB\-engine_impl\fR options were removed in OpenSSL 4.0.
+.PP
+The \fB\-hmac\-env\fR and \fB\-hmac\-stdin\fR options were added in OpenSSL 4.0.
+.PP
+Since OpenSSL 4.1, one\-shot sign and verify (e.g. Ed25519, Ed448) with input
+from a file uses memory\-mapped I/O on supported platforms (Unix\e\-like), allowing
+large files to be processed without the previous 16MB limit for file\-based
+input.
 .SH COPYRIGHT
 .IX Header "COPYRIGHT"
-Copyright 2000\-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000\-2026 The OpenSSL Project Authors. All Rights Reserved.
 .PP
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

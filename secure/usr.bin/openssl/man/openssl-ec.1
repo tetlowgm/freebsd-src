@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OPENSSL-EC 1ossl"
-.TH OPENSSL-EC 1ossl 2026-09-29 3.5.9 OpenSSL
+.TH OPENSSL-EC 1ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -69,7 +69,7 @@ openssl\-ec \- EC key processing
 .IX Header "SYNOPSIS"
 \&\fBopenssl\fR \fBec\fR
 [\fB\-help\fR]
-[\fB\-inform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR|\fBENGINE\fR]
+[\fB\-inform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR]
 [\fB\-outform\fR \fBDER\fR|\fBPEM\fR]
 [\fB\-in\fR \fIfilename\fR|\fIuri\fR]
 [\fB\-passin\fR \fIarg\fR]
@@ -87,7 +87,6 @@ openssl\-ec \- EC key processing
 [\fB\-param_enc\fR \fIarg\fR]
 [\fB\-no_public\fR]
 [\fB\-check\fR]
-[\fB\-engine\fR \fIid\fR]
 [\fB\-provider\fR \fIname\fR]
 [\fB\-provider\-path\fR \fIpath\fR]
 [\fB\-provparam\fR \fI[name:]key=value\fR]
@@ -104,8 +103,8 @@ PKCS#8 private key format use the \fBopenssl\-pkcs8\fR\|(1) command.
 .IP \fB\-help\fR 4
 .IX Item "-help"
 Print out a usage message.
-.IP "\fB\-inform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR|\fBENGINE\fR" 4
-.IX Item "-inform DER|PEM|P12|ENGINE"
+.IP "\fB\-inform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR" 4
+.IX Item "-inform DER|PEM|P12"
 The key input format; unspecified by default.
 See \fBopenssl\-format\-options\fR\|(1) for details.
 .IP "\fB\-outform\fR \fBDER\fR|\fBPEM\fR" 4
@@ -166,9 +165,6 @@ This specifies how the points on the elliptic curve are converted
 into octet strings. Possible values are: \fBcompressed\fR, \fBuncompressed\fR (the
 default value) and \fBhybrid\fR. For more information regarding
 the point conversion forms please read the X9.62 standard.
-\&\fBNote\fR Due to patent issues the \fBcompressed\fR option is disabled
-by default for binary curves and can be enabled by defining
-the preprocessor macro \fBOPENSSL_EC_BIN_PT_COMP\fR at compile time.
 .IP "\fB\-param_enc\fR \fIarg\fR" 4
 .IX Item "-param_enc arg"
 This specifies how the elliptic curve parameters are encoded.
@@ -184,10 +180,6 @@ This option omits the public key components from the private key output.
 .IP \fB\-check\fR 4
 .IX Item "-check"
 This option checks the consistency of an EC private or public key.
-.IP "\fB\-engine\fR \fIid\fR" 4
-.IX Item "-engine id"
-See "Engine Options" in \fBopenssl\fR\|(1).
-This option is deprecated.
 .IP "\fB\-provider\fR \fIname\fR" 4
 .IX Item "-provider name"
 .PD 0
@@ -251,13 +243,13 @@ To change the point conversion form to \fBcompressed\fR:
 \&\fBopenssl\-rsa\fR\|(1)
 .SH HISTORY
 .IX Header "HISTORY"
-The \fB\-engine\fR option was deprecated in OpenSSL 3.0.
-.PP
 The \fB\-conv_form\fR and \fB\-no_public\fR options are no longer supported
 with keys loaded from an engine in OpenSSL 3.0.
+.PP
+The \fB\-engine\fR option was removed in OpenSSL 4.0.
 .SH COPYRIGHT
 .IX Header "COPYRIGHT"
-Copyright 2003\-2023 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2003\-2026 The OpenSSL Project Authors. All Rights Reserved.
 .PP
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

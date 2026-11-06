@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "PROVIDER-SIGNATURE 7ossl"
-.TH PROVIDER-SIGNATURE 7ossl 2026-09-29 3.5.9 OpenSSL
+.TH PROVIDER-SIGNATURE 7ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -579,7 +579,11 @@ Section 4 "Security Considerations".  The default value for
 nonce \fBk\fR as defined in FIPS 186\-4 Section 6.3 "Secret Number
 Generation".
 .Sp
-The FIPS provider does not support deterministic digital signature generation.
+The FIPS provider does not support deterministic digital signature generation
+for DSA.
+.Sp
+The FIPS provider supports deterministic digital signature generation for
+ECDSA.
 .IP """kat"" (\fBOSSL_SIGNATURE_PARAM_KAT\fR) <unsigned integer>" 4
 .IX Item """kat"" (OSSL_SIGNATURE_PARAM_KAT) <unsigned integer>"
 Sets a flag to modify the sign operation to return an error if the initial

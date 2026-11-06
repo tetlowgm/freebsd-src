@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "EVP_PKEY-RSA 7ossl"
-.TH EVP_PKEY-RSA 7ossl 2026-09-29 3.5.9 OpenSSL
+.TH EVP_PKEY-RSA 7ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -73,6 +73,22 @@ That implementation supports the basic RSA keys, containing the modulus \fIn\fR,
 the public exponent \fIe\fR, the private exponent \fId\fR, and a collection of prime
 factors, exponents and coefficient for CRT calculations, of which the first
 few are known as \fIp\fR and \fIq\fR, \fIdP\fR and \fIdQ\fR, and \fIqInv\fR.
+.PP
+RSA key generation uses FIPS 186\-5 Section A.1.6 "Generation of Probable
+Primes with Conditions Based on Auxiliary Probable Primes" for the OpenSSL FIPS
+provider. It is also used for the OpenSSL default provider when the generation
+parameters satisfy the following conditions:
+.IP "There are 2 ""primes"" (p, q)" 4
+.IX Item "There are 2 ""primes"" (p, q)"
+.PD 0
+.IP "The exponent ""e"" >= 65537 and is odd" 4
+.IX Item "The exponent ""e"" >= 65537 and is odd"
+.IP "The cryptographic length ""bits"" >= 2048" 4
+.IX Item "The cryptographic length ""bits"" >= 2048"
+.PD
+.PP
+Otherwise the OpenSSL default provider uses an older general multi\-prime key
+generator.
 .SS "Common RSA parameters"
 .IX Subsection "Common RSA parameters"
 In addition to the common parameters that all keytypes should support (see
@@ -189,6 +205,18 @@ needed exponents and coefficients to be derived if not available.  Setting this
 option requires at least OSSL_PARAM_RSA_FACTOR1, OSSL_PARAM_RSA_FACTOR2,
 and OSSL_PARAM_RSA_N to be provided.  This option is ignored if
 OSSL_KEYMGMT_SELECT_PRIVATE_KEY is not set in the selection parameter.
+.IP """rsa\-a"" (\fBOSSL_PKEY_PARAM_RSA_A\fR) <unsigned integer>" 4
+.IX Item """rsa-a"" (OSSL_PKEY_PARAM_RSA_A) <unsigned integer>"
+Setting this value to one of 1, 3, 5 or 7 applies an additional constraint
+requiring that the computed prime p is congruent to this value mod 8. 
+If this value is zero then it is ignored. An error will occur if the value is not
+set to one of the above values.
+.IP """rsa\-b"" (\fBOSSL_PKEY_PARAM_RSA_B\fR) <unsigned integer>" 4
+.IX Item """rsa-b"" (OSSL_PKEY_PARAM_RSA_B) <unsigned integer>"
+Setting this value to one of 1, 3, 5 or 7 applies an additional constraint
+requiring that the computed prime q is congruent to this value mod 8. 
+If this value is zero then it is ignored. An error will occur if the value is not
+set to one of the above values.
 .SS "RSA key generation FIPS indicator"
 .IX Subsection "RSA key generation FIPS indicator"
 The following key generation parameter can be retrieved with
@@ -261,9 +289,9 @@ SP800\-56Br1 \fIKeyPair Validation check\fR for the OpenSSL FIPS provider. The
 OpenSSL default provider allows testing of the validity of multi\-primes.
 .SH "CONFORMING TO"
 .IX Header "CONFORMING TO"
-.IP FIPS186\-4 4
-.IX Item "FIPS186-4"
-Section B.3.6  Generation of Probable Primes with Conditions Based on
+.IP FIPS186\-5 4
+.IX Item "FIPS186-5"
+Section A.1.6 Generation of Probable Primes with Conditions Based on
 Auxiliary Probable Primes
 .IP "RFC 8017, excluding RSA\-PSS and RSA\-OAEP" 4
 .IX Item "RFC 8017, excluding RSA-PSS and RSA-OAEP"
@@ -317,6 +345,9 @@ An \fBRSA\fR key can be generated with key generation parameters:
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 \&\fBEVP_RSA_gen\fR\|(3), \fBEVP_KEYMGMT\fR\|(3), \fBEVP_PKEY\fR\|(3), \fBprovider\-keymgmt\fR\|(7)
+.SH HISTORY
+.IX Header "HISTORY"
+The RSA key generation parameters "a" and "b" were added in OpenSSL 4.0.
 .SH COPYRIGHT
 .IX Header "COPYRIGHT"
 Copyright 2020\-2026 The OpenSSL Project Authors. All Rights Reserved.

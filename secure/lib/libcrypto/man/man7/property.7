@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "PROPERTY 7ossl"
-.TH PROPERTY 7ossl 2026-09-29 3.5.9 OpenSSL
+.TH PROPERTY 7ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -147,6 +147,12 @@ The quotes are not included in the body of the string.
 .IP \(bu 4
 \&\fB\*(Aq...\*(Aq\fR is a quoted string.
 The quotes are not included in the body of the string.
+.PP
+String values in property definitions and queries are matched case\-sensitively.
+An unquoted string value is converted to lowercase when it is parsed, while a
+quoted string value retains its case.  For example, \f(CW\*(C`foo=bar\*(C'\fR matches
+\&\f(CW\*(C`foo=\*(Aqbar\*(Aq\*(C'\fR, and \f(CW\*(C`foo=BAR\*(C'\fR is treated as \f(CW\*(C`foo=bar\*(C'\fR, but neither matches
+\&\f(CW\*(C`foo=\*(AqBAR\*(Aq\*(C'\fR.
 .SS Lookups
 .IX Subsection "Lookups"
 When an algorithm is looked up, a property query is used to determine

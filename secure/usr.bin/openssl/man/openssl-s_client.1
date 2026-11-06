@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OPENSSL-S_CLIENT 1ossl"
-.TH OPENSSL-S_CLIENT 1ossl 2026-09-29 3.5.9 OpenSSL
+.TH OPENSSL-S_CLIENT 1ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -86,9 +86,18 @@ openssl\-s_client \- SSL/TLS client program
 [\fB\-verify\fR \fIdepth\fR]
 [\fB\-verify_return_error\fR]
 [\fB\-verify_quiet\fR]
+[\fB\-CAfile\fR \fIfile\fR]
+[\fB\-no\-CAfile\fR]
+[\fB\-CApath\fR \fIdir\fR]
+[\fB\-no\-CApath\fR]
+[\fB\-CAstore\fR \fIuri\fR]
+[\fB\-no\-CAstore\fR]
 [\fB\-verifyCAfile\fR \fIfilename\fR]
 [\fB\-verifyCApath\fR \fIdir\fR]
 [\fB\-verifyCAstore\fR \fIuri\fR]
+[\fB\-chainCAfile\fR \fIfilename\fR]
+[\fB\-chainCApath\fR \fIdirectory\fR]
+[\fB\-chainCAstore\fR \fIuri\fR]
 [\fB\-cert\fR \fIfilename\fR]
 [\fB\-certform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR]
 [\fB\-cert_chain\fR \fIfilename\fR]
@@ -97,11 +106,8 @@ openssl\-s_client \- SSL/TLS client program
 [\fB\-CRLform\fR \fBDER\fR|\fBPEM\fR]
 [\fB\-crl_download\fR]
 [\fB\-key\fR \fIfilename\fR|\fIuri\fR]
-[\fB\-keyform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR|\fBENGINE\fR]
+[\fB\-keyform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR]
 [\fB\-pass\fR \fIarg\fR]
-[\fB\-chainCAfile\fR \fIfilename\fR]
-[\fB\-chainCApath\fR \fIdirectory\fR]
-[\fB\-chainCAstore\fR \fIuri\fR]
 [\fB\-requestCAfile\fR \fIfilename\fR]
 [\fB\-dane_tlsa_domain\fR \fIdomain\fR]
 [\fB\-dane_tlsa_rrdata\fR \fIrrdata\fR]
@@ -136,6 +142,7 @@ openssl\-s_client \- SSL/TLS client program
 [\fB\-sctp\fR]
 [\fB\-sctp_label_bug\fR]
 [\fB\-fallback_scsv\fR]
+[\fB\-grease\fR]
 [\fB\-async\fR]
 [\fB\-maxfraglen\fR \fIlen\fR]
 [\fB\-max_send_frag\fR]
@@ -154,6 +161,8 @@ openssl\-s_client \- SSL/TLS client program
 [\fB\-sess_in\fR \fIfilename\fR]
 [\fB\-serverinfo\fR \fItypes\fR]
 [\fB\-status\fR]
+[\fB\-ocsp_check_leaf\fR]
+[\fB\-ocsp_check_all\fR]
 [\fB\-alpn\fR \fIprotocols\fR]
 [\fB\-nextprotoneg\fR \fIprotocols\fR]
 [\fB\-ct\fR]
@@ -176,7 +185,6 @@ openssl\-s_client \- SSL/TLS client program
 [\fB\-no_tls1_1\fR]
 [\fB\-no_tls1_2\fR]
 [\fB\-no_tls1_3\fR]
-[\fB\-ssl3\fR]
 [\fB\-tls1\fR]
 [\fB\-tls1_1\fR]
 [\fB\-tls1_2\fR]
@@ -184,18 +192,13 @@ openssl\-s_client \- SSL/TLS client program
 [\fB\-dtls\fR]
 [\fB\-dtls1\fR]
 [\fB\-dtls1_2\fR]
+[\fB\-dtls1_3\fR]
 [\fB\-xkey\fR \fIinfile\fR]
 [\fB\-xcert\fR \fIfile\fR]
 [\fB\-xchain\fR \fIfile\fR]
 [\fB\-xchain_build\fR \fIfile\fR]
 [\fB\-xcertform\fR \fBDER\fR|\fBPEM\fR]>
 [\fB\-xkeyform\fR \fBDER\fR|\fBPEM\fR]>
-[\fB\-CAfile\fR \fIfile\fR]
-[\fB\-no\-CAfile\fR]
-[\fB\-CApath\fR \fIdir\fR]
-[\fB\-no\-CApath\fR]
-[\fB\-CAstore\fR \fIuri\fR]
-[\fB\-no\-CAstore\fR]
 [\fB\-bugs\fR]
 [\fB\-no_comp\fR]
 [\fB\-comp\fR]
@@ -230,8 +233,6 @@ openssl\-s_client \- SSL/TLS client program
 [\fB\-provider\-path\fR \fIpath\fR]
 [\fB\-provparam\fR \fI[name:]key=value\fR]
 [\fB\-propquery\fR \fIpropq\fR]
-[\fB\-engine\fR \fIid\fR]
-[\fB\-ssl_client_engine\fR \fIid\fR]
 [\fB\-allow_proxy_certs\fR]
 [\fB\-attime\fR \fItimestamp\fR]
 [\fB\-no_check_time\fR]
@@ -264,7 +265,17 @@ openssl\-s_client \- SSL/TLS client program
 [\fB\-issuer_checks\fR]
 [\fB\-enable_server_rpk\fR]
 [\fB\-enable_client_rpk\fR]
+[\fB\-expected\-rpks\fR]
 [\fIhost\fR:\fIport\fR]
+[\fB\-ech_config_list\fR]
+[\fB\-ech_outer_alpn\fR \fIprotocols\fR]
+[\fB\-ech_grease\fR]
+[\fB\-ech_grease_suite\fR \fIsuite\fR]
+[\fB\-ech_grease_type\fR \fItype\fR]
+[\fB\-ech_ignore_cid\fR]
+[\fB\-ech_outer_sni\fR \fIvalue\fR]
+[\fB\-ech_no_outer_sni\fR]
+[\fB\-ech_select\fR \fIconfig\-index\fR]
 .SH DESCRIPTION
 .IX Header "DESCRIPTION"
 This command implements a generic SSL/TLS client which
@@ -307,6 +318,12 @@ When used with the \fB\-connect\fR flag, the program uses the host and port
 specified with this flag and issues an HTTP CONNECT command to connect
 to the desired server.
 If the host string is an IPv6 address, it must be enclosed in \f(CW\*(C`[\*(C'\fR and \f(CW\*(C`]\*(C'\fR.
+.IP "\fB\-ech_config_list\fR \fIvalue\fR" 4
+.IX Item "-ech_config_list value"
+Specifies the ECHConfigList value to use for Encrypted Client Hello (ECH) for
+the TLS session. The value must be a base64 encoded ECHConfigList.
+.Sp
+The ECHConfigList structure is defined in RFC 9849.
 .IP "\fB\-proxy_user\fR \fIuserid\fR" 4
 .IX Item "-proxy_user userid"
 When used with the \fB\-proxy\fR flag, the program will attempt to authenticate
@@ -387,8 +404,8 @@ of CRL is limited by \fBX509_CRL_load_http\fR\|(3) function.
 .IX Item "-key filename|uri"
 The client private key to use.
 If not specified then the certificate file will be used to read also the key.
-.IP "\fB\-keyform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR|\fBENGINE\fR" 4
-.IX Item "-keyform DER|PEM|P12|ENGINE"
+.IP "\fB\-keyform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR" 4
+.IX Item "-keyform DER|PEM|P12"
 The key format; unspecified by default.
 See \fBopenssl\-format\-options\fR\|(1) for details.
 .IP "\fB\-pass\fR \fIarg\fR" 4
@@ -416,20 +433,37 @@ This will typically abort the handshake with a fatal error.
 .IP \fB\-verify_quiet\fR 4
 .IX Item "-verify_quiet"
 Limit verify output to only errors.
+.IP "\fB\-CAfile\fR \fIfile\fR, \fB\-no\-CAfile\fR, \fB\-CApath\fR \fIdir\fR, \fB\-no\-CApath\fR, \fB\-CAstore\fR \fIuri\fR, \fB\-no\-CAstore\fR" 4
+.IX Item "-CAfile file, -no-CAfile, -CApath dir, -no-CApath, -CAstore uri, -no-CAstore"
+See "Trusted Certificate Options" in \fBopenssl\-verification\-options\fR\|(1) for details.
+.Sp
+The certificates loaded via the \fB\-CAfile\fR, \fB\-CApath\fR, and \fB\-CAstore\fR options
+are used as trust anchors when verifying the server\*(Aqs certificate unless
+overridden by \fB\-verifyCAfile\fR, \fB\-verifyCApath\fR, or \fB\-verifyCAstore\fR options.
+They are also used as trust anchors when attempting
+to build the client certificate chain provided to the server unless
+overridden by \fB\-chainCAfile\fR, \fB\-chainCApath\fR, or \fB\-chainCAstore\fR options.
 .IP "\fB\-verifyCAfile\fR \fIfilename\fR" 4
 .IX Item "-verifyCAfile filename"
-A file in PEM format containing trusted certificates to use
-for verifying the server\*(Aqs certificate.
+A file in PEM format containing one or more CA certificates
+to trust for verifying the server\*(Aqs certificate.
+.Sp
+This and the following two options, \fB\-verifyCApath\fR and \fB\-verifyCAstore\fR,
+take precedence over the \fB\-CAfile\fR, \fB\-CApath\fR, and \fB\-CAstore\fR options.
 .IP "\fB\-verifyCApath\fR \fIdir\fR" 4
 .IX Item "-verifyCApath dir"
-A directory containing trusted certificates to use
-for verifying the server\*(Aqs certificate.
+A directory with files in PEM format containing CA certificates
+to trust for verifying the server\*(Aqs certificate.
 This directory must be in "hash format",
 see \fBopenssl\-verify\fR\|(1) for more information.
 .IP "\fB\-verifyCAstore\fR \fIuri\fR" 4
 .IX Item "-verifyCAstore uri"
-The URI of a store containing trusted certificates to use
-for verifying the server\*(Aqs certificate.
+URI of a store containing CA certificates
+to trust for verifying the server\*(Aqs certificate.
+The URI may indicate a single certificate, as well as a collection of them.
+With URIs in the \f(CW\*(C`file:\*(C'\fR scheme, this is generally treated like \fB\-verifyCApath\fR or
+\&\fB\-verifyCAfile\fR, depending on if the URI indicates a directory or a single file.
+See \fBossl_store\fR\|(7) for more information on stores and supported schemes.
 .Sp
 When any of \fB\-verifyCAfile\fR, \fB\-verifyCApath\fR, or \fB\-verifyCAstore\fR is
 specified, they are loaded into a separate verification store (via
@@ -438,35 +472,38 @@ verification instead of the store built from \fB\-CAfile\fR, \fB\-CApath\fR, and
 \&\fB\-CAstore\fR.
 .IP "\fB\-chainCAfile\fR \fIfile\fR" 4
 .IX Item "-chainCAfile file"
-A file in PEM format containing trusted certificates to use
-when attempting to build the client certificate chain.
+A file in PEM format containing one or more trusted CA certificates to use
+when attempting to build the client certificate chain provided to the server.
+.Sp
+This and the following two options, \fB\-chainCApath\fR and \fB\-chainCAstore\fR,
+take precedence over the \fB\-CAfile\fR, \fB\-CApath\fR, and \fB\-CAstore\fR options.
 .IP "\fB\-chainCApath\fR \fIdirectory\fR" 4
 .IX Item "-chainCApath directory"
-A directory containing trusted certificates to use
-for building the client certificate chain provided to the server.
+A directory with files in PEM format containing trusted CA certificates to use
+when attempting to build the client certificate chain provided to the server.
 This directory must be in "hash format",
 see \fBopenssl\-verify\fR\|(1) for more information.
 .IP "\fB\-chainCAstore\fR \fIuri\fR" 4
 .IX Item "-chainCAstore uri"
 The URI of a store containing trusted certificates to use
-when attempting to build the client certificate chain.
+when attempting to build the client certificate chain provided to the server.
 The URI may indicate a single certificate, as well as a collection of them.
-With URIs in the \f(CW\*(C`file:\*(C'\fR scheme, this acts as \fB\-chainCAfile\fR or
-\&\fB\-chainCApath\fR, depending on if the URI indicates a directory or a
-single file.
-See \fBossl_store\-file\fR\|(7) for more information on the \f(CW\*(C`file:\*(C'\fR scheme.
+With URIs in the \f(CW\*(C`file:\*(C'\fR scheme, this is generally treated like \fB\-chainCApath\fR or
+\&\fB\-chainCAfile\fR, depending on whether the URI points to a directory or a single file.
+See \fBossl_store\fR\|(7) for more information on stores and supported schemes.
 .IP "\fB\-requestCAfile\fR \fIfile\fR" 4
 .IX Item "-requestCAfile file"
 A file containing a list of certificates whose subject names will be sent
 to the server in the \fBcertificate_authorities\fR extension. Only supported
-for TLS 1.3
+for TLS 1.3 and DTLS 1.3
 .IP "\fB\-dane_tlsa_domain\fR \fIdomain\fR" 4
 .IX Item "-dane_tlsa_domain domain"
 Enable RFC6698/RFC7671 DANE TLSA authentication and specify the
 TLSA base domain which becomes the default SNI hint and the primary
 reference identifier for hostname checks.  This must be used in
 combination with at least one instance of the \fB\-dane_tlsa_rrdata\fR
-option below.
+option below, or else at least one \fB\-expected\-rpks\fR option (from
+which associated TLSA "3 1 0" records are synthesised internally).
 .Sp
 When DANE authentication succeeds, the diagnostic output will include
 the lowest (closest to 0) depth at which a TLSA record authenticated
@@ -597,8 +634,8 @@ Inhibit shutting down the connection when end of file is reached in the
 input. This implicitly turns on \fB\-nocommands\fR as well.
 .IP \fB\-quiet\fR 4
 .IX Item "-quiet"
-Inhibit printing of session and certificate information.  This implicitly
-turns on \fB\-ign_eof\fR and \fB\-nocommands\fR as well.
+Inhibit printing any non\-error\-related information.  This implicitly
+turns on \fB\-ign_eof\fR, \fB\-nocommands\fR and \fB\-verify_quiet\fR as well.
 .IP \fB\-no_ign_eof\fR 4
 .IX Item "-no_ign_eof"
 Shut down the connection when end of file is reached in the input.
@@ -616,12 +653,12 @@ This option must be provided in order to use a PSK cipher.
 .IP "\fB\-psk_session\fR \fIfile\fR" 4
 .IX Item "-psk_session file"
 Use the pem encoded SSL_SESSION data stored in \fIfile\fR as the basis of a PSK.
-Note that this will only work if TLSv1.3 is negotiated.
+Note that this will only work if (D)TLSv1.3 is negotiated.
 .IP \fB\-sctp\fR 4
 .IX Item "-sctp"
 Use SCTP for the transport protocol instead of UDP in DTLS. Must be used in
-conjunction with \fB\-dtls\fR, \fB\-dtls1\fR or \fB\-dtls1_2\fR. This option is only
-available where OpenSSL has support for SCTP enabled.
+conjunction with \fB\-dtls\fR, \fB\-dtls1\fR, \fB\-dtls1_2\fR or \fB\-dtls1_3\fR. This option
+is only available where OpenSSL has support for SCTP enabled.
 .IP \fB\-sctp_label_bug\fR 4
 .IX Item "-sctp_label_bug"
 Use the incorrect behaviour of older OpenSSL implementations when computing
@@ -632,12 +669,17 @@ available where OpenSSL has support for SCTP enabled.
 .IP \fB\-fallback_scsv\fR 4
 .IX Item "-fallback_scsv"
 Send TLS_FALLBACK_SCSV in the ClientHello.
+.IP \fB\-grease\fR 4
+.IX Item "-grease"
+Send GREASE (Generate Random Extensions And Sustain Extensibility) values in
+the ClientHello as defined in RFC 8701. This injects random reserved values
+into cipher suites, supported groups, supported versions, signature algorithms,
+key share, and extensions to prevent ecosystem ossification.
 .IP \fB\-async\fR 4
 .IX Item "-async"
 Switch on asynchronous mode. Cryptographic operations will be performed
-asynchronously. This will only have an effect if an asynchronous capable engine
-is also used via the \fB\-engine\fR option. For test purposes the dummy async engine
-(dasync) can be used (if available).
+asynchronously. This will only have an effect if an asynchronous capable
+provider is also used.
 .IP "\fB\-maxfraglen\fR \fIlen\fR" 4
 .IX Item "-maxfraglen len"
 Enable Maximum Fragment Length Negotiation; allowed values are
@@ -648,18 +690,14 @@ The maximum size of data fragment to send.
 See \fBSSL_CTX_set_max_send_fragment\fR\|(3) for further information.
 .IP "\fB\-split_send_frag\fR \fIint\fR" 4
 .IX Item "-split_send_frag int"
-The size used to split data for encrypt pipelines. If more data is written in
-one go than this value then it will be split into multiple pipelines, up to the
-maximum number of pipelines defined by max_pipelines. This only has an effect if
-a suitable cipher suite has been negotiated, an engine that supports pipelining
-has been loaded, and max_pipelines is greater than 1. See
-\&\fBSSL_CTX_set_split_send_fragment\fR\|(3) for further information.
+This is used for pipelines. There is currently \fBno support\fR for cipher
+pipelining in libssl. See \fBSSL_CTX_set_max_send_fragment\fR\|(3) for further
+information.
 .IP "\fB\-max_pipelines\fR \fIint\fR" 4
 .IX Item "-max_pipelines int"
-The maximum number of encrypt/decrypt pipelines to be used. This will only have
-an effect if an engine has been loaded that supports pipelining (e.g. the dasync
-engine) and a suitable cipher suite has been negotiated. The default value is 1.
-See \fBSSL_CTX_set_max_pipelines\fR\|(3) for further information.
+This is used for pipelines. There is currently \fBno support\fR for cipher
+pipelining in libssl. See \fBSSL_CTX_set_max_send_fragment\fR\|(3) for further
+information.
 .IP "\fB\-read_buf\fR \fIint\fR" 4
 .IX Item "-read_buf int"
 The default read buffer size to be used for connections. This will only have an
@@ -676,10 +714,10 @@ closed connection will be treated as if the close_notify alert was received.
 For more information on shutting down a connection, see \fBSSL_shutdown\fR\|(3).
 .IP \fB\-no_tx_cert_comp\fR 4
 .IX Item "-no_tx_cert_comp"
-Disables support for sending TLSv1.3 compressed certificates.
+Disables support for sending (D)TLSv1.3 compressed certificates.
 .IP \fB\-no_rx_cert_comp\fR 4
 .IX Item "-no_rx_cert_comp"
-Disables support for receiving TLSv1.3 compressed certificate.
+Disables support for receiving (D)TLSv1.3 compressed certificate.
 .IP \fB\-brief\fR 4
 .IX Item "-brief"
 Only provide a brief summary of connection parameters instead of the
@@ -731,6 +769,22 @@ file.
 .IX Item "-status"
 Sends a certificate status request to the server (OCSP stapling). The server
 response (if any) is printed out.
+.IP \fB\-ocsp_check_leaf\fR 4
+.IX Item "-ocsp_check_leaf"
+Require performing server (end\-entity) certificate status checking, where any
+OCSP response provided in the TLS handshake (by so\-called "OCSP stapling") is tried
+first.
+If no valid and conclusive OCSP response can be found, CRL\-based checking
+is attempted as fallback if enabled, otherwise the status check fails.
+.Sp
+This implies \fB\-status\fR.
+.IP \fB\-ocsp_check_all\fR 4
+.IX Item "-ocsp_check_all"
+As the option before, but require performing certificate status checking also
+for the issuer chain of the server certificate (i.e., intermediate CA certificates,
+excluding the trust anchor).
+.Sp
+This implies the \fB\-status\fR and \fB\-ocsp_check_leaf\fR.
 .IP "\fB\-alpn\fR \fIprotocols\fR, \fB\-nextprotoneg\fR \fIprotocols\fR" 4
 .IX Item "-alpn protocols, -nextprotoneg protocols"
 These flags enable the Enable the Application\-Layer Protocol Negotiation
@@ -740,7 +794,8 @@ The \fIprotocols\fR list is a comma\-separated list of protocol names that
 the client should advertise support for. The list should contain the most
 desirable protocols first.  Protocol names are printable ASCII strings,
 for example "http/1.1" or "spdy/3".
-The flag \fB\-nextprotoneg\fR cannot be specified if \fB\-tls1_3\fR is used.
+The flag \fB\-nextprotoneg\fR cannot be specified if \fB\-tls1_3\fR or \fB\-dtls1_3\fR is
+used.
 .IP "\fB\-ct\fR, \fB\-noct\fR" 4
 .IX Item "-ct, -noct"
 Use one of these two options to control whether Certificate Transparency (CT)
@@ -765,8 +820,8 @@ to the server. This will only work with resumed sessions that support early
 data and when the server accepts the early data.
 .IP \fB\-enable_pha\fR 4
 .IX Item "-enable_pha"
-For TLSv1.3 only, send the Post\-Handshake Authentication extension. This will
-happen whether or not a certificate has been provided via \fB\-cert\fR.
+For (D)TLSv1.3 only, send the Post\-Handshake Authentication extension. This
+will happen whether or not a certificate has been provided via \fB\-cert\fR.
 .IP "\fB\-use_srtp\fR \fIvalue\fR" 4
 .IX Item "-use_srtp value"
 Offer SRTP key management, where \fBvalue\fR is a colon\-separated profile list.
@@ -794,11 +849,11 @@ Kernel TLS is off by default as of OpenSSL 3.2.0.
 .IP \fB\-tfo\fR 4
 .IX Item "-tfo"
 Enable creation of connections via TCP fast open (RFC7413).
-.IP "\fB\-no_ssl3\fR, \fB\-no_tls1\fR, \fB\-no_tls1_1\fR, \fB\-no_tls1_2\fR, \fB\-no_tls1_3\fR, \fB\-ssl3\fR, \fB\-tls1\fR, \fB\-tls1_1\fR, \fB\-tls1_2\fR, \fB\-tls1_3\fR" 4
-.IX Item "-no_ssl3, -no_tls1, -no_tls1_1, -no_tls1_2, -no_tls1_3, -ssl3, -tls1, -tls1_1, -tls1_2, -tls1_3"
+.IP "\fB\-no_ssl3\fR, \fB\-no_tls1\fR, \fB\-no_tls1_1\fR, \fB\-no_tls1_2\fR, \fB\-no_tls1_3\fR, \fB\-tls1\fR, \fB\-tls1_1\fR, \fB\-tls1_2\fR, \fB\-tls1_3\fR" 4
+.IX Item "-no_ssl3, -no_tls1, -no_tls1_1, -no_tls1_2, -no_tls1_3, -tls1, -tls1_1, -tls1_2, -tls1_3"
 See "TLS Version Options" in \fBopenssl\fR\|(1).
-.IP "\fB\-dtls\fR, \fB\-dtls1\fR, \fB\-dtls1_2\fR" 4
-.IX Item "-dtls, -dtls1, -dtls1_2"
+.IP "\fB\-dtls\fR, \fB\-dtls1\fR, \fB\-dtls1_2\fR, \fB\-dtls1_3\fR" 4
+.IX Item "-dtls, -dtls1, -dtls1_2, -dtls1_3"
 These specify the use of DTLS instead of TLS.
 See "TLS Version Options" in \fBopenssl\fR\|(1).
 .IP "\fB\-nameopt\fR \fIoption\fR" 4
@@ -809,9 +864,6 @@ See \fBopenssl\-namedisplay\-options\fR\|(1) for details.
 .IX Item "-xkey infile, -xcert file, -xchain file, -xchain_build file, -xcertform DER|PEM, -xkeyform DER|PEM"
 Set extended certificate verification options.
 See "Extended Verification Options" in \fBopenssl\-verification\-options\fR\|(1) for details.
-.IP "\fB\-CAfile\fR \fIfile\fR, \fB\-no\-CAfile\fR, \fB\-CApath\fR \fIdir\fR, \fB\-no\-CApath\fR, \fB\-CAstore\fR \fIuri\fR, \fB\-no\-CAstore\fR" 4
-.IX Item "-CAfile file, -no-CAfile, -CApath dir, -no-CApath, -CAstore uri, -no-CAstore"
-See "Trusted Certificate Options" in \fBopenssl\-verification\-options\fR\|(1) for details.
 .IP "\fB\-bugs\fR, \fB\-comp\fR, \fB\-no_comp\fR, \fB\-no_ticket\fR, \fB\-serverpref\fR, \fB\-client_renegotiation\fR, \fB\-legacy_renegotiation\fR, \fB\-no_renegotiation\fR, \fB\-no_resumption_on_reneg\fR, \fB\-legacy_server_connect\fR, \fB\-no_legacy_server_connect\fR, \fB\-no_etm\fR \fB\-allow_no_dhe_kex\fR, \fB\-prefer_no_dhe_kex\fR, \fB\-prioritize_chacha\fR, \fB\-strict\fR, \fB\-sigalgs\fR \fIalgs\fR, \fB\-client_sigalgs\fR \fIalgs\fR, \fB\-groups\fR \fIgroups\fR, \fB\-curves\fR \fIcurves\fR, \fB\-named_curve\fR \fIcurve\fR, \fB\-cipher\fR \fIciphers\fR, \fB\-ciphersuites\fR \fI1.3ciphers\fR, \fB\-min_protocol\fR \fIminprot\fR, \fB\-max_protocol\fR \fImaxprot\fR, \fB\-record_padding\fR \fIpadding\fR, \fB\-debug_broken_protocol\fR, \fB\-no_middlebox\fR" 4
 .IX Item "-bugs, -comp, -no_comp, -no_ticket, -serverpref, -client_renegotiation, -legacy_renegotiation, -no_renegotiation, -no_resumption_on_reneg, -legacy_server_connect, -no_legacy_server_connect, -no_etm -allow_no_dhe_kex, -prefer_no_dhe_kex, -prioritize_chacha, -strict, -sigalgs algs, -client_sigalgs algs, -groups groups, -curves curves, -named_curve curve, -cipher ciphers, -ciphersuites 1.3ciphers, -min_protocol minprot, -max_protocol maxprot, -record_padding padding, -debug_broken_protocol, -no_middlebox"
 See "SUPPORTED COMMAND LINE COMMANDS" in \fBSSL_CONF_cmd\fR\|(3) for details.
@@ -829,13 +881,6 @@ See "Random State Options" in \fBopenssl\fR\|(1) for details.
 .IX Item "-propquery propq"
 .PD
 See "Provider Options" in \fBopenssl\fR\|(1), \fBprovider\fR\|(7), and \fBproperty\fR\|(7).
-.IP "\fB\-engine\fR \fIid\fR" 4
-.IX Item "-engine id"
-See "Engine Options" in \fBopenssl\fR\|(1).
-This option is deprecated.
-.IP "\fB\-ssl_client_engine\fR \fIid\fR" 4
-.IX Item "-ssl_client_engine id"
-Specify engine to be used for client certificate operations.
 .IP "\fB\-allow_proxy_certs\fR, \fB\-attime\fR, \fB\-no_check_time\fR, \fB\-check_ss_sig\fR, \fB\-crl_check\fR, \fB\-crl_check_all\fR, \fB\-explicit_policy\fR, \fB\-extended_crl\fR, \fB\-ignore_critical\fR, \fB\-inhibit_any\fR, \fB\-inhibit_map\fR, \fB\-no_alt_chains\fR, \fB\-partial_chain\fR, \fB\-policy\fR, \fB\-policy_check\fR, \fB\-policy_print\fR, \fB\-purpose\fR, \fB\-suiteB_128\fR, \fB\-suiteB_128_only\fR, \fB\-suiteB_192\fR, \fB\-trusted_first\fR, \fB\-use_deltas\fR, \fB\-auth_level\fR, \fB\-verify_depth\fR, \fB\-verify_email\fR, \fB\-verify_hostname\fR, \fB\-verify_ip\fR, \fB\-verify_name\fR, \fB\-x509_strict\fR \fB\-issuer_checks\fR" 4
 .IX Item "-allow_proxy_certs, -attime, -no_check_time, -check_ss_sig, -crl_check, -crl_check_all, -explicit_policy, -extended_crl, -ignore_critical, -inhibit_any, -inhibit_map, -no_alt_chains, -partial_chain, -policy, -policy_check, -policy_print, -purpose, -suiteB_128, -suiteB_128_only, -suiteB_192, -trusted_first, -use_deltas, -auth_level, -verify_depth, -verify_email, -verify_hostname, -verify_ip, -verify_name, -x509_strict -issuer_checks"
 Set various options of certificate chain verification.
@@ -857,6 +902,27 @@ A raw public key will be sent by the client, if solicited by the server,
 provided a suitable key and public certificate pair is configured.
 Some servers may nevertheless not request any client credentials,
 or may request a certificate.
+.IP "\fB\-expected\-rpks\fR \fIfile\fR" 4
+.IX Item "-expected-rpks file"
+This option implies the \fB\-enable_server_rpk\fR option and can be specified
+multiple times.
+Each PEM \fIfile\fR should contain one or more public keys, private keys or
+certificates.
+With a private key or certificate an attempt is made to extract the associated
+public key.
+Each resulting public key is added (via a call to \fBSSL_add_expected_rpk\fR\|(3) as
+a valid raw public key that the server may present to be considered verified.
+If a server nevertheless presents an X.509 certificate, the enclosed public key
+is validated as though it were presented as a raw public key instead.
+.Sp
+If the \fB\-dane_tlsa_domain\fR and \fB\-dane_tlsa_rrdata\fR options (with certificate
+usage \fBDANE\-EE\|(3)\fR and selector \fBSPKI\|(1)\fR) are also used then the specified
+TLSA records are used in combination with the keys found via the
+\&\fB\-expected\-rpks\fR option(s).
+.Sp
+Verification success or failure is reported as a DANE verification success or
+failure, because verification of raw public keys is internally mapped to
+verification of DANE TLSA records derived from the specified keys.
 .IP \fIhost\fR:\fIport\fR 4
 .IX Item "host:port"
 Rather than providing \fB\-connect\fR, the target host and optional port may
@@ -864,6 +930,55 @@ be provided as a single positional argument after all options. If neither this
 nor \fB\-connect\fR are provided, falls back to attempting to connect to
 \&\fIlocalhost\fR on port \fI4433\fR.
 If the host string is an IPv6 address, it must be enclosed in \f(CW\*(C`[\*(C'\fR and \f(CW\*(C`]\*(C'\fR.
+.IP "\fB\-ech_outer_alpn\fR \fIprotocols\fR" 4
+.IX Item "-ech_outer_alpn protocols"
+When doing Encrypted Client Hello (ECH), this allows the caller to specify
+ALPN values to use in the outer ClientHello. (A "normal" ALPN value
+specified via \-alpn will be used in the inner ClientHello.)
+.IP \fB\-ech_grease\fR 4
+.IX Item "-ech_grease"
+When not really doing Encrypted Client Hello (ECH), one can emit a so\-called
+GREASE value, which is essentially a random value in order to try ensure that
+server code is less likely to ossify.
+.IP "\fB\-ech_grease_suite\fR \fIsuite\fR" 4
+.IX Item "-ech_grease_suite suite"
+When \fB\-ech_grease\fR is specified, one can choose which ECH ciphersuite to use
+via this parameter.
+.Sp
+The comma\-separated suite string names an HPKE suite in the form of
+\&\fIkem\fR,\fIkdf\fR,\fIaead\fR, e.g. "x25519,hkdf\-sha256,aes256gcm" or can use
+the numeric values (in decimal or hexadecimal form) from the HPKE specification
+so "0x20,0x01,0x02" is the same as the previous example.
+.Sp
+KEM values supported: p256 or 0x10; p384 or 0x11, p521 or 0x12, x25519 or 0x20, x448 or 0x21
+.Sp
+KDF values supported: hkdf\-sha256 or 0x01, hkdf\-sha384 or 0x02, hkdf\-sha512 or 0x03
+.Sp
+AEAD values supported: aes128gcm or 0x01, aes256gcm or 0x02, chachapoly1305 or 0x03
+.IP "\fB\-ech_grease_type\fR \fItype\fR" 4
+.IX Item "-ech_grease_type type"
+Allows the client to set the TLS extension type for a GREASEd ECH value
+(currently equivalent to the ECH version number).  The current default is
+0xfe0d.
+.IP \fB\-ech_ignore_cid\fR 4
+.IX Item "-ech_ignore_cid"
+Encrypted Client Hello (ECH) extensions contain a configuration identifier
+(cid) taken from the ECHConfigList usually found in the domain name system
+(DNS). As those identifiers could be revealing, the client has the option to
+use a random value instead.
+.IP "\fB\-ech_outer_sni\fR \fIvalue\fR" 4
+.IX Item "-ech_outer_sni value"
+When doing Encrypted Client Hello (ECH), this allows the caller to specify a
+subject name indication (SNI) value to use in the outer ClientHello over\-riding
+the public_name value from the relevant ECHConfigList.
+.IP \fB\-ech_no_outer_sni\fR 4
+.IX Item "-ech_no_outer_sni"
+Setting this flag means no SNI will be emitted in the outer ClientHello.
+.IP "\fB\-ech_select\fR \fIconfig\-index\fR" 4
+.IX Item "-ech_select config-index"
+If an ECHConfigList contains more than one ECHConfig then the client will by
+default use the first that works. This allows the caller to specify which
+ECHConfig to use (using a zero\-based index).
 .SH "CONNECTED COMMANDS (BASIC)"
 .IX Header "CONNECTED COMMANDS (BASIC)"
 If a connection is established with an SSL/TLS server then any data received
@@ -881,16 +996,16 @@ The commands are listed below.
 End the current SSL connection and exit.
 .IP \fBR\fR 4
 .IX Item "R"
-Renegotiate the SSL session (TLSv1.2 and below only).
+Renegotiate the SSL session ((D)TLSv1.2 and below only).
 .IP \fBC\fR 4
 .IX Item "C"
 Attempt to reconnect to the server using a resumption handshake.
 .IP \fBk\fR 4
 .IX Item "k"
-Send a key update message to the server (TLSv1.3 only)
+Send a key update message to the server ((D)TLSv1.3 only)
 .IP \fBK\fR 4
 .IX Item "K"
-Send a key update message to the server and request one back (TLSv1.3 only)
+Send a key update message to the server and request one back ((D)TLSv1.3 only)
 .SH "CONNECTED COMMANDS (ADVANCED)"
 .IX Header "CONNECTED COMMANDS (ADVANCED)"
 If \fB\-adv\fR has been given then "advanced" command mode is entered. As with basic
@@ -922,7 +1037,7 @@ Close the connection to the peer
 Reconnect to the peer and attempt a resumption handshake
 .IP \fBkeyup\fR 4
 .IX Item "keyup"
-Send a Key Update message. TLSv1.3 only. This command takes an optional
+Send a Key Update message. (D)TLSv1.3 only. This command takes an optional
 argument. If the argument "req" is supplied then the peer is also requested to
 update its keys. Otherwise if "noreq" is supplied the peer is not requested
 to update its keys. The default is "req".
@@ -947,7 +1062,7 @@ then an HTTP command can be given such as "GET /" to retrieve a web page.
 .PP
 If the handshake fails then there are several possible causes, if it is
 nothing obvious like no client certificate then the \fB\-bugs\fR,
-\&\fB\-ssl3\fR, \fB\-tls1\fR, \fB\-no_ssl3\fR, \fB\-no_tls1\fR options can be tried
+\&\fB\-tls1\fR, \fB\-no_tls1\fR options can be tried
 in case it is a buggy server. In particular you should play with these
 options \fBbefore\fR submitting a bug report to an OpenSSL mailing list.
 .PP
@@ -1050,7 +1165,7 @@ information whenever a session is renegotiated.
 \&\fBSSL_CTX_set_max_send_fragment\fR\|(3),
 \&\fBSSL_CTX_set_split_send_fragment\fR\|(3),
 \&\fBSSL_CTX_set_max_pipelines\fR\|(3),
-\&\fBossl_store\-file\fR\|(7)
+\&\fBossl_store\fR\|(7)
 .SH HISTORY
 .IX Header "HISTORY"
 The \fB\-no_alt_chains\fR option was added in OpenSSL 1.1.0.
@@ -1058,7 +1173,7 @@ The \fB\-name\fR option was added in OpenSSL 1.1.1.
 .PP
 The \fB\-certform\fR option has become obsolete in OpenSSL 3.0.0 and has no effect.
 .PP
-The \fB\-engine\fR option was deprecated in OpenSSL 3.0.
+The \fB\-engine\fR option was removed in OpenSSL 4.0.
 .PP
 The
 \&\fB\-enable_client_rpk\fR,
@@ -1067,6 +1182,15 @@ The
 \&\fB\-no_tx_cert_comp\fR,
 and \fB\-tfo\fR
 options were added in OpenSSL 3.2.
+.PP
+The
+<\-ocsp_check_leaf>
+and \fB\-ocsp_check_all\fR
+options were added in OpenSSL 3.6.
+.PP
+The \fBech\fR options were added in OpenSSL 4.0.
+.PP
+The \fB\-expected\-rpks\fR option was added in OpenSSL 4.0.
 .SH COPYRIGHT
 .IX Header "COPYRIGHT"
 Copyright 2000\-2026 The OpenSSL Project Authors. All Rights Reserved.

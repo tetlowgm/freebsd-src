@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "SSL_CTX_SET_TLSEXT_SERVERNAME_CALLBACK 3ossl"
-.TH SSL_CTX_SET_TLSEXT_SERVERNAME_CALLBACK 3ossl 2026-09-29 3.5.9 OpenSSL
+.TH SSL_CTX_SET_TLSEXT_SERVERNAME_CALLBACK 3ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -76,7 +76,7 @@ SSL_set_tlsext_host_name \- handle server name indication (SNI)
 \&                                   int (*cb)(SSL *s, int *al, void *arg));
 \& long SSL_CTX_set_tlsext_servername_arg(SSL_CTX *ctx, void *arg);
 \&
-\& const char *SSL_get_servername(const SSL *s, const int type);
+\& const char *SSL_get_servername(const SSL *s, int type);
 \& int SSL_get_servername_type(const SSL *s);
 \&
 \& int SSL_set_tlsext_host_name(const SSL *s, const char *name);
@@ -88,9 +88,9 @@ the ClientHello callback, which can be set using \fBSSL_CTX_set_client_hello_cb(
 However, even where the ClientHello callback is used, the servername callback is
 still necessary in order to acknowledge the servername requested by the client.
 .PP
-\&\fBSSL_CTX_set_tlsext_servername_callback()\fR sets the application callback \fBcb\fR
+\&\fBSSL_CTX_set_tlsext_servername_callback()\fR sets the application callback \fIcb\fR
 used by a server to perform any actions or configuration required based on
-the servername extension received in the incoming connection. When \fBcb\fR
+the \fBservername\fR extension received in the incoming connection. When \fIcb\fR
 is NULL, SNI is not used. Note that this callback occurs late in the processing
 of the ClientHello message. In particular it happens after session resumption
 has occurred, and so typically this callback should not call functions such
@@ -107,13 +107,13 @@ up a different configuration for the selected servername in this case.
 .IX Item "SSL_TLSEXT_ERR_ALERT_FATAL"
 In this case the servername requested by the client is not accepted and the
 handshake will be aborted. The value of the alert to be used should be stored in
-the location pointed to by the \fBal\fR parameter to the callback. By default this
+the location pointed to by the \fIal\fR parameter to the callback. By default this
 value is initialised to SSL_AD_UNRECOGNIZED_NAME.
 .IP SSL_TLSEXT_ERR_ALERT_WARNING 4
 .IX Item "SSL_TLSEXT_ERR_ALERT_WARNING"
 If this value is returned then the servername is not accepted by the server.
 However, the handshake will continue and send a warning alert instead. The value
-of the alert should be stored in the location pointed to by the \fBal\fR parameter
+of the alert should be stored in the location pointed to by the \fIal\fR parameter
 as for SSL_TLSEXT_ERR_ALERT_FATAL above. Note that TLSv1.3 does not support
 warning alerts, so if TLSv1.3 has been negotiated then this return value is
 treated the same way as SSL_TLSEXT_ERR_NOACK.
@@ -123,7 +123,7 @@ This return value indicates that the servername is not accepted by the server.
 No alerts are sent and the server will not acknowledge the requested servername.
 .PP
 \&\fBSSL_CTX_set_tlsext_servername_arg()\fR sets a context\-specific argument to be
-passed into the callback (via the \fBarg\fR parameter) for this \fBSSL_CTX\fR.
+passed into the callback (via the \fIarg\fR parameter) for this \fBSSL_CTX\fR.
 .PP
 The behaviour of \fBSSL_get_servername()\fR depends on a number of different factors.
 In particular note that in TLSv1.3 the servername is negotiated in every
@@ -167,20 +167,26 @@ client is processed. The servername, certificate and ALPN callbacks occur after
 a servername extension from the client is processed.
 .PP
 \&\fBSSL_get_servername_type()\fR returns the servername type or \-1 if no servername
-is present. Currently the only supported type (defined in RFC3546) is
-\&\fBTLSEXT_NAMETYPE_host_name\fR.
+is present.
+The only type defined in RFC 3546 and supported here is \fBTLSEXT_NAMETYPE_host_name\fR.
 .PP
-\&\fBSSL_set_tlsext_host_name()\fR sets the server name indication ClientHello extension
-to contain the value \fBname\fR. The type of server name indication extension is set
-to \fBTLSEXT_NAMETYPE_host_name\fR (defined in RFC3546).
+\&\fBSSL_set_tlsext_host_name()\fR sets the Server Name Indication (SNI)
+ClientHello extension defined in RFC 3546 section 3.1
+to contain the value \fIname\fR of type \fBTLSEXT_NAMETYPE_host_name\fR.
+If \fIname\fR is NULL, it clears the SNI extension.
+.PP
+Using this function may also be important for correct routing of connection requests.
+TLS clients should call this function alongside \fBSSL_set1_dnsname\fR\|(3) or
+\&\fBSSL_add1_dnsname\fR\|(3) to set the expected server hostname(s) for certificate validation.
+.PP
+The \fBSSL_set_tlsext_host_name()\fR function should only be called on SSL objects
+that will act as clients; otherwise, the configured \fIname\fR will be ignored.
+In the future, calling this function on the server side may result in an error.
 .SH NOTES
 .IX Header "NOTES"
 Several callbacks are executed during ClientHello processing, including
 the ClientHello, ALPN, and servername callbacks.  The ClientHello callback is
 executed first, then the servername callback, followed by the ALPN callback.
-.PP
-The \fBSSL_set_tlsext_host_name()\fR function should only be called on SSL objects
-that will act as clients; otherwise the configured \fBname\fR will be ignored.
 .SH "RETURN VALUES"
 .IX Header "RETURN VALUES"
 \&\fBSSL_CTX_set_tlsext_servername_callback()\fR and
@@ -189,7 +195,9 @@ that will act as clients; otherwise the configured \fBname\fR will be ignored.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 \&\fBssl\fR\|(7), \fBSSL_CTX_set_alpn_select_cb\fR\|(3),
-\&\fBSSL_get0_alpn_selected\fR\|(3), \fBSSL_CTX_set_client_hello_cb\fR\|(3)
+\&\fBSSL_get0_alpn_selected\fR\|(3), \fBSSL_CTX_set_client_hello_cb\fR\|(3),
+\&\fBSSL_set1_dnsname\fR\|(3), \fBSSL_add1_dnsname\fR\|(3),
+\&\fBX509_VERIFY_PARAM_set1_host\fR\|(3), \fBX509_VERIFY_PARAM_add1_host\fR\|(3)
 .SH HISTORY
 .IX Header "HISTORY"
 \&\fBSSL_get_servername()\fR historically provided some unexpected results in certain

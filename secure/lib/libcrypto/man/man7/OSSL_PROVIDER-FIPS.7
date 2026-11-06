@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OSSL_PROVIDER-FIPS 7ossl"
-.TH OSSL_PROVIDER-FIPS 7ossl 2026-09-29 3.5.9 OpenSSL
+.TH OSSL_PROVIDER-FIPS 7ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -123,11 +123,16 @@ The OpenSSL FIPS provider supports these operations and algorithms:
 .IX Item "SHA2, see EVP_MD-SHA2"
 .IP "SHA3, see \fBEVP_MD\-SHA3\fR\|(7)" 4
 .IX Item "SHA3, see EVP_MD-SHA3"
-.IP "KECCAK\-KMAC, see \fBEVP_MD\-KECCAK\-KMAC\fR\|(7)" 4
-.IX Item "KECCAK-KMAC, see EVP_MD-KECCAK-KMAC"
 .IP "SHAKE, see \fBEVP_MD\-SHAKE\fR\|(7)" 4
 .IX Item "SHAKE, see EVP_MD-SHAKE"
+.IP "CSHAKE, see \fBEVP_MD\-CSHAKE\fR\|(7)" 4
+.IX Item "CSHAKE, see EVP_MD-CSHAKE"
+.IP "CSHAKE\-KECCAK, see \fBEVP_MD\-CSHAKE\-KECCAK\fR\|(7)" 4
+.IX Item "CSHAKE-KECCAK, see EVP_MD-CSHAKE-KECCAK"
 .PD
+It is used internally as a sub algorithm of CSHAKE.
+.IP "ML\-DSA\-MU, see \fBEVP_MD\-ML\-DSA\-MU\fR\|(7)" 4
+.IX Item "ML-DSA-MU, see EVP_MD-ML-DSA-MU"
 .SS "Symmetric Ciphers"
 .IX Subsection "Symmetric Ciphers"
 .IP "AES, see \fBEVP_CIPHER\-AES\fR\|(7)" 4
@@ -153,12 +158,24 @@ The OpenSSL FIPS provider supports these operations and algorithms:
 .IP "HKDF, see \fBEVP_KDF\-HKDF\fR\|(7)" 4
 .IX Item "HKDF, see EVP_KDF-HKDF"
 .PD 0
+.IP "HKDF\-SHA256, see \fBEVP_KDF\-HKDF\fR\|(7)" 4
+.IX Item "HKDF-SHA256, see EVP_KDF-HKDF"
+.IP "HKDF\-SHA384, see \fBEVP_KDF\-HKDF\fR\|(7)" 4
+.IX Item "HKDF-SHA384, see EVP_KDF-HKDF"
+.IP "HKDF\-SHA512, see \fBEVP_KDF\-HKDF\fR\|(7)" 4
+.IX Item "HKDF-SHA512, see EVP_KDF-HKDF"
+.IP "IKEV2KDF, see \fBEVP_KDF\-IKEV2KDF\fR\|(7)" 4
+.IX Item "IKEV2KDF, see EVP_KDF-IKEV2KDF"
 .IP "TLS13\-KDF, see \fBEVP_KDF\-TLS13_KDF\fR\|(7)" 4
 .IX Item "TLS13-KDF, see EVP_KDF-TLS13_KDF"
 .IP "SSKDF, see \fBEVP_KDF\-SS\fR\|(7)" 4
 .IX Item "SSKDF, see EVP_KDF-SS"
 .IP "PBKDF2, see \fBEVP_KDF\-PBKDF2\fR\|(7)" 4
 .IX Item "PBKDF2, see EVP_KDF-PBKDF2"
+.IP "SNMPKDF, see \fBEVP_KDF\-SNMPKDF\fR\|(7)" 4
+.IX Item "SNMPKDF, see EVP_KDF-SNMPKDF"
+.IP "SRTPKDF, see \fBEVP_KDF\-SRTPKDF\fR\|(7)" 4
+.IX Item "SRTPKDF, see EVP_KDF-SRTPKDF"
 .IP "SSHKDF, see \fBEVP_KDF\-SSHKDF\fR\|(7)" 4
 .IX Item "SSHKDF, see EVP_KDF-SSHKDF"
 .IP "TLS1\-PRF, see \fBEVP_KDF\-TLS1_PRF\fR\|(7)" 4
@@ -183,8 +200,20 @@ The OpenSSL FIPS provider supports these operations and algorithms:
 .IX Item "X25519, see EVP_KEYEXCH-X25519"
 .IP "X448, see \fBEVP_KEYEXCH\-X448\fR\|(7)" 4
 .IX Item "X448, see EVP_KEYEXCH-X448"
-.IP "ML\-KEM, see \fBEVP_KEM\-ML\-KEM\fR\|(7)" 4
-.IX Item "ML-KEM, see EVP_KEM-ML-KEM"
+.IP "ML\-KEM\-512, see \fBEVP_KEM\-ML\-KEM\-512\fR\|(7)" 4
+.IX Item "ML-KEM-512, see EVP_KEM-ML-KEM-512"
+.IP "ML\-KEM\-768, see \fBEVP_KEM\-ML\-KEM\-768\fR\|(7)" 4
+.IX Item "ML-KEM-768, see EVP_KEM-ML-KEM-768"
+.IP "ML\-KEM\-1024, see \fBEVP_KEM\-ML\-KEM\-1024\fR\|(7)" 4
+.IX Item "ML-KEM-1024, see EVP_KEM-ML-KEM-1024"
+.IP "X25519MLKEM768, see \fBEVP_PKEY\-MLX\-KEM\fR\|(7)" 4
+.IX Item "X25519MLKEM768, see EVP_PKEY-MLX-KEM"
+.IP "X448MLKEM1024, see \fBEVP_PKEY\-MLX\-KEM\fR\|(7)" 4
+.IX Item "X448MLKEM1024, see EVP_PKEY-MLX-KEM"
+.IP "SecP256r1MLKEM768, see \fBEVP_PKEY\-MLX\-KEM\fR\|(7)" 4
+.IX Item "SecP256r1MLKEM768, see EVP_PKEY-MLX-KEM"
+.IP "SecP384r1MLKEM1024, see \fBEVP_PKEY\-MLX\-KEM\fR\|(7)" 4
+.IX Item "SecP384r1MLKEM1024, see EVP_PKEY-MLX-KEM"
 .IP TLS1\-PRF 4
 .IX Item "TLS1-PRF"
 .IP HKDF 4
@@ -218,6 +247,8 @@ for signature generation, but may be used for verification for legacy use cases.
 .IX Item "HMAC, see EVP_SIGNATURE-HMAC"
 .IP "CMAC, see \fBEVP_SIGNATURE\-CMAC\fR\|(7)" 4
 .IX Item "CMAC, see EVP_SIGNATURE-CMAC"
+.IP "LMS, see \fBEVP_SIGNATURE\-LMS\fR\|(7)" 4
+.IX Item "LMS, see EVP_SIGNATURE-LMS"
 .PD
 .SS "Asymmetric Cipher"
 .IX Subsection "Asymmetric Cipher"
@@ -272,6 +303,20 @@ included in SP 800\-56Arev3 are not approved for key agreement".
 .IX Item "ML-DSA-65, see EVP_KEYMGMT-ML-DSA"
 .IP "ML\-DSA\-87, see \fBEVP_KEYMGMT\-ML\-DSA\fR\|(7)" 4
 .IX Item "ML-DSA-87, see EVP_KEYMGMT-ML-DSA"
+.IP "MK\-KEM\-512, see \fBEVP_KEYMGMT\-ML\-KEM\-512\fR\|(7)" 4
+.IX Item "MK-KEM-512, see EVP_KEYMGMT-ML-KEM-512"
+.IP "MK\-KEM\-768, see \fBEVP_KEYMGMT\-ML\-KEM\-768\fR\|(7)" 4
+.IX Item "MK-KEM-768, see EVP_KEYMGMT-ML-KEM-768"
+.IP "MK\-KEM\-1024, see \fBEVP_KEYMGMT\-ML\-KEM\-1024\fR\|(7)" 4
+.IX Item "MK-KEM-1024, see EVP_KEYMGMT-ML-KEM-1024"
+.IP "X25519MLKEM768, see \fBEVP_KEYMGMT\-MLX\-KEM\fR\|(7)" 4
+.IX Item "X25519MLKEM768, see EVP_KEYMGMT-MLX-KEM"
+.IP "X448MLKEM1024, see \fBEVP_KEYMGMT\-MLX\-KEM\fR\|(7)" 4
+.IX Item "X448MLKEM1024, see EVP_KEYMGMT-MLX-KEM"
+.IP "SecP256r1MLKEM768, see \fBEVP_KEYMGMT\-MLX\-KEM\fR\|(7)" 4
+.IX Item "SecP256r1MLKEM768, see EVP_KEYMGMT-MLX-KEM"
+.IP "SecP384r1MLKEM1024, see \fBEVP_KEYMGMT\-MLX\-KEM\fR\|(7)" 4
+.IX Item "SecP384r1MLKEM1024, see EVP_KEYMGMT-MLX-KEM"
 .IP "SLH\-DSA\-SHA2\-128s, see \fBEVP_KEYMGMT\-SLH\-DSA\fR\|(7)" 4
 .IX Item "SLH-DSA-SHA2-128s, see EVP_KEYMGMT-SLH-DSA"
 .IP "SLH\-DSA\-SHA2\-128f, see \fBEVP_KEYMGMT\-SLH\-DSA\fR\|(7)" 4
@@ -336,10 +381,11 @@ The FIPS module passes the following type(s) to \fBOSSL_SELF_TEST_onbegin()\fR.
 Uses HMAC SHA256 on the module file to validate that the module has not been
 modified. The integrity value is compared to a value written to a configuration
 file during installation.
-.IP """KAT_Integrity"" (\fBOSSL_SELF_TEST_TYPE_KAT_INTEGRITY\fR)" 4
-.IX Item """KAT_Integrity"" (OSSL_SELF_TEST_TYPE_KAT_INTEGRITY)"
+.IP """KAT_Mac"" (\fBOSSL_SELF_TEST_TYPE_KAT_MAC\fR)" 4
+.IX Item """KAT_Mac"" (OSSL_SELF_TEST_TYPE_KAT_MAC)"
 Used during the Module Integrity test to perform a known answer test on
-HMAC SHA256 prior to using it.
+HMAC SHA256 prior to using it. In pre\-4.0 versions
+\&\fBOSSL_SELF_TEST_TYPE_KAT_INTEGRITY\fR ("KAT_Integrity") was used for this.
 .IP """KAT_Cipher"" (\fBOSSL_SELF_TEST_TYPE_KAT_CIPHER\fR)" 4
 .IX Item """KAT_Cipher"" (OSSL_SELF_TEST_TYPE_KAT_CIPHER)"
 Known answer test for a symmetric cipher.
@@ -453,8 +499,12 @@ Digest tests used with the "KAT_Digest" type.
 .IX Item """RSA"" (OSSL_SELF_TEST_DESC_SIGN_RSA)"
 .IP """ECDSA"" (\fBOSSL_SELF_TEST_DESC_SIGN_ECDSA\fR)" 4
 .IX Item """ECDSA"" (OSSL_SELF_TEST_DESC_SIGN_ECDSA)"
+.IP """DetECDSA"" (\fBOSSL_SELF_TEST_DESC_SIGN_DetECDSA\fR)" 4
+.IX Item """DetECDSA"" (OSSL_SELF_TEST_DESC_SIGN_DetECDSA)"
 .IP """EDDSA"" (\fBOSSL_SELF_TEST_DESC_SIGN_EDDSA\fR)" 4
 .IX Item """EDDSA"" (OSSL_SELF_TEST_DESC_SIGN_EDDSA)"
+.IP """LMS"" (\fBOSSL_SELF_TEST_DESC_SIGN_LMS\fR)" 4
+.IX Item """LMS"" (OSSL_SELF_TEST_DESC_SIGN_LMS)"
 .IP """ML\-DSA"" (\fBOSSL_SELF_TEST_DESC_SIGN_ML_DSA\fR)" 4
 .IX Item """ML-DSA"" (OSSL_SELF_TEST_DESC_SIGN_ML_DSA)"
 .IP """SLH\-DSA"" (\fBOSSL_SELF_TEST_DESC_SIGN_SLH_DSA\fR)" 4
@@ -471,6 +521,8 @@ Key agreement tests used with the "KAT_KA" type.
 .IP """HKDF"" (\fBOSSL_SELF_TEST_DESC_KDF_HKDF\fR)" 4
 .IX Item """HKDF"" (OSSL_SELF_TEST_DESC_KDF_HKDF)"
 .PD 0
+.IP """IKEV2KDF"" (\fBOSSL_SELF_TEST_DESC_KDF_IKEV2KDF\fR)" 4
+.IX Item """IKEV2KDF"" (OSSL_SELF_TEST_DESC_KDF_IKEV2KDF)"
 .IP """TLS13_KDF_EXTRACT"" (\fBOSSL_SELF_TEST_DESC_KDF_TLS13_EXTRACT\fR)" 4
 .IX Item """TLS13_KDF_EXTRACT"" (OSSL_SELF_TEST_DESC_KDF_TLS13_EXTRACT)"
 .IP """TLS13_KDF_EXPAND"" (\fBOSSL_SELF_TEST_DESC_KDF_TLS13_EXPAND\fR)" 4
@@ -483,6 +535,10 @@ Key agreement tests used with the "KAT_KA" type.
 .IX Item """X942KDF"" (OSSL_SELF_TEST_DESC_KDF_X942KDF)"
 .IP """PBKDF2"" (\fBOSSL_SELF_TEST_DESC_KDF_PBKDF2\fR)" 4
 .IX Item """PBKDF2"" (OSSL_SELF_TEST_DESC_KDF_PBKDF2)"
+.IP """SNMPKDF"" (\fBOSSL_SELF_TEST_DESC_KDF_SNMPKDF\fR)" 4
+.IX Item """SNMPKDF"" (OSSL_SELF_TEST_DESC_KDF_SNMPKDF)"
+.IP """SRTPKDF"" (\fBOSSL_SELF_TEST_DESC_KDF_SRTPKDF\fR)" 4
+.IX Item """SRTPKDF"" (OSSL_SELF_TEST_DESC_KDF_SRTPKDF)"
 .IP """SSHKDF"" (\fBOSSL_SELF_TEST_DESC_KDF_SSHKDF\fR)" 4
 .IX Item """SSHKDF"" (OSSL_SELF_TEST_DESC_KDF_SSHKDF)"
 .IP """TLS12_PRF"" (\fBOSSL_SELF_TEST_DESC_KDF_TLS12_PRF\fR)" 4
@@ -598,7 +654,11 @@ process.
 <https://www.openssl.org/source/>
 .SH HISTORY
 .IX Header "HISTORY"
-This functionality was added in OpenSSL 3.0.
+The HKDF\-SHA256, HKDF\-SHA384 and HKDF\-SHA512 algorithms were added in OpenSSL 3.6.
+.PP
+The CSHAKE\-128 and CSHAKE\-256 algorithms were added in OpenSSL 4.0.
+.PP
+All other functionality was added in OpenSSL 3.0.
 .SH COPYRIGHT
 .IX Header "COPYRIGHT"
 Copyright 2019\-2026 The OpenSSL Project Authors. All Rights Reserved.

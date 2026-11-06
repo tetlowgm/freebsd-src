@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OPENSSL-CIPHERS 1ossl"
-.TH OPENSSL-CIPHERS 1ossl 2026-09-29 3.5.9 OpenSSL
+.TH OPENSSL-CIPHERS 1ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -72,7 +72,6 @@ openssl\-ciphers \- SSL cipher display and cipher list command
 [\fB\-s\fR]
 [\fB\-v\fR]
 [\fB\-V\fR]
-[\fB\-ssl3\fR]
 [\fB\-tls1\fR]
 [\fB\-tls1_1\fR]
 [\fB\-tls1_2\fR]
@@ -92,6 +91,9 @@ openssl\-ciphers \- SSL cipher display and cipher list command
 This command converts textual OpenSSL cipher lists into
 ordered SSL cipher preference lists. It can be used to
 determine the appropriate cipherlist.
+.PP
+As of OpenSSL 4.0 the list of TLS 1.3 ciphersuites \fIval\fR and TLS 1.2 ciphers
+\&\fIcipherlist\fR are processed case\-insensitively.
 .SH OPTIONS
 .IX Header "OPTIONS"
 .IP \fB\-help\fR 4
@@ -138,8 +140,8 @@ Verbose output: For each cipher suite, list details as provided by
 .IP \fB\-V\fR 4
 .IX Item "-V"
 Like \fB\-v\fR, but include the official cipher suite values in hex.
-.IP "\fB\-tls1_3\fR, \fB\-tls1_2\fR, \fB\-tls1_1\fR, \fB\-tls1\fR, \fB\-ssl3\fR" 4
-.IX Item "-tls1_3, -tls1_2, -tls1_1, -tls1, -ssl3"
+.IP "\fB\-tls1_3\fR, \fB\-tls1_2\fR, \fB\-tls1_1\fR, \fB\-tls1\fR" 4
+.IX Item "-tls1_3, -tls1_2, -tls1_1, -tls1"
 In combination with the \fB\-s\fR option, list the ciphers which could be used if
 the specified protocol were negotiated.
 Note that not all protocols and flags may be available, depending on how
@@ -253,9 +255,6 @@ encryption.
 "Low" encryption cipher suites, currently those using 64 or 56 bit
 encryption algorithms but excluding export cipher suites.  All these
 cipher suites have been removed as of OpenSSL 1.1.0.
-.IP \fBFIPS\fR 4
-.IX Item "FIPS"
-Cipher suites permitted in FIPS mode.
 .IP "\fBeNULL\fR, \fBNULL\fR" 4
 .IX Item "eNULL, NULL"
 The "NULL" ciphers that is those offering no encryption. Because these offer no
@@ -306,12 +305,12 @@ Cipher suites using DSS authentication, i.e. the certificates carry DSS keys.
 .IX Item "aECDSA, ECDSA"
 Cipher suites using ECDSA authentication, i.e. the certificates carry ECDSA
 keys.
-.IP "\fBTLSv1.2\fR, \fBTLSv1.0\fR, \fBSSLv3\fR" 4
-.IX Item "TLSv1.2, TLSv1.0, SSLv3"
-Lists cipher suites introduced in TLS v1.2, TLS v1.0 or SSL v3.0 respectively.
+.IP "\fBTLSv1.2\fR, \fBTLSv1.0\fR" 4
+.IX Item "TLSv1.2, TLSv1.0"
+Lists cipher suites introduced in TLS v1.2 or TLS v1.0 respectively.
 Note: there are no cipher suites specific to TLS v1.1.
-Since this is only the minimum version, if, for example, TLSv1.0 is negotiated
-then both TLSv1.0 and SSLv3.0 cipher suites are available.
+Since this is only the minimum version, if, for example, TLSv1.2 is negotiated
+then both TLSv1.2 and TLSv1.0 cipher suites are available.
 .Sp
 Note: these cipher strings \fBdo not\fR change the negotiated version of SSL or
 TLS, they only affect the list of available cipher suites.
@@ -372,7 +371,7 @@ Cipher suites using SHA256 or SHA384.
 .IP \fBaGOST\fR 4
 .IX Item "aGOST"
 Cipher suites using GOST R 34.10 (either 2001 or 2012) for authentication
-(needs an engine supporting GOST algorithms).
+(needs a provider that supports GOST algorithms).
 .IP \fBaGOST01\fR 4
 .IX Item "aGOST01"
 Cipher suites that can be uses with GOST R 34.10\-2001 keys for authentication.
@@ -603,8 +602,8 @@ is used.
 .Ve
 .SS "GOST cipher suites for TLS v1.2"
 .IX Subsection "GOST cipher suites for TLS v1.2"
-Note: these ciphers require an engine which including GOST cryptographic
-algorithms, such as the \fBgost\fR engine, which isn\*(Aqt part of the OpenSSL
+Note: these ciphers require a provider that supports GOST cryptographic
+algorithms, such as the \fBgostprov\fR provider, which isn\*(Aqt part of the OpenSSL
 distribution.
 .PP
 .Vb 7
@@ -851,12 +850,14 @@ Note: the CBC modes mentioned in this RFC are not supported.
 .Ve
 .SS "TLS v1.3 cipher suites"
 .IX Subsection "TLS v1.3 cipher suites"
-.Vb 5
+.Vb 7
 \& TLS_AES_128_GCM_SHA256                     TLS_AES_128_GCM_SHA256
 \& TLS_AES_256_GCM_SHA384                     TLS_AES_256_GCM_SHA384
 \& TLS_CHACHA20_POLY1305_SHA256               TLS_CHACHA20_POLY1305_SHA256
 \& TLS_AES_128_CCM_SHA256                     TLS_AES_128_CCM_SHA256
 \& TLS_AES_128_CCM_8_SHA256                   TLS_AES_128_CCM_8_SHA256
+\& TLS_SM4_GCM_SM3                            TLS_SM4_GCM_SM3
+\& TLS_SM4_CCM_SM3                            TLS_SM4_CCM_SM3
 .Ve
 .SS "TLS v1.3 integrity\-only cipher suites according to RFC 9150"
 .IX Subsection "TLS v1.3 integrity-only cipher suites according to RFC 9150"
@@ -939,6 +940,9 @@ Support for standard IANA names in cipher lists was added in
 OpenSSL 3.2.0.
 .PP
 The support for TLS v1.3 integrity\-only cipher suites was added in OpenSSL 3.4.
+.PP
+The list of TLS 1.3 ciphersuites \fIval\fR and TLS 1.2 ciphers
+\&\fIcipherlist\fR were case\-sensitive prior to OpenSSL 4.0.
 .SH COPYRIGHT
 .IX Header "COPYRIGHT"
 Copyright 2000\-2026 The OpenSSL Project Authors. All Rights Reserved.

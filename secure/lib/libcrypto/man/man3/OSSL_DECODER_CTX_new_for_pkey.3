@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OSSL_DECODER_CTX_NEW_FOR_PKEY 3ossl"
-.TH OSSL_DECODER_CTX_NEW_FOR_PKEY 3ossl 2026-09-29 3.5.9 OpenSSL
+.TH OSSL_DECODER_CTX_NEW_FOR_PKEY 3ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -130,12 +130,26 @@ If no suitable decoder implementation is found,
 \&\fBOSSL_DECODER_CTX_new_for_pkey()\fR still creates a \fBOSSL_DECODER_CTX\fR, but
 with no associated decoder (\fBOSSL_DECODER_CTX_get_num_decoders\fR\|(3) returns
 zero).  This helps the caller to distinguish between an error when creating
-the \fBOSSL_ENCODER_CTX\fR and missing encoder implementation, and allows it to
+the \fBOSSL_DECODER_CTX\fR and missing decoder implementation, and allows it to
 act accordingly.
 .PP
-Note that \fBOSSL_DECODER_CTX_new_for_pkey()\fR finalises the OSSL_DECODER_CTX;
-after that the OSSL_DECODER_CTX_set_* and OSSL_DECODER_CTX_add_* functions
-described in \fBOSSL_DECODER_CTX\fR\|(3) shouldn\*(Aqt be called.
+and
+\&\fBOSSL_DECODER_CTX_set_selection()\fR,
+.PP
+Note that \fBOSSL_DECODER_CTX_new_for_pkey()\fR freezes some fields of the
+OSSL_DECODER_CTX, and as a result the functions
+\&\fBOSSL_DECODER_CTX_add_decoder\fR\|(3),
+\&\fBOSSL_DECODER_CTX_add_extra\fR\|(3),
+\&\fBOSSL_DECODER_CTX_set_cleanup\fR\|(3),
+\&\fBOSSL_DECODER_CTX_set_construct\fR\|(3),
+\&\fBOSSL_DECODER_CTX_set_construct_data\fR\|(3),
+\&\fBOSSL_DECODER_CTX_set_input_structure\fR\|(3),
+\&\fBOSSL_DECODER_CTX_set_input_type\fR\|(3)
+and
+\&\fBOSSL_DECODER_CTX_set_selection\fR\|(3)
+return an error if called on the resulting context.
+Note that \fBOSSL_DECODER_CTX_set_params\fR\|(3) remains available to set decoder
+parameters.
 .PP
 \&\fBOSSL_DECODER_CTX_set_passphrase()\fR gives the implementation a pass phrase to
 use when decrypting the encoded private key. Alternatively, a pass phrase
@@ -188,7 +202,10 @@ auto detect the selection.
 failure.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-\&\fBprovider\fR\|(7), \fBOSSL_DECODER\fR\|(3), \fBOSSL_DECODER_CTX\fR\|(3)
+\&\fBprovider\fR\|(7),
+\&\fBOSSL_DECODER\fR\|(3),
+\&\fBOSSL_DECODER_CTX\fR\|(3),
+\&\fBOSSL_DECODER_CTX_set_params\fR\|(3).
 .SH HISTORY
 .IX Header "HISTORY"
 The functions described here were added in OpenSSL 3.0.

@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OSSL_HTTP_REQ_CTX 3ossl"
-.TH OSSL_HTTP_REQ_CTX 3ossl 2026-09-29 3.5.9 OpenSSL
+.TH OSSL_HTTP_REQ_CTX 3ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -175,10 +175,10 @@ in the header line, followed by a \f(CW\*(C`;\*(C'\fR character and any further 
 For instance, if the \fIexpected_content_type\fR argument specifies \f(CW\*(C`text/html\*(C'\fR,
 this is matched by \f(CW\*(C`Text/HTML\*(C'\fR, \f(CW\*(C`text/html; charset=UTF\-8\*(C'\fR, etc.
 .PP
-If the \fIexpect_asn1\fR parameter is nonzero a structure in ASN.1 encoding will be
-expected as the response content and input streaming is disabled.  This means
-that an ASN.1 sequence header is required, its length field is checked, and
-\&\fBOSSL_HTTP_REQ_CTX_get0_mem_bio()\fR should be used to get the buffered response.
+If the \fIexpect_asn1\fR parameter is nonzero, a structure in ASN.1 DER/BER encoding
+will be expected as the response content and input streaming is disabled.
+This means that an ASN.1 sequence header is required, its length field is checked,
+and \fBOSSL_HTTP_REQ_CTX_get0_mem_bio()\fR should be used to get the buffered response.
 Otherwise (by default) any input format is allowed,
 with body length checks being performed on error messages only.
 In this case the BIO given as \fIrbio\fR argument to \fBOSSL_HTTP_REQ_CTX_new()\fR should

@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OPENSSL-CMS 1ossl"
-.TH OPENSSL-CMS 1ossl 2026-09-29 3.5.9 OpenSSL
+.TH OPENSSL-CMS 1ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -116,8 +116,7 @@ Keys and password options:
 [\fB\-inkey\fR \fIfilename\fR|\fIuri\fR]
 [\fB\-passin\fR \fIarg\fR]
 [\fB\-keyopt\fR \fIname\fR:\fIparameter\fR]
-[\fB\-keyform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR|\fBENGINE\fR]
-[\fB\-engine\fR \fIid\fR]
+[\fB\-keyform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR]
 [\fB\-provider\fR \fIname\fR]
 [\fB\-provider\-path\fR \fIpath\fR]
 [\fB\-provparam\fR \fI[name:]key=value\fR]
@@ -127,22 +126,25 @@ Keys and password options:
 .PP
 Encryption options:
 .PP
-[\fB\-originator\fR \fIfile\fR]
-[\fB\-recip\fR \fIfile\fR]
+[\fB\-originator\fR \fIfilename\fR|\fIuri\fR]
+[\fB\-recip\fR \fIfilename\fR|\fIuri\fR]
 [\fIrecipient\-cert\fR ...]
 [\fB\-\fR\f(BIcipher\fR]
+[\fB\-kekcipher\fR \fIcipher\fR]
 [\fB\-wrap\fR \fIcipher\fR]
 [\fB\-aes128\-wrap\fR]
 [\fB\-aes192\-wrap\fR]
 [\fB\-aes256\-wrap\fR]
 [\fB\-des3\-wrap\fR]
 [\fB\-debug_decrypt\fR]
+[\fB\-recip_kdf\fR \fIkdf\fR]
+[\fB\-recip_ukm\fR \fIukm\fR]
 .PP
 Signing options:
 .PP
 [\fB\-md\fR \fIdigest\fR]
-[\fB\-signer\fR \fIfile\fR]
-[\fB\-certfile\fR \fIfile\fR]
+[\fB\-signer\fR \fIfilename\fR|\fIuri\fR]
+[\fB\-certfile\fR \fIfilename\fR|\fIuri\fR]
 [\fB\-cades\fR]
 [\fB\-nodetach\fR]
 [\fB\-nocerts\fR]
@@ -164,6 +166,7 @@ Verification options:
 [\fB\-noverify\fR]
 [\fB\-nointern\fR]
 [\fB\-cades\fR]
+[\fB\-verify_partial\fR]
 [\fB\-verify_retcode\fR]
 [\fB\-CAfile\fR \fIfile\fR]
 [\fB\-no\-CAfile\fR]
@@ -402,8 +405,8 @@ relevant key if it is not supplied then an attempt is used to decrypt any
 .IX Item "-inkey filename|uri"
 The private key to use when signing or decrypting. This must match the
 corresponding certificate. If this option is not specified then the
-private key must be included in the certificate file specified with
-the \fB\-recip\fR or \fB\-signer\fR file. When signing this option can be used
+private key must be included in the certificate specified with
+the \fB\-recip\fR or \fB\-signer\fR option. When signing this option can be used
 multiple times to specify successive keys.
 .IP "\fB\-passin\fR \fIarg\fR" 4
 .IX Item "-passin arg"
@@ -415,14 +418,10 @@ For signing and encryption this option can be used multiple times to
 set customised parameters for the preceding key or certificate. It can
 currently be used to set RSA\-PSS for signing, RSA\-OAEP for encryption
 or to modify default parameters for ECDH.
-.IP "\fB\-keyform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR|\fBENGINE\fR" 4
-.IX Item "-keyform DER|PEM|P12|ENGINE"
+.IP "\fB\-keyform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR" 4
+.IX Item "-keyform DER|PEM|P12"
 The format of the private key file; unspecified by default.
 See \fBopenssl\-format\-options\fR\|(1) for details.
-.IP "\fB\-engine\fR \fIid\fR" 4
-.IX Item "-engine id"
-See "Engine Options" in \fBopenssl\fR\|(1).
-This option is deprecated.
 .IP "\fB\-provider\fR \fIname\fR" 4
 .IX Item "-provider name"
 .PD 0
@@ -439,13 +438,13 @@ See "Provider Options" in \fBopenssl\fR\|(1), \fBprovider\fR\|(7), and \fBproper
 See "Random State Options" in \fBopenssl\fR\|(1) for details.
 .SS "Encryption and decryption options"
 .IX Subsection "Encryption and decryption options"
-.IP "\fB\-originator\fR \fIfile\fR" 4
-.IX Item "-originator file"
+.IP "\fB\-originator\fR \fIfilename\fR|\fIuri\fR" 4
+.IX Item "-originator filename|uri"
 A certificate of the originator of the encrypted message. Necessary for
 decryption when Key Agreement is in use for a shared key. Currently, not
 allowed for encryption.
-.IP "\fB\-recip\fR \fIfile\fR" 4
-.IX Item "-recip file"
+.IP "\fB\-recip\fR \fIfilename\fR|\fIuri\fR" 4
+.IX Item "-recip filename|uri"
 When decrypting a message this specifies the certificate of the recipient.
 The certificate must match one of the recipients of the message.
 .Sp
@@ -458,7 +457,7 @@ option.
 .IP "\fIrecipient\-cert\fR ..." 4
 .IX Item "recipient-cert ..."
 This is an alternative to using the \fB\-recip\fR option when encrypting a message.
-One or more certificate filenames may be given.
+One or more certificates may be given.
 .IP \fB\-\fR\f(BIcipher\fR 4
 .IX Item "-cipher"
 The encryption algorithm to use. For example, AES (256 bits) \- \fB\-aes256\fR
@@ -472,6 +471,12 @@ algorithms.
 .Sp
 If not specified, AES\-256\-CBC is used as the default. Only used with \fB\-encrypt\fR and
 \&\fB\-EncryptedData_encrypt\fR commands.
+.IP "\fB\-kekcipher\fR \fIcipher\fR" 4
+.IX Item "-kekcipher cipher"
+Cipher algorithm to use for password key encryption. This option is relevant
+when a password for password recipient information is provided using
+\&\fB\-pwri_password\fR, and an AEAD encryption algorithm is selected. In such cases,
+a non\-AEAD algorithm should be specified using this option.
 .IP "\fB\-wrap\fR \fIcipher\fR" 4
 .IX Item "-wrap cipher"
 Cipher algorithm to use for key wrap when encrypting the message using Key
@@ -485,21 +490,48 @@ Depending on the OpenSSL build options used, \fB\-des3\-wrap\fR may not be suppo
 .IX Item "-debug_decrypt"
 This option sets the \fBCMS_DEBUG_DECRYPT\fR flag. This option should be used
 with caution: see the notes section below.
+.IP \fB\-recip_kdf\fR 4
+.IX Item "-recip_kdf"
+This option sets the KDF used to generate the key encryption key in the
+\&\fBKEMRecipientInfo\fR type. Any KDF that takes \fBOSSL_KDF_PARAM_KEY\fR and
+\&\fBOSSL_KDF_PARAM_INFO\fR parameters and is otherwise fully defined by its name or
+OID can be used, for example \fBHKDF\-SHA256\fR.
+.IP \fB\-recip_ukm\fR 4
+.IX Item "-recip_ukm"
+This option sets the \fBKEMRecipientInfo\fR type\*(Aqs optional user keying material (UKM)
+in hexadecimal form. The UKM will be encoded, along with other information, into the
+\&\fBOSSL_KDF_PARAM_INFO\fR parameter of the \fBKEMRecipientInfo\fR type\*(Aqs KDF.
 .SS "Signing options"
 .IX Subsection "Signing options"
 .IP "\fB\-md\fR \fIdigest\fR" 4
 .IX Item "-md digest"
 Digest algorithm to use when signing or resigning. If not present then the
 default digest algorithm for the signing key will be used (usually SHA\-256).
-.IP "\fB\-signer\fR \fIfile\fR" 4
-.IX Item "-signer file"
-A signing certificate.  When signing or resigning a message, this option can be
+.Sp
+Note that, in the case signed attributes are not used (\fB\-noattr\fR), for
+some hash\-less signing schemes the given digest algorithm will be ignored
+and a digest algorithm required by the signing scheme will be used. This is
+the case for EdDSA (RFC 8419). For SLH\-DSA (RFC 9814) and ML\-DSA (RFC 9882),
+the scheme\-suggested digest algorithm will only be used if none is given.
+.IP "\fB\-signer\fR \fIfilename\fR|\fIuri\fR" 4
+.IX Item "-signer filename|uri"
+A signer certificate.  When signing or resigning a message, this option can be
 used multiple times if more than one signer is required.
-.IP "\fB\-certfile\fR \fIfile\fR" 4
-.IX Item "-certfile file"
-Allows additional certificates to be specified. When signing these will
-be included with the message. When verifying, these will be searched for
-signer certificates and will be used for chain building.
+.IP "\fB\-certfile\fR \fIfilename\fR|\fIuri\fR" 4
+.IX Item "-certfile filename|uri"
+Provide extra certificates.
+When signing, these will be included with the message and can serve
+both as candidate untrusted CA certificates for chain building in verification
+and as fallback signer certificates.
+When verifying, the provided certificates will be used for chain building
+and take precedence over the signer certificates in the message
+as a source of candidate signers.
+With \fB\-nointern\fR these will be the only signer certificates considered.
+.Sp
+Note that a message can have multiple signers.
+In such cases, all signer certificates must be available.
+When verifying a multi\-signed message, all the signatures must be valid
+unless \fB\-verify_partial\fR has been specified.
 .Sp
 The input can be in PEM, DER, or PKCS#12 format.
 .IP \fB\-cades\fR 4
@@ -516,9 +548,10 @@ do not support S/MIME.  Without this option cleartext signing with
 the MIME type multipart/signed is used.
 .IP \fB\-nocerts\fR 4
 .IX Item "-nocerts"
-When signing a message the signer\*(Aqs certificate is normally included
-with this option it is excluded. This will reduce the size of the
-signed message but the verifier must have a copy of the signers certificate
+When signing a message, the signer certificates are normally included,
+but this option disables their inclusion.
+This will reduce the size of the signed message,
+but the verifier must then have a copy of those certificates
 available locally (passed using the \fB\-certfile\fR option for example).
 .IP \fB\-noattr\fR 4
 .IX Item "-noattr"
@@ -550,8 +583,8 @@ option \fBmust\fR but supplied if a signed receipt is requested.
 .IX Subsection "Verification options"
 .IP "\fB\-signer\fR \fIfile\fR" 4
 .IX Item "-signer file"
-If a message has been verified successfully then the signers certificate(s)
-will be written to this file if the verification was successful.
+If a message has been verified successfully, then the signer certificate(s)
+will be written to this file.
 .IP "\fB\-content\fR \fIfilename\fR" 4
 .IX Item "-content filename"
 This specifies a file containing the detached content for operations taking
@@ -573,14 +606,20 @@ Don\*(Aqt verify message signature.
 Do not verify the signers certificate of a signed message.
 .IP \fB\-nointern\fR 4
 .IX Item "-nointern"
-When verifying a message normally certificates (if any) included in
-the message are searched for the signing certificate. With this option
-only the certificates specified in the \fB\-certfile\fR option are used.
-The supplied certificates can still be used as untrusted CAs however.
+Normally, when verifying a message, the certificates (if any) included in
+the message are searched for the signer certificates. With this option,
+only the certificates given with the \fB\-certfile\fR option are used.
+However, the certificates included in the message are still used
+as candidate intermediate CA certificates during chain construction.
 .IP \fB\-cades\fR 4
 .IX Item "-cades"
 When used with \fB\-verify\fR, require and check signer certificate digest.
 See the NOTES section for more details.
+.IP \fB\-verify_partial\fR 4
+.IX Item "-verify_partial"
+Succeed if at least one signature can be verified.
+Print info which signature verifications succeeded or failed in which
+aspect(s).
 .IP \fB\-verify_retcode\fR 4
 .IX Item "-verify_retcode"
 Exit nonzero on verification failure.
@@ -903,6 +942,10 @@ user has to manually include the correct encryption algorithm. It should store
 the list of permitted ciphers in a database and only use those.
 .PP
 No revocation checking is done on the signer\*(Aqs certificate.
+.PP
+Ed448 signing is not supported when using signed\-data with signed attributes
+since OpenSSL does not currently support the digestAlgorithm id\-shake256\-len
+as required per RFC 8419.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 \&\fBossl_store\-file\fR\|(7)
@@ -924,9 +967,13 @@ The \-no_alt_chains option was added in OpenSSL 1.0.2b.
 .PP
 The \fB\-nameopt\fR option was added in OpenSSL 3.0.0.
 .PP
-The \fB\-engine\fR option was deprecated in OpenSSL 3.0.
-.PP
 The \fB\-digest\fR option was added in OpenSSL 3.2.
+.PP
+The \fB\-recip_kdf\fR and \fB\-recip_ukm\fR options were added in OpenSSL 3.6.
+.PP
+The \fB\-engine\fR option was removed in OpenSSL 4.0.
+.PP
+The \fB\-verify_partial\fR option was added in OpenSSL 4.1.
 .SH COPYRIGHT
 .IX Header "COPYRIGHT"
 Copyright 2008\-2026 The OpenSSL Project Authors. All Rights Reserved.

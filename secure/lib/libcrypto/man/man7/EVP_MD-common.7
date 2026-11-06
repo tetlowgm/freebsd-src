@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "EVP_MD-COMMON 7ossl"
-.TH EVP_MD-COMMON 7ossl 2026-09-29 3.5.9 OpenSSL
+.TH EVP_MD-COMMON 7ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -86,12 +86,44 @@ This value can also be retrieved with \fBEVP_MD_get_size\fR\|(3).
 .IP """flags"" (\fBOSSL_DIGEST_PARAM_FLAGS\fR) <unsigned integer>" 4
 .IX Item """flags"" (OSSL_DIGEST_PARAM_FLAGS) <unsigned integer>"
 Diverse flags that describe exceptional behaviour for the digest.
-These flags are described in "DESCRIPTION" in \fBEVP_MD_meth_set_flags\fR\|(3).
 .Sp
 The length of the "flags" parameter should equal that of an
 \&\fBunsigned long int\fR.
 .Sp
+Several flags can be or\*(Aqd together.  The available flags are:
+.RS 4
+.IP EVP_MD_FLAG_ONESHOT 4
+.IX Item "EVP_MD_FLAG_ONESHOT"
+This digest method can only handle one block of input.
+.IP EVP_MD_FLAG_XOF 4
+.IX Item "EVP_MD_FLAG_XOF"
+This digest method is an extensible\-output function (XOF) and supports
+the \fBEVP_MD_CTRL_XOF_LEN\fR control.
+.IP EVP_MD_FLAG_DIGALGID_NULL 4
+.IX Item "EVP_MD_FLAG_DIGALGID_NULL"
+When setting up a DigestAlgorithmIdentifier, this flag will have the
+parameter set to NULL by default.  Use this for PKCS#1.  \fINote: if
+combined with EVP_MD_FLAG_DIGALGID_ABSENT, the latter will override.\fR
+.IP EVP_MD_FLAG_DIGALGID_ABSENT 4
+.IX Item "EVP_MD_FLAG_DIGALGID_ABSENT"
+When setting up a DigestAlgorithmIdentifier, this flag will have the
+parameter be left absent by default.  \fINote: if combined with
+EVP_MD_FLAG_DIGALGID_NULL, the latter will be overridden.\fR
+.IP EVP_MD_FLAG_DIGALGID_CUSTOM 4
+.IX Item "EVP_MD_FLAG_DIGALGID_CUSTOM"
+Custom DigestAlgorithmIdentifier handling via ctrl, with
+\&\fBEVP_MD_FLAG_DIGALGID_ABSENT\fR as default.  \fINote: if combined with
+EVP_MD_FLAG_DIGALGID_NULL, the latter will be overridden.\fR
+Currently unused.
+.IP EVP_MD_FLAG_FIPS 4
+.IX Item "EVP_MD_FLAG_FIPS"
+This digest method is suitable for use in FIPS mode.
+Currently unused.
+.RE
+.RS 4
+.Sp
 This value can also be retrieved with \fBEVP_MD_get_flags\fR\|(3).
+.RE
 .SS "FIPS indicator"
 .IX Subsection "FIPS indicator"
 Digest implementations in the OpenSSL FIPS provider make the following

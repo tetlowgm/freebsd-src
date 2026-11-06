@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "EVP_PKEY-ML-DSA 7ossl"
-.TH EVP_PKEY-ML-DSA 7ossl 2026-09-29 3.5.9 OpenSSL
+.TH EVP_PKEY-ML-DSA 7ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -112,6 +112,20 @@ The following key generation parameter can be retrieved with
 .IX Item """fips-indicator"" (OSSL_PKEY_PARAM_FIPS_APPROVED_INDICATOR) <integer>"
 Returns 1 if the operation is FIPS approved, or 0 otherwise.
 See "FIPS indicators" in \fBfips_module\fR\|(7) for more information.
+.SS "Encoder Parameters"
+.IX Subsection "Encoder Parameters"
+.IP """output_formats"" (\fBOSSL_PKEY_PARAM_OUTPUT_FORMATS\fR) <UTF8 string>" 4
+.IX Item """output_formats"" (OSSL_PKEY_PARAM_OUTPUT_FORMATS) <UTF8 string>"
+This parameter can be used with \fBOSSL_ENCODER_CTX_new_for_pkey\fR\|(3)
+and \fBOSSL_ENCODER_CTX_set_params\fR\|(3) to select the preferred \fBPKCS#8\fR output
+formats of a private key.
+When this parameter is either not specified or empty, the behaviour is
+determined by the provider configuration parameters described below.
+Otherwise, it has the same syntax and behaviour as the provider configuration
+\&\fBml\-dsa.output_formats\fR parameter, except that the \fBml\-dsa.retain\-seed\fR
+parameter is then ignored, i.e. the \f(CW\*(C`seed\-only\*(C'\fR and \f(CW\*(C`seed\-priv\*(C'\fR formats
+remain available so long as the seed was initially known, regardless of any
+setting of \fBml\-dsa.retain\-seed\fR.
 .SS "Common ML\-DSA parameters"
 .IX Subsection "Common ML-DSA parameters"
 In addition to the common parameters that all keytypes should support (see
@@ -131,6 +145,10 @@ respective key type of \fBML\-DSA\-44\fR, \fBML\-DSA\-65\fR or \fBML\-DSA\-87\fR
 .IX Item """priv"" (OSSL_PKEY_PARAM_PRIV_KEY) <octet string>"
 The encoded private key value of size 2560, 4032 or 4896 bytes depending on the
 respective key type of \fBML\-DSA\-44\fR, \fBML\-DSA\-65\fR or \fBML\-DSA\-87\fR.
+.IP """properties"" (\fBOSSL_PKEY_PARAM_PROPERTIES\fR) <UTF8 string>" 4
+.IX Item """properties"" (OSSL_PKEY_PARAM_PROPERTIES) <UTF8 string>"
+Can be used when importing raw keys using \fBEVP_PKEY_fromdata\fR\|(3),
+to fetch internal digest algorithms.
 .SS "Provider configuration parameters"
 .IX Subsection "Provider configuration parameters"
 See the description of the \fB\-provparam\fR option in \fBopenssl\fR\|(1) to learn
@@ -141,10 +159,10 @@ configuration options programmatically.
 .el .IP "\f(CWml\-dsa.retain_seed\fR (\fBOSSL_PKEY_PARAM_ML_DSA_RETAIN_SEED\fR) <UTF8 string>" 4
 .IX Item "ml-dsa.retain_seed (OSSL_PKEY_PARAM_ML_DSA_RETAIN_SEED) <UTF8 string>"
 When set to a string representing a false boolean value (see
-\&\fBOSSL_PROVIDER_conf_get_bool\fR\|(3)), the seed will not be retained after key
-generation or key import from a seed value.
-If the resulting key is then written to a PKCS#8 object, it will contain
-only the FIPS 204 \f(CW\*(C`sk\*(C'\fR key.
+\&\fBOSSL_PROVIDER_conf_get_bool\fR\|(3)), the seed will not be included when
+keys are encoded to \fBPKCS#8\fR form, unless the \f(CW\*(C`output_formats\*(C'\fR encoder
+parameter is set to a nonempty value, as described above.
+The output \fBPKCS#8\fR object will contain only the FIPS 204 \f(CW\*(C`sk\*(C'\fR key.
 .ie n .IP """ml\-dsa.prefer_seed"" (\fBOSSL_PKEY_PARAM_ML_DSA_PREFER_SEED\fR) <UTF8 string>" 4
 .el .IP "\f(CWml\-dsa.prefer_seed\fR (\fBOSSL_PKEY_PARAM_ML_DSA_PREFER_SEED\fR) <UTF8 string>" 4
 .IX Item "ml-dsa.prefer_seed (OSSL_PKEY_PARAM_ML_DSA_PREFER_SEED) <UTF8 string>"
@@ -343,12 +361,15 @@ In the \fBopenssl.cnf\fR file, this looks like:
 \&\fBEVP_PKEY_get_raw_private_key\fR\|(3),
 \&\fBEVP_PKEY_get_raw_public_key\fR\|(3),
 \&\fBEVP_PKEY_get1_encoded_public_key\fR\|(3),
+\&\fBOSSL_ENCODER_CTX_new_for_pkey\fR\|(3),
+\&\fBOSSL_ENCODER_CTX_set_params\fR\|(3),
 \&\fBOSSL_PROVIDER_add_conf_parameter\fR\|(3),
 \&\fBprovider\-keymgmt\fR\|(7),
 \&\fBEVP_SIGNATURE\-ML\-DSA\fR\|(7)
 .SH HISTORY
 .IX Header "HISTORY"
 This functionality was added in OpenSSL 3.5.
+The \f(CW\*(C`output_formats\*(C'\fR \fBOSSL_ENCODER_CTX\fR parameter was added in OpenSSL 4.0.
 .SH COPYRIGHT
 .IX Header "COPYRIGHT"
 Copyright 2025\-2026 The OpenSSL Project Authors. All Rights Reserved.

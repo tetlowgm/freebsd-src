@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "EVP_PKEY-SLH-DSA 7ossl"
-.TH EVP_PKEY-SLH-DSA 7ossl 2026-09-29 3.5.9 OpenSSL
+.TH EVP_PKEY-SLH-DSA 7ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -74,12 +74,18 @@ EVP_PKEY\-SLH\-DSA\-SHAKE\-256s, EVP_PKEY\-SLH\-DSA\-SHAKE\-256f
 \&\- EVP_PKEY SLH\-DSA keytype and algorithm support
 .SH DESCRIPTION
 .IX Header "DESCRIPTION"
-The \fBSLH\-DSA\-SHA2\-128s\fR, \fBEVP_PKEY\-SLH\-DSA\-SHA2\-128f\fR,
-\&\fBSLH\-DSA\-SHA2\-192s\fR, \fBEVP_PKEY\-SLH\-DSA\-SHA2\-192f\fR,
-\&\fBSLH\-DSA\-SHA2\-256s\fR, \fBEVP_PKEY\-SLH\-DSA\-SHA2\-256f\fR,
-\&\fBSLH\-DSA\-SHAKE\-128s\fR, \fBEVP_PKEY\-SLH\-DSA\-SHAKE\-128f\fR,
-\&\fBSLH\-DSA\-SHAKE\-192s\fR, \fBEVP_PKEY\-SLH\-DSA\-SHAKE\-192f\fR,
-\&\fBSLH\-DSA\-SHAKE\-256s\fR and \fBEVP_PKEY\-SLH\-DSA\-SHAKE\-256f\fR key types are
+SLH\-DSA implements the algorithms \fBSLH\-DSA\-SHA2\-128s\fR, \fBSLH\-DSA\-SHA2\-128f\fR,
+\&\fBSLH\-DSA\-SHA2\-192s\fR, \fBSLH\-DSA\-SHA2\-192f\fR,
+\&\fBSLH\-DSA\-SHA2\-256s\fR, \fBSLH\-DSA\-SHA2\-256f\fR,
+\&\fBSLH\-DSA\-SHAKE\-128s\fR, \fBSLH\-DSA\-SHAKE\-128f\fR,
+\&\fBSLH\-DSA\-SHAKE\-192s\fR, \fBSLH\-DSA\-SHAKE\-192f\fR,
+\&\fBSLH\-DSA\-SHAKE\-256s\fR and \fBSLH\-DSA\-SHAKE\-256f\fR.
+The corresponding key types \fBEVP_PKEY_SLH_DSA_SHA2_128S\fR, \fBEVP_PKEY_SLH_DSA_SHA2_128F\fR,
+\&\fBEVP_PKEY_SLH_DSA_SHA2_192S\fR, \fBEVP_PKEY_SLH_DSA_SHA2_192F\fR,
+\&\fBEVP_PKEY_SLH_DSA_SHA2_256S\fR, \fBEVP_PKEY_SLH_DSA_SHA2_256F\fR,
+\&\fBEVP_PKEY_SLH_DSA_SHAKE_128S\fR, \fBEVP_PKEY_SLH_DSA_SHAKE_128F\fR,
+\&\fBEVP_PKEY_SLH_DSA_SHAKE_192S\fR, \fBEVP_PKEY_SLH_DSA_SHAKE_192F\fR,
+\&\fBEVP_PKEY_SLH_DSA_SHAKE_256S\fR and \fBEVP_PKEY_SLH_DSA_SHAKE_256F\fR are
 implemented in OpenSSL\*(Aqs default and FIPS providers.  These implementations
 support the associated key, containing the public key \fIpub\fR and the
 private key \fIpriv\fR.

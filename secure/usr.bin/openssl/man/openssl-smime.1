@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OPENSSL-SMIME 1ossl"
-.TH OPENSSL-SMIME 1ossl 2026-09-29 3.5.9 OpenSSL
+.TH OPENSSL-SMIME 1ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -79,8 +79,8 @@ openssl\-smime \- S/MIME command
 [\fB\-crlfeol\fR]
 [\fB\-\fR\f(BIcipher\fR]
 [\fB\-in\fR \fIfile\fR]
-[\fB\-certfile\fR \fIfile\fR]
-[\fB\-signer\fR \fIfile\fR]
+[\fB\-certfile\fR \fIfilename\fR|\fIuri\fR]
+[\fB\-signer\fR \fIfilename\fR|\fIuri\fR]
 [\fB\-nointern\fR]
 [\fB\-noverify\fR]
 [\fB\-nochain\fR]
@@ -89,10 +89,10 @@ openssl\-smime \- S/MIME command
 [\fB\-noattr\fR]
 [\fB\-nodetach\fR]
 [\fB\-nosmimecap\fR]
-[\fB\-recip\fR \fI file\fR]
+[\fB\-recip\fR \fIfilename\fR|\fIuri\fR]
 [\fB\-inform\fR \fBDER\fR|\fBPEM\fR|\fBSMIME\fR]
 [\fB\-outform\fR \fBDER\fR|\fBPEM\fR|\fBSMIME\fR]
-[\fB\-keyform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR|\fBENGINE\fR]
+[\fB\-keyform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR]
 [\fB\-passin\fR \fIarg\fR]
 [\fB\-inkey\fR \fIfilename\fR|\fIuri\fR]
 [\fB\-out\fR \fIfile\fR]
@@ -111,7 +111,6 @@ openssl\-smime \- S/MIME command
 [\fB\-no\-CApath\fR]
 [\fB\-CAstore\fR \fIuri\fR]
 [\fB\-no\-CAstore\fR]
-[\fB\-engine\fR \fIid\fR]
 [\fB\-rand\fR \fIfiles\fR]
 [\fB\-writerand\fR \fIfile\fR]
 [\fB\-allow_proxy_certs\fR]
@@ -188,6 +187,10 @@ Resign a message: take an existing message and one or more new signers.
 .IX Item "-verify"
 Verify signed mail. Expects a signed mail message on input and outputs
 the signed data. Both clear text and opaque signing is supported.
+.Sp
+Unless \fB\-nochain\fR is specified, validation of signer certificates and their
+chain is done by default w.r.t. the S/MIME signing (\f(CW\*(C`smimesign\*(C'\fR) purpose.
+For details see "Certificate Extensions" in \fBopenssl\-verification\-options\fR\|(1).
 .IP \fB\-pk7out\fR 4
 .IX Item "-pk7out"
 Takes an input message and writes out a PEM encoded PKCS#7 structure.
@@ -209,8 +212,8 @@ See \fBopenssl\-format\-options\fR\|(1) for details.
 The output format of the PKCS#7 (S/MIME) structure (if one is being written);
 the default is \fBSMIME\fR.
 See \fBopenssl\-format\-options\fR\|(1) for details.
-.IP "\fB\-keyform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR|\fBENGINE\fR" 4
-.IX Item "-keyform DER|PEM|P12|ENGINE"
+.IP "\fB\-keyform\fR \fBDER\fR|\fBPEM\fR|\fBP12\fR" 4
+.IX Item "-keyform DER|PEM|P12"
 The key format; unspecified by default.
 See \fBopenssl\-format\-options\fR\|(1) for details.
 .IP "\fB\-stream\fR, \fB\-indef\fR" 4
@@ -254,26 +257,38 @@ See \fBopenssl\-enc\fR\|(1) for a list of ciphers supported by your version of O
 If not specified, AES\-256\-CBC is used as the default. Only used with \fB\-encrypt\fR.
 .IP \fB\-nointern\fR 4
 .IX Item "-nointern"
-When verifying a message normally certificates (if any) included in
-the message are searched for the signing certificate. With this option
-only the certificates specified in the \fB\-certfile\fR option are used.
-The supplied certificates can still be used as untrusted CAs however.
+Normally, when verifying a message, the certificates (if any) included in
+the message are searched for the signer certificates. With this option,
+only the certificates given with the \fB\-certfile\fR option are used.
+However, the certificates included in the message are still used
+as candidate intermediate CA certificates during chain construction
+unless \fB\-nochain\fR is also specified.
 .IP \fB\-noverify\fR 4
 .IX Item "-noverify"
 Do not verify the signers certificate of a signed message.
 .IP \fB\-nochain\fR 4
 .IX Item "-nochain"
-Do not do chain verification of signers certificates; that is, do not
-use the certificates in the signed message as untrusted CAs.
+When verifying the signer certificates of a signed message, do not use the
+certificates in the message as candidate CA certificates for chain building.
+This also disables the default use of the S/MIME signing (\f(CW\*(C`smimesign\*(C'\fR) purpose.
+To re\-enable it, \fB\-purpose smimesign\fR can be specified.
 .IP \fB\-nosigs\fR 4
 .IX Item "-nosigs"
 Don\*(Aqt try to verify the signatures on the message.
 .IP \fB\-nocerts\fR 4
 .IX Item "-nocerts"
-When signing a message, the signer\*(Aqs certificate is normally included.
-With this option it is excluded. This will reduce the size of the
-signed message, but the verifier must have a copy of the signers certificate
+When signing a message, the signer certificates are normally included,
+but this option disables their inclusion.
+This will reduce the size of the signed message,
+but the verifier must have a copy of those certificates
 available locally (passed using the \fB\-certfile\fR option for example).
+.Sp
+With the \-sign operation,
+setting this option has special effect on any extra certificates supplied via the
+\&\fB\-certfile\fR option: while signer certificates supplied via the \fB\-signer\fR option are
+not included, the extra certificates from \fB\-certfile\fR are included in the given order.
+This can be used to specify the order certificates appear in the PKCS#7 structure
+as a workaround for broken applications that require a certain ordering.
 .IP \fB\-noattr\fR 4
 .IX Item "-noattr"
 Normally, when a message is signed, a set of attributes are included which
@@ -298,21 +313,31 @@ is useful when handling binary data which may not be in MIME format.
 .IX Item "-crlfeol"
 Normally the output file uses a single \fBLF\fR as end of line. When this
 option is present \fBCRLF\fR is used instead.
-.IP "\fB\-certfile\fR \fIfile\fR" 4
-.IX Item "-certfile file"
-Allows additional certificates to be specified. When signing these will
-be included with the message. When verifying, these will be searched for
-signer certificates and will be used for chain building.
+.IP "\fB\-certfile\fR \fIfilename\fR|\fIuri\fR" 4
+.IX Item "-certfile filename|uri"
+Provide extra certificates.
+When signing, these will be included with the message and can serve
+both as candidate untrusted CA certificates for chain building in verification
+and as fallback signer certificates.
+When verifying, the provided certificates will be used for chain building
+and take precedence over the signer certificates in the message
+as a source of candidate signers.
+With \fB\-nointern\fR these will be the only signer certificates considered.
+.Sp
+Note that a message can have multiple signers.
+When verifying a multi\-signed message, all the signatures must be valid,
+and so all the signer certificates need to be available.
 .Sp
 The input can be in PEM, DER, or PKCS#12 format.
-.IP "\fB\-signer\fR \fIfile\fR" 4
-.IX Item "-signer file"
-A signing certificate when signing or resigning a message, this option can be
-used multiple times if more than one signer is required. If a message is being
-verified then the signers certificates will be written to this file if the
-verification was successful.
-.IP "\fB\-recip\fR \fIfile\fR" 4
-.IX Item "-recip file"
+.IP "\fB\-signer\fR \fIfilename\fR|\fIuri\fR" 4
+.IX Item "-signer filename|uri"
+A signer certificate. When signing or resigning a message, this option can be
+used multiple times if more than one signer is required.
+If a message has been verified successfully, then the signer certificate(s)
+will be written to this file.
+In the verification case, the option argument format \fIuri\fR cannot be used.
+.IP "\fB\-recip\fR \fIfilename\fR|\fIuri\fR" 4
+.IX Item "-recip filename|uri"
 The recipients certificate when decrypting a message. This certificate
 must match one of the recipients of the message or an error occurs.
 .IP "\fB\-inkey\fR \fIfilename\fR|\fIuri\fR" 4
@@ -320,7 +345,7 @@ must match one of the recipients of the message or an error occurs.
 The private key to use when signing or decrypting. This must match the
 corresponding certificate. If this option is not specified then the
 private key must be included in the certificate file specified with
-the \fB\-recip\fR or \fB\-signer\fR file. When signing this option can be used
+the \fB\-recip\fR or \fB\-signer\fR option. When signing this option can be used
 multiple times to specify successive keys.
 .IP "\fB\-passin\fR \fIarg\fR" 4
 .IX Item "-passin arg"
@@ -341,10 +366,6 @@ Any verification errors cause the command to exit.
 .IP "\fB\-CAfile\fR \fIfile\fR, \fB\-no\-CAfile\fR, \fB\-CApath\fR \fIdir\fR, \fB\-no\-CApath\fR, \fB\-CAstore\fR \fIuri\fR, \fB\-no\-CAstore\fR" 4
 .IX Item "-CAfile file, -no-CAfile, -CApath dir, -no-CApath, -CAstore uri, -no-CAstore"
 See "Trusted Certificate Options" in \fBopenssl\-verification\-options\fR\|(1) for details.
-.IP "\fB\-engine\fR \fIid\fR" 4
-.IX Item "-engine id"
-See "Engine Options" in \fBopenssl\fR\|(1).
-This option is deprecated.
 .IP "\fB\-rand\fR \fIfiles\fR, \fB\-writerand\fR \fIfile\fR" 4
 .IX Item "-rand files, -writerand file"
 See "Random State Options" in \fBopenssl\fR\|(1) for details.
@@ -546,7 +567,7 @@ algorithms as supplied in the SMIMECapabilities signed attribute. This means the
 user has to manually include the correct encryption algorithm. It should store
 the list of permitted ciphers in a database and only use those.
 .PP
-No revocation checking is done on the signer\*(Aqs certificate.
+No revocation checking is done on signer certificates.
 .PP
 The current code can only handle S/MIME v2 messages, the more complex S/MIME v3
 structures may cause parsing errors.
@@ -562,7 +583,7 @@ added in OpenSSL 1.0.0
 .PP
 The \-no_alt_chains option was added in OpenSSL 1.1.0.
 .PP
-The \fB\-engine\fR option was deprecated in OpenSSL 3.0.
+The \fB\-engine\fR option was removed in OpenSSL 4.0.
 .SH COPYRIGHT
 .IX Header "COPYRIGHT"
 Copyright 2000\-2026 The OpenSSL Project Authors. All Rights Reserved.

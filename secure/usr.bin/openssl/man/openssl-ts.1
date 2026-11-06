@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OPENSSL-TS 1ossl"
-.TH OPENSSL-TS 1ossl 2026-09-29 3.5.9 OpenSSL
+.TH OPENSSL-TS 1ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -105,7 +105,6 @@ openssl\-ts \- Time Stamping Authority command
 [\fB\-out\fR \fIresponse.tsr\fR]
 [\fB\-token_out\fR]
 [\fB\-text\fR]
-[\fB\-engine\fR \fIid\fR]
 [\fB\-provider\fR \fIname\fR]
 [\fB\-provider\-path\fR \fIpath\fR]
 [\fB\-provparam\fR \fI[name:]key=value\fR]
@@ -342,10 +341,6 @@ response (TimeStampResp). (Optional)
 .IX Item "-text"
 If this option is specified the output is human\-readable text format
 instead of DER. (Optional)
-.IP "\fB\-engine\fR \fIid\fR" 4
-.IX Item "-engine id"
-See "Engine Options" in \fBopenssl\fR\|(1).
-This option is deprecated.
 .IP "\fB\-provider\fR \fIname\fR" 4
 .IX Item "-provider name"
 .PD 0
@@ -445,12 +440,6 @@ The name of the file containing the hexadecimal serial number of the
 last timestamp response created. This number is incremented by 1 for
 each response. If the file does not exist at the time of response
 generation a new file is created with serial number 1. (Mandatory)
-.IP \fBcrypto_device\fR 4
-.IX Item "crypto_device"
-Specifies the OpenSSL engine that will be set as the default for
-all available algorithms. The default value is built\-in, you can specify
-any other engines supported by OpenSSL (e.g. use chil for the NCipher HSM).
-(Optional)
 .IP \fBsigner_cert\fR 4
 .IX Item "signer_cert"
 TSA signing certificate in PEM format. The same as the \fB\-signer\fR
@@ -675,7 +664,8 @@ seeding mechanism. The new seeding mechanism makes it unnecessary to
 define a RANDFILE for saving and restoring randomness. This option is
 retained mainly for compatibility reasons.
 .PP
-The \fB\-engine\fR option was deprecated in OpenSSL 3.0.
+The \fB\-engine\fR option and \fBcrypto_device\fR configuration option were removed in
+OpenSSL 4.0.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 \&\fBopenssl\fR\|(1),

@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OSSL_CRMF_MSG_GET0_TMPL 3ossl"
-.TH OSSL_CRMF_MSG_GET0_TMPL 3ossl 2026-09-29 3.5.9 OpenSSL
+.TH OSSL_CRMF_MSG_GET0_TMPL 3ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -124,7 +124,7 @@ OSSL_CRMF_MSG_centralkeygen_requested
 \&
 \& int OSSL_CRMF_MSG_get_certReqId(const OSSL_CRMF_MSG *crm);
 \& int OSSL_CRMF_MSG_centralkeygen_requested(const OSSL_CRMF_MSG *crm,
-\&                                           const X509_REQ *p10cr);
+\&                                           const X509_REQ *p10);
 .Ve
 .SH DESCRIPTION
 .IX Header "DESCRIPTION"
@@ -189,7 +189,7 @@ with the caller, who is responsible for freeing it.
 .PP
 \&\fBOSSL_CRMF_MSG_centralkeygen_requested()\fR returns 1 if central key generation
 is requested i.e., the public key in the certificate request (\fIcrm\fR is taken if it is non\-NULL,
-otherwise \fIp10cr\fR) is NULL or has an empty key value (with length zero).
+otherwise \fIp10\fR) is NULL or has an empty key value (with length zero).
 In case \fIcrm\fR is non\-NULL, this is checked for consistency with its \fBpopo\fR field
 (must be NULL if and only if central key generation is requested).
 Otherwise it returns 0, and on error a negative value.
@@ -216,7 +216,7 @@ The OpenSSL CRMF support was added in OpenSSL 3.0.
 and \fBOSSL_CRMF_MSG_centralkeygen_requested()\fR were added in OpenSSL 3.5.
 .SH COPYRIGHT
 .IX Header "COPYRIGHT"
-Copyright 2007\-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2007\-2026 The OpenSSL Project Authors. All Rights Reserved.
 .PP
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

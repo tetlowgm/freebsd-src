@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "OPENSSL-S_TIME 1ossl"
-.TH OPENSSL-S_TIME 1ossl 2026-09-29 3.5.9 OpenSSL
+.TH OPENSSL-S_TIME 1ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -77,7 +77,7 @@ openssl\-s_time \- SSL/TLS performance timing program
 [\fB\-new\fR]
 [\fB\-verify\fR \fIdepth\fR]
 [\fB\-time\fR \fIseconds\fR]
-[\fB\-ssl3\fR]
+[\fB\-testmode\fR]
 [\fB\-tls1\fR]
 [\fB\-tls1_1\fR]
 [\fB\-tls1_2\fR]
@@ -170,6 +170,12 @@ Specifies how long (in seconds) this command should establish connections
 and optionally transfer payload data from a server. Server and client
 performance and the link speed determine how many connections it
 can establish.
+.IP \fB\-testmode\fR 4
+.IX Item "-testmode"
+Runs the s_time command in test mode. Performs only 1 iteration of the new
+connection test and 2 iterations of the session reuse test (the latter to
+ensure session resumption is actually exercised) regardless of any \fB\-time\fR
+value. This is intended for use by the test suite.
 .IP "\fB\-nameopt\fR \fIoption\fR" 4
 .IX Item "-nameopt option"
 This specifies how the subject or issuer names are displayed.
@@ -191,16 +197,23 @@ See "Provider Options" in \fBopenssl\fR\|(1), \fBprovider\fR\|(7), and \fBproper
 .IP "\fB\-cafile\fR \fIfile\fR" 4
 .IX Item "-cafile file"
 This is an obsolete synonym for \fB\-CAfile\fR.
-.IP "\fB\-ssl3\fR, \fB\-tls1\fR, \fB\-tls1_1\fR, \fB\-tls1_2\fR, \fB\-tls1_3\fR" 4
-.IX Item "-ssl3, -tls1, -tls1_1, -tls1_2, -tls1_3"
+.IP "\fB\-tls1\fR, \fB\-tls1_1\fR, \fB\-tls1_2\fR, \fB\-tls1_3\fR" 4
+.IX Item "-tls1, -tls1_1, -tls1_2, -tls1_3"
 See "TLS Version Options" in \fBopenssl\fR\|(1).
+.SH ENVIRONMENT
+.IX Header "ENVIRONMENT"
+.IP \fBSSL_CIPHER\fR 4
+.IX Item "SSL_CIPHER"
+If the \fB\-cipher\fR option is not specified, the contents of this environment
+variable are used to modify the TLSv1.2 and below cipher list sent
+by the client the same way the aforementioned option does.
 .SH NOTES
 .IX Header "NOTES"
 This command can be used to measure the performance of an SSL connection.
 To connect to an SSL HTTP server and get the default page the command
 .PP
 .Vb 1
-\& openssl s_time \-connect servername:443 \-www / \-CApath yourdir \-CAfile yourfile.pem \-cipher commoncipher [\-ssl3]
+\& openssl s_time \-connect servername:443 \-www / \-CApath yourdir \-CAfile yourfile.pem \-cipher commoncipher
 .Ve
 .PP
 would typically be used (https uses port 443). \fIcommoncipher\fR is a cipher to
@@ -209,7 +222,7 @@ for details.
 .PP
 If the handshake fails then there are several possible causes, if it is
 nothing obvious like no client certificate then the \fB\-bugs\fR and
-\&\fB\-ssl3\fR options can be tried
+\&\fB\-tls1\fR options can be tried
 in case it is a buggy server. In particular you should play with these
 options \fBbefore\fR submitting a bug report to an OpenSSL mailing list.
 .PP
@@ -238,6 +251,8 @@ fails.
 .SH HISTORY
 .IX Header "HISTORY"
 The \fB\-cafile\fR option was deprecated in OpenSSL 3.0.
+.PP
+The \fB\-testmode\fR option was added in OpenSSL 4.1.
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 \&\fBopenssl\fR\|(1),
@@ -247,7 +262,7 @@ The \fB\-cafile\fR option was deprecated in OpenSSL 3.0.
 \&\fBossl_store\-file\fR\|(7)
 .SH COPYRIGHT
 .IX Header "COPYRIGHT"
-Copyright 2004\-2021 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2004\-2026 The OpenSSL Project Authors. All Rights Reserved.
 .PP
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

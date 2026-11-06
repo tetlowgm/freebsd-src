@@ -58,7 +58,7 @@
 .\" ========================================================================
 .\"
 .IX Title "SSL_CTX_SET1_CURVES 3ossl"
-.TH SSL_CTX_SET1_CURVES 3ossl 2026-09-29 3.5.9 OpenSSL
+.TH SSL_CTX_SET1_CURVES 3ossl 2026-10-23 4.1.0 OpenSSL
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -66,7 +66,8 @@
 .SH NAME
 SSL_CTX_set1_groups, SSL_CTX_set1_groups_list, SSL_set1_groups,
 SSL_set1_groups_list, SSL_get1_groups, SSL_get0_iana_groups,
-SSL_get_shared_group, SSL_get_negotiated_group, SSL_CTX_set1_curves,
+SSL_get0_ec_point_formats, SSL_get_shared_group, SSL_get_negotiated_group,
+SSL_CTX_set1_curves,
 SSL_CTX_set1_curves_list, SSL_set1_curves, SSL_set1_curves_list,
 SSL_get1_curves, SSL_get_shared_curve, SSL_CTX_get0_implemented_groups
 \&\- EC supported curve functions
@@ -75,22 +76,23 @@ SSL_get1_curves, SSL_get_shared_curve, SSL_CTX_get0_implemented_groups
 .Vb 1
 \& #include <openssl/ssl.h>
 \&
-\& int SSL_CTX_set1_groups(SSL_CTX *ctx, int *glist, int glistlen);
-\& int SSL_CTX_set1_groups_list(SSL_CTX *ctx, char *list);
+\& int SSL_CTX_set1_groups(SSL_CTX *ctx, const int *glist, int glistlen);
+\& int SSL_CTX_set1_groups_list(SSL_CTX *ctx, const char *list);
 \&
-\& int SSL_set1_groups(SSL *ssl, int *glist, int glistlen);
-\& int SSL_set1_groups_list(SSL *ssl, char *list);
+\& int SSL_set1_groups(SSL *ssl, const int *glist, int glistlen);
+\& int SSL_set1_groups_list(SSL *ssl, const char *list);
 \&
 \& int SSL_get1_groups(SSL *ssl, int *groups);
 \& int SSL_get0_iana_groups(SSL *ssl, uint16_t **out);
+\& int SSL_get0_ec_point_formats(SSL *ssl, const unsigned char **plst);
 \& int SSL_get_shared_group(SSL *s, int n);
 \& int SSL_get_negotiated_group(SSL *s);
 \&
-\& int SSL_CTX_set1_curves(SSL_CTX *ctx, int *clist, int clistlen);
-\& int SSL_CTX_set1_curves_list(SSL_CTX *ctx, char *list);
+\& int SSL_CTX_set1_curves(SSL_CTX *ctx, const int *clist, int clistlen);
+\& int SSL_CTX_set1_curves_list(SSL_CTX *ctx, const char *list);
 \&
-\& int SSL_set1_curves(SSL *ssl, int *clist, int clistlen);
-\& int SSL_set1_curves_list(SSL *ssl, char *list);
+\& int SSL_set1_curves(SSL *ssl, const int *clist, int clistlen);
+\& int SSL_set1_curves_list(SSL *ssl, const char *list);
 \&
 \& int SSL_get1_curves(SSL *ssl, int *curves);
 \& int SSL_get_shared_curve(SSL *s, int n);
@@ -131,7 +133,7 @@ extension. The extension\*(Aqs preference order, to be evaluated by the server, 
 determined by the order of the elements in the array.
 .PP
 For a TLS 1.2 server, the groups determine the selected group. If
-\&\fBSSL_OP_CIPHER_SERVER_PREFERENCE\fR is set, the order of the elements in the
+\&\fBSSL_OP_SERVER_PREFERENCE\fR is set, the order of the elements in the
 array determines the selected group. Otherwise, the order is ignored and the
 client\*(Aqs order determines the selection.
 .PP
@@ -177,9 +179,13 @@ levels, and can specify which predicted key shares should be sent by a client.
 Group tuples are used by OpenSSL TLS servers to decide whether to request a
 stronger keyshare than those predicted by sending a Hello Retry Request
 (\fBHRR\fR) even if some of the predicted groups are supported.
-OpenSSL clients ignore tuple boundaries, and pay attention only to the overall
-order of \fIlist\fR elements and which groups are selected as predicted keyshares
-as described below.
+OpenSSL clients largely ignore tuple boundaries, and pay attention only to the
+overall order of \fIlist\fR elements and which groups are selected as predicted
+keyshares as described below.
+Tuple boundaries do however affect the behaviour of keyshare predictions
+that \f(CW\*(C`float\*(C'\fR from an unsupported or deleted tuple element to the first
+remaining element of the same tuple, when no other elements of that tuple
+are marked as predicted keyshares.
 .PP
 The specified list elements can optionally be ignored if not implemented
 (listing unknown groups otherwise results in error).
@@ -257,7 +263,7 @@ For a TLS 1.3 server, the groups in the string \fIlist\fR will be used to determ
 is used for the key agreement. The preference order of the group tuples is determined
 by the order of the tuples in the array, and the preference order of the groups within
 a group tuple is determined by the order of the groups in the tuple. Server preference
-can be enforced by setting \fBSSL_OP_CIPHER_SERVER_PREFERENCE\fR using
+can be enforced by setting \fBSSL_OP_SERVER_PREFERENCE\fR using
 \&\fBSSL_set_options\fR (default: client preference).
 .PP
 The server will select the group to be used for a key agreement using the following
@@ -270,7 +276,7 @@ pseudo\-code algorithm:
 \&             IF current key\-share group is also part of current group tuple: SH, return success
 \&         FOR each client supported groups
 \&             IF current supported group is also part of current group tuple: HRR, return success
-\&     ELSE (= server preference = with SSL_OP_CIPHER_SERVER_PREFERENCE option set)
+\&     ELSE (= server preference = with SSL_OP_SERVER_PREFERENCE option set)
 \&         FOR each group in current tuple
 \&             IF current group is also part of client key\-share groups: SH, return success
 \&         FOR each group in current tuple
@@ -307,6 +313,19 @@ is populated with the host\-byte\-order representation of the uint16_t group
 identifiers, as assigned by IANA.  The group list is returned in the same order
 that was received in the ClientHello.  The return value is the number of groups,
 not the number of bytes written.
+.PP
+\&\fBSSL_get0_ec_point_formats()\fR retrieves the peer\*(Aqs \fBec_point_formats\fR
+extension as a byte array of \fBTLSEXT_ECPOINTFORMAT_*\fR values in the
+order received.  If the peer sent the extension, \fB*plst\fR is set to an
+internal buffer holding the list and its length is returned; otherwise
+the return value is 0 and \fB*plst\fR is left unchanged.  The returned
+pointer is owned by the \fBSSL\fR connection and must not be freed.  The
+point format no longer affects certificate selection or acceptance.
+.PP
+The \fBec_point_formats\fR extension applies only to TLS 1.2 and below, but
+the peer\*(Aqs list is recorded even when TLS 1.3 is ultimately negotiated,
+since a TLS 1.3 \fBClientHello\fR may still carry the extension for
+backward compatibility.
 .PP
 \&\fBSSL_get_shared_group()\fR returns the NID of the shared group \fBn\fR for a
 server\-side SSL \fBssl\fR. If \fBn\fR is \-1 then the total number of shared groups is
@@ -363,6 +382,10 @@ success and 0 for failure.
 \&\fBSSL_get1_groups()\fR returns the number of groups, which may be zero.
 .PP
 \&\fBSSL_get0_iana_groups()\fR returns the number of (uint16_t) groups, which may be zero.
+.PP
+\&\fBSSL_get0_ec_point_formats()\fR returns the number of point formats sent by
+the peer in its \fBec_point_formats\fR extension, or 0 if no such extension
+was received.
 .PP
 \&\fBSSL_get_shared_group()\fR returns the NID of shared group \fBn\fR or NID_undef if there
 is no shared group \fBn\fR; or the total number of shared groups if \fBn\fR
@@ -444,7 +467,7 @@ OpenSSL 3.5 also introduced support for group tuples, the \f(CW\*(C`*\*(C'\fR ke
 prediction prefix, the \f(CW\*(C`/\*(C'\fR tuple separator, the \f(CW\*(C`DEFAULT\*(C'\fR pseudo\-group,
 and the \f(CW\*(C`\-\*(C'\fR prefix.
 .PP
-OpenSSL 3.5 also introduces support for three \fIhybrid\fR ECDH PQ key exchange
+OpenSSL 3.5 also introduced support for three \fIhybrid\fR ECDH PQ key exchange
 TLS groups: \fBX25519MLKEM768\fR, \fBSecP256r1MLKEM768\fR and
 \&\fBSecP384r1MLKEM1024\fR.
 They offer CPU performance comparable to the associated ECDH group, though at
@@ -454,6 +477,10 @@ largely as a result of the high CPU cost of ECDH for the underlying \fBP\-384\fR
 group.
 Also its key exchange messages at close to 1700 bytes are larger than the
 roughly 1200 bytes for the first two groups.
+.PP
+OpenSSL 4.0 introduced the \fBcurveSM2\fR (also known as \f(CW\*(C`ECDHE over SM2\*(C'\fR) key
+exchange group as specified in RFC8998, and \fBcurveSM2MLKEM768\fR, which is a
+hybrid of the \fBcurveSM2\fR group with \fBML\-KEM\-768\fR.
 .PP
 As of OpenSSL 3.5 key exchange group names are case\-insensitive.
 .PP
