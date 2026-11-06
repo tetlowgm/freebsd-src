@@ -19,8 +19,6 @@ MV?=		/bin/mv
 PERL?=		perl
 SETENVI=	/usr/bin/env -i
 
-BN_CONF_H=		include/crypto/bn_conf.h
-BN_CONF_H_ORIG=		${BN_CONF_H}.orig
 CONFIGURATION_H=	include/openssl/configuration.h
 CONFIGURATION_H_ORIG=	${CONFIGURATION_H}.orig
 
@@ -77,12 +75,6 @@ all: patch
 patch: configure
 	# Spam arch-specific overrides to config files.
 	@echo "==> Patching headers"
-	@(cd ${.CURDIR} && ${SETENVI} ${WRK_ENV} ${GMAKE} ${BN_CONF_H} && \
-	 ${MV} ${BN_CONF_H} ${BN_CONF_H_ORIG} && \
-	 ${CAT} ${BN_CONF_H}.orig \
-	     ${LCRYPTO_SRC}/freebsd/${BN_CONF_H} >> \
-	     ${BN_CONF_H})
-
 	@(cd ${.CURDIR} && \
 	  ${MV} ${CONFIGURATION_H} ${CONFIGURATION_H_ORIG} && \
 	  ${CAT} ${CONFIGURATION_H_ORIG} \
@@ -91,7 +83,7 @@ patch: configure
 
 
 clean: .PHONY
-	@(cd ${.CURDIR} && rm -f ${BN_CONF_H_ORIG} ${CONFIGURATION_H_ORIG})
+	@(cd ${.CURDIR} && rm -f ${CONFIGURATION_H_ORIG})
 
 	@(cd ${SRCTOP}/secure/lib/libcrypto && \
 	    ${SETENVI} ${WRK_ENV} ${MAKE} cleanasm)
