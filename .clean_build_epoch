@@ -5,3 +5,6 @@
 
 # 4757b351ea9: openssl: Import version 3.5.1
 20250807	# All OpenSSL-using bits need rebuilt
+
+# openssl: update to 4.1.0 (removed headers, libcrypto/libssl.so.41)
+20261106	# All OpenSSL-using bits need rebuilt
