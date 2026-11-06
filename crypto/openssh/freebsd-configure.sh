@@ -8,7 +8,6 @@ configure_args="
     --with-ssl-dir=/usr
     --without-tcp-wrappers
     --with-libedit
-    --with-ssl-engine
     --without-xauth
 "
 
