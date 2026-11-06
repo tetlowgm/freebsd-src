@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023-2024 The OpenSSL Project Authors. All Rights Reserved.
+ *  Copyright 2023-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  *  Licensed under the Apache License 2.0 (the "License").  You may not use
  *  this file except in compliance with the License.  You can obtain a copy
@@ -171,7 +171,7 @@ static int handle_io_failure(SSL *ssl, int res)
 }
 
 /*
- * Simple application to send a basic HTTP/1.0 request to a server and
+ * Simple application to send a basic HTTP/1.1 request to a server and
  * print the response on the screen.
  */
 int main(int argc, char *argv[])
@@ -181,7 +181,7 @@ int main(int argc, char *argv[])
     BIO *bio = NULL;
     int res = EXIT_FAILURE;
     int ret;
-    const char *request_start = "GET / HTTP/1.0\r\nConnection: close\r\nHost: ";
+    const char *request_start = "GET / HTTP/1.1\r\nConnection: close\r\nHost: ";
     const char *request_end = "\r\n\r\n";
     size_t written, readbytes = 0;
     char buf[160];
@@ -273,7 +273,7 @@ int main(int argc, char *argv[])
      * Virtually all clients should do this unless you really know what you
      * are doing.
      */
-    if (!SSL_set1_host(ssl, hostname)) {
+    if (!SSL_set1_dnsname(ssl, hostname)) {
         printf("Failed to set the certificate verification hostname");
         goto end;
     }

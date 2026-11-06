@@ -384,8 +384,9 @@ static int test_cipher_reinit(int test_id)
     if (!TEST_ptr(cipher = EVP_CIPHER_fetch(libctx, name, NULL)))
         goto err;
 
-    /* ccm fails on the second update - this matches OpenSSL 1_1_1 behaviour */
-    ccm = (EVP_CIPHER_get_mode(cipher) == EVP_CIPH_CCM_MODE);
+    /* ccm fails on the second update on <4.2.0 - this matches OpenSSL 1_1_1 behaviour */
+    ccm = (EVP_CIPHER_get_mode(cipher) == EVP_CIPH_CCM_MODE
+        && fips_provider_version_match(libctx, "<4.2.0"));
 
     /* siv cannot be called with NULL key as the iv is irrelevant */
     siv = (EVP_CIPHER_get_mode(cipher) == EVP_CIPH_SIV_MODE);
@@ -485,7 +486,7 @@ static int test_cipher_reinit_partialupdate(int test_id)
 
     /* skip any ciphers that don't allow partial updates */
     if (((EVP_CIPHER_get_flags(cipher)
-             & (EVP_CIPH_FLAG_CTS | EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK))
+             & (EVP_CIPH_FLAG_CTS | EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK | EVP_CIPH_FLAG_ENC_THEN_MAC))
             != 0)
         || EVP_CIPHER_get_mode(cipher) == EVP_CIPH_CCM_MODE
         || EVP_CIPHER_get_mode(cipher) == EVP_CIPH_XTS_MODE
@@ -558,7 +559,7 @@ static int rsa_keygen(int bits, EVP_PKEY **pub, EVP_PKEY **priv)
         || !TEST_true(OSSL_ENCODER_to_data(ectx, &pub_der, &len)))
         goto err;
     pp = pub_der;
-    if (!TEST_ptr(d2i_PublicKey(EVP_PKEY_RSA, pub, &pp, len)))
+    if (!TEST_ptr(d2i_PublicKey(EVP_PKEY_RSA, pub, &pp, (long)len)))
         goto err;
     ret = 1;
 err:
@@ -595,8 +596,8 @@ static int kem_rsa_gen_recover(void)
         && TEST_int_eq(EVP_PKEY_encapsulate(dctx, NULL, &ctlen, NULL,
                            &secretlen),
             1)
-        && TEST_int_eq(ctlen, secretlen)
-        && TEST_int_eq(ctlen, bits / 8)
+        && TEST_size_t_eq(ctlen, secretlen)
+        && TEST_size_t_eq(ctlen, bits / 8)
         && TEST_int_eq(EVP_PKEY_encapsulate(dctx, ct, &ctlen, secret,
                            &secretlen),
             1)
@@ -731,7 +732,7 @@ static int kem_rsa_params(void)
         && TEST_int_eq(EVP_PKEY_CTX_set_kem_op(privctx, "RSASVE"), 1)
         && TEST_int_eq(EVP_PKEY_decapsulate(privctx, secret, NULL, ct, sizeof(ct)), 1)
         && TEST_int_eq(EVP_PKEY_decapsulate(privctx, NULL, &secretlen, ct, sizeof(ct)), 1)
-        && TEST_int_eq(secretlen, 256)
+        && TEST_size_t_eq(secretlen, 256)
         /* Fail if passed NULL arguments */
         && TEST_int_eq(EVP_PKEY_decapsulate(privctx, NULL, NULL, ct, sizeof(ct)), 0)
         && TEST_int_eq(EVP_PKEY_decapsulate(privctx, secret, &secretlen, NULL, 0), 0)

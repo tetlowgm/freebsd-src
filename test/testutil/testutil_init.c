@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -33,13 +33,15 @@ static size_t internal_trace_cb(const char *buf, size_t cnt,
 
         tid = CRYPTO_THREAD_get_current_id();
         hex = OPENSSL_buf2hexstr((const unsigned char *)&tid, sizeof(tid));
-        BIO_snprintf(buffer, sizeof(buffer), "TRACE[%s]:%s: ",
+        snprintf(buffer, sizeof(buffer), "TRACE[%s]:%s: ",
             hex, OSSL_trace_get_category_name(category));
         OPENSSL_free(hex);
         BIO_set_prefix(trace_data->bio, buffer);
         break;
     case OSSL_TRACE_CTRL_WRITE:
-        ret = BIO_write(trace_data->bio, buf, cnt);
+        if (cnt > INT_MAX)
+            cnt = INT_MAX;
+        ret = BIO_write(trace_data->bio, buf, (int)cnt);
         break;
     case OSSL_TRACE_CTRL_END:
         trace_data->ingroup = 0;

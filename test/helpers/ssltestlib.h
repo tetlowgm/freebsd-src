@@ -76,7 +76,14 @@ void bio_s_no_retry_zero_free(void);
 #define MEMPACKET_CTRL_SET_DUPLICATE_REC (4 << 15)
 
 int mempacket_swap_epoch(BIO *bio);
+int mempacket_swap_epoch_dtls13(BIO *bio);
+int mempacket_iterate(BIO *bio);
 int mempacket_move_packet(BIO *bio, int d, int s);
+int mempacket_find_record(BIO *bio, int rectype, int hs_msg_type,
+    int *pktidx, int *recidx);
+int mempacket_split_packet_at(BIO *bio, int pktidx, int recidx);
+int mempacket_append_to_record(BIO *bio, int pktidx, int recidx,
+    unsigned char *data, size_t datalen);
 int mempacket_dup_last_packet(BIO *bio);
 int mempacket_test_inject(BIO *bio, const char *in, int inl, int pktnum,
     int type);
@@ -90,7 +97,5 @@ SSL_SESSION *create_a_psk(SSL *ssl, size_t mdsize);
 /* Add cert from `cert_file` multiple times to create large extra cert chain */
 int ssl_ctx_add_large_cert_chain(OSSL_LIB_CTX *libctx, SSL_CTX *sctx,
     const char *cert_file);
-
-ENGINE *load_dasync(void);
 
 #endif /* OSSL_TEST_SSLTESTLIB_H */

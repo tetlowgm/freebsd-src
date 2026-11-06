@@ -28,13 +28,13 @@ B<openssl> B<s_server>
 [B<-serverinfo> I<val>]
 [B<-key> I<filename>|I<uri>]
 [B<-key2> I<filename>|I<uri>]
-[B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
+[B<-keyform> B<DER>|B<PEM>|B<P12>]
 [B<-pass> I<val>]
 [B<-dcert> I<infile>]
 [B<-dcertform> B<DER>|B<PEM>|B<P12>]
 [B<-dcert_chain> I<infile>]
 [B<-dkey> I<filename>|I<uri>]
-[B<-dkeyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
+[B<-dkeyform> B<DER>|B<PEM>|B<P12>]
 [B<-dpass> I<val>]
 [B<-nbio_test>]
 [B<-crlf>]
@@ -74,6 +74,7 @@ B<openssl> B<s_server>
 [B<-no_ign_eof>]
 [B<-no_ems>]
 [B<-status>]
+[B<-status_all>]
 [B<-status_verbose>]
 [B<-status_timeout> I<int>]
 [B<-proxy> I<[http[s]://][userinfo@]host[:port][/path][?query][#fragment]>]
@@ -131,9 +132,15 @@ B<openssl> B<s_server>
 {- $OpenSSL::safe::opt_x_synopsis -}
 {- $OpenSSL::safe::opt_trust_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
-{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 [B<-enable_server_rpk>]
 [B<-enable_client_rpk>]
+[B<-expected-rpks>]
+[B<-ech_key> I<filename>]
+[B<-ech_dir> I<dirname>]
+[B<-ech_noretry_dir> I<dirname>]
+[B<-ech_trialdecrypt>]
+[B<-ech_greaseretries>]
 
 =head1 DESCRIPTION
 
@@ -242,7 +249,7 @@ be used.
 
 The private Key file to use for servername if not given via B<-cert2>.
 
-=item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
+=item B<-keyform> B<DER>|B<PEM>|B<P12>
 
 The key format; unspecified by default.
 See L<openssl-format-options(1)> for details.
@@ -276,7 +283,7 @@ The input can be in PEM, DER, or PKCS#12 format.
 The format of the additional certificate file; unspecified by default.
 See L<openssl-format-options(1)> for details.
 
-=item B<-dkeyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
+=item B<-dkeyform> B<DER>|B<PEM>|B<P12>
 
 The format of the additional private key; unspecified by default.
 See L<openssl-format-options(1)> for details.
@@ -337,6 +344,9 @@ Download CRLs from distribution points given in CDP extensions of certificates
 A file in PEM format containing trusted CA certificates (root and/or
 intermediate) used to verify the client certificate chain.
 
+This and the following two options, B<-verifyCApath> and B<-verifyCAstore>,
+take precedence over the B<-CAfile>, B<-CApath>, and B<-CAstore> options.
+
 =item B<-verifyCApath> I<dir>
 
 A directory containing trusted certificates to use
@@ -346,14 +356,14 @@ see L<openssl-verify(1)> for more information.
 
 =item B<-verifyCAstore> I<uri>
 
-The URI of a store containing trusted certificates to use
+URI of a store containing trusted certificates to use
 for verifying client certificates.
+The URI may indicate a single certificate, as well as a collection of them.
+With URIs in the C<file:> scheme, this is generally treated like B<-verifyCApath> or
+B<-verifyCAfile>, depending on whether the URI points to a directory or a single file.
+See L<ossl_store(7)> for more information on stores and supported schemes.
 
-When any of B<-verifyCAfile>, B<-verifyCApath>, or B<-verifyCAstore> is
-specified, they are loaded into a separate verification store (via
-L<SSL_CTX_set1_verify_cert_store(3)>) and used for client certificate
-verification instead of the store built from B<-CAfile>, B<-CApath>, and
-B<-CAstore>. Note that B<-CAfile> is the sole source of acceptable issuing
+Note that B<-CAfile> is the sole source of acceptable issuing
 CA names sent to the client in the Certificate Request message during the
 handshake; B<-CApath>, B<-CAstore>, and the B<-verifyCA*> options do not
 contribute to this list.
@@ -362,6 +372,9 @@ contribute to this list.
 
 A file in PEM format containing trusted certificates to use
 when attempting to build the server certificate chain.
+
+This and the following two options, B<-chainCApath> and B<-chainCAstore>,
+take precedence over the B<-CAfile>, B<-CApath>, and B<-CAstore> options.
 
 =item B<-chainCApath> I<dir>
 
@@ -375,10 +388,9 @@ see L<openssl-verify(1)> for more information.
 The URI of a store containing trusted certificates to use
 for building the server certificate chain provided to the client.
 The URI may indicate a single certificate, as well as a collection of them.
-With URIs in the C<file:> scheme, this acts as B<-chainCAfile> or
-B<-chainCApath>, depending on if the URI indicates a directory or a
-single file.
-See L<ossl_store-file(7)> for more information on the C<file:> scheme.
+With URIs in the C<file:> scheme, this is generally treated like B<-chainCApath> or
+B<-chainCAfile>, depending on whether the URI points to a directory or a single file.
+See L<ossl_store(7)> for more information on stores and supported schemes.
 
 =item B<-nocert>
 
@@ -496,7 +508,15 @@ Disable Extended master secret negotiation.
 
 =item B<-status>
 
-Enables certificate status request support (aka OCSP stapling).
+Enables certificate status request support (aka OCSP stapling):
+an OCSP response is provided for the leaf (server) certificate
+if requested by the client side.
+
+=item B<-status_all>
+
+Like before, but for TLS v1.3 and beyond, status responses for all
+certificates in the chain (except the trust anchor) are provided
+if requested by the client side.
 
 =item B<-status_verbose>
 
@@ -539,6 +559,8 @@ Any given query component is handled as part of the path component.
 
 Overrides any OCSP responder URLs from the certificate and always provides the
 OCSP Response stored in the file. The file must be in DER format.
+This option may be used multiple times to specify OCSP responses for all
+certificates in the server certificate chain.
 
 =item B<-ssl_config> I<val>
 
@@ -561,9 +583,8 @@ Cannot be used in conjunction with B<-early_data>.
 =item B<-async>
 
 Switch on asynchronous mode. Cryptographic operations will be performed
-asynchronously. This will only have an effect if an asynchronous capable engine
-is also used via the B<-engine> option. For test purposes the dummy async engine
-(dasync) can be used (if available).
+asynchronously. This will only have an effect if an asynchronous capable
+provider is also used via the B<-provider> option.
 
 =item B<-max_send_frag> I<+int>
 
@@ -572,19 +593,15 @@ See L<SSL_CTX_set_max_send_fragment(3)> for further information.
 
 =item B<-split_send_frag> I<+int>
 
-The size used to split data for encrypt pipelines. If more data is written in
-one go than this value then it will be split into multiple pipelines, up to the
-maximum number of pipelines defined by max_pipelines. This only has an effect if
-a suitable cipher suite has been negotiated, an engine that supports pipelining
-has been loaded, and max_pipelines is greater than 1. See
-L<SSL_CTX_set_split_send_fragment(3)> for further information.
+This is used for pipelines. There is currently B<no support> for cipher
+pipelining in libssl. See L<SSL_CTX_set_max_send_fragment(3)> for further
+information.
 
 =item B<-max_pipelines> I<+int>
 
-The maximum number of encrypt/decrypt pipelines to be used. This will only have
-an effect if an engine has been loaded that supports pipelining (e.g. the dasync
-engine) and a suitable cipher suite has been negotiated. The default value is 1.
-See L<SSL_CTX_set_max_pipelines(3)> for further information.
+This is used for pipelines. There is currently B<no support> for cipher
+pipelining in libssl. See L<SSL_CTX_set_max_send_fragment(3)> for further
+information.
 
 =item B<-naccept> I<+int>
 
@@ -600,11 +617,11 @@ further information).
 
 =item B<-no_tx_cert_comp>
 
-Disables support for sending TLSv1.3 compressed certificates.
+Disables support for sending (D)TLSv1.3 compressed certificates.
 
 =item B<-no_rx_cert_comp>
 
-Disables support for receiving TLSv1.3 compressed certificates.
+Disables support for receiving (D)TLSv1.3 compressed certificates.
 
 =item B<-no_comp>
 
@@ -615,8 +632,8 @@ OpenSSL 1.1.0.
 =item B<-num_tickets>
 
 Control the number of tickets that will be sent to the client after a full
-handshake in TLSv1.3. The default number of tickets is 2. This option does not
-affect the number of tickets sent after a resumption handshake.
+handshake in (D)TLSv1.3. The default number of tickets is 2. This option does
+not affect the number of tickets sent after a resumption handshake.
 
 =item B<-dhparam> I<infile>
 
@@ -684,8 +701,8 @@ connect to that peer and complete the handshake.
 =item B<-sctp>
 
 Use SCTP for the transport protocol instead of UDP in DTLS. Must be used in
-conjunction with B<-dtls>, B<-dtls1> or B<-dtls1_2>. This option is only
-available where OpenSSL has support for SCTP enabled.
+conjunction with B<-dtls>, B<-dtls1>, B<-dtls1_2> or B<-dtls1_3>. This option
+is only available where OpenSSL has support for SCTP enabled.
 
 =item B<-sctp_label_bug>
 
@@ -713,7 +730,8 @@ The I<val> list is a comma-separated list of supported protocol
 names.  The list should contain the most desirable protocols first.
 Protocol names are printable ASCII strings, for example "http/1.1" or
 "spdy/3".
-The flag B<-nextprotoneg> cannot be specified if B<-tls1_3> is used.
+The flag B<-nextprotoneg> cannot be specified if B<-tls1_3> or B<-dtls1_3>
+is used.
 
 =item B<-ktls>
 
@@ -761,16 +779,16 @@ B<-WWW>, B<-HTTP> or B<-rev>.
 
 =item B<-stateless>
 
-Require TLSv1.3 cookies.
+Require (D)TLSv1.3 cookies.
 
 =item B<-anti_replay>, B<-no_anti_replay>
 
 Switches replay protection on or off, respectively. Replay protection is on by
 default unless overridden by a configuration file. When it is on, OpenSSL will
-automatically detect if a session ticket has been used more than once, TLSv1.3
-has been negotiated, and early data is enabled on the server. A full handshake
-is forced if a session ticket is used a second or subsequent time. Any early
-data that was sent will be rejected.
+automatically detect if a session ticket has been used more than once,
+(D)TLSv1.3 has been negotiated, and early data is enabled on the server. A full
+handshake is forced if a session ticket is used a second or subsequent time.
+Any early data that was sent will be rejected.
 
 Note that the server manages an internal cache of session tickets. If a client
 closes the connection without sending the close_notify alert, the
@@ -794,9 +812,18 @@ Pre-compresses certificates (RFC8879) that will be sent during the handshake.
 
 {- $OpenSSL::safe::opt_trust_item -}
 
-{- $OpenSSL::safe::opt_r_item -}
+The certificates loaded via the B<-CAfile>, B<-CApath>, and B<-CAstore> options
+are used as trust anchors when verifying client certificates unless
+overridden by B<-verifyCAfile>, B<-verifyCApath>, or B<-verifyCAstore> options.
+They are also used as trust anchors when attempting
+to build the server certificate chain provided to clients unless
+overridden by B<-chainCAfile>, B<-chainCApath>, or B<-chainCAstore> options.
 
-{- $OpenSSL::safe::opt_engine_item -}
+B<-CAfile> also determines the list of acceptable issuing CA names
+sent to the client in the Certificate Request message during the handshake;
+B<-CApath>, B<-CAstore>, and the B<-verifyCA*> options do not contribute here.
+
+{- $OpenSSL::safe::opt_r_item -}
 
 {- $OpenSSL::safe::opt_provider_item -}
 
@@ -824,7 +851,50 @@ support raw public keys may elect to use them.
 Clients that don't support raw public keys or prefer to use X.509
 certificates can still elect to send X.509 certificates as usual.
 
-Raw public keys are extracted from the configured certificate/private key.
+=item B<-expected-rpks> I<file>
+
+This option implies the B<-enable_client_rpk> option and can be specified
+multiple times.
+Each PEM I<file> should contain one or more public keys, private keys or
+certificates.
+With a private key or certificate an attempt is made to extract the associated
+public key.
+Each resulting public key is added (via a call to L<SSL_add_expected_rpk(3)> as
+a valid raw public key that the client may present to be considered verified.
+If a client nevertheless presents an X.509 certificate, the enclosed public key
+is validated as though it were presented as a raw public key instead.
+
+Verification success or failure is reported as a DANE verification success or
+failure, because verification of raw public keys is internally mapped to
+verification of DANE TLSA records derived from the specified keys.
+
+=item I<host>:I<port>
+
+=item B<-ech_key> I<filename>
+
+Load one Encrypted Client Hello (ECH) key pair.
+
+=item B<-ech_dir> I<dirname>
+
+Attempt to load an ECH key pair from every file in the named directory.
+Any keys successfully loaded will be returned in 'retry_configs'.
+
+=item B<-ech_noretry_dir> I<dirname>
+
+Attempt to load an ECH key pair from every file in the named directory.
+Keys loaded will not be returned in 'retry_configs'.
+
+=item B<-ech_trialdecrypt>
+
+When an Encrypted Client Hello (ECH) extension is seen in a ClientHello,
+attempt to decrypt with all known ECH private keys if necessary. Without
+this, the ECH "config_id" is used to match against the loaded ECH private
+keys and decryption is only attempted when there's a match.
+
+=item B<-ech_greaseretries>
+
+If set, servers will add GREASEy ECHConfig values to those sent
+in retry_configs.
 
 =back
 
@@ -850,12 +920,12 @@ End the current SSL connection and exit.
 
 =item B<r>
 
-Renegotiate the SSL session (TLSv1.2 and below only).
+Renegotiate the SSL session ((D)TLSv1.2 and below only).
 
 =item B<R>
 
-Renegotiate the SSL session and request a client certificate (TLSv1.2 and below
-only).
+Renegotiate the SSL session and request a client certificate ((D)TLSv1.2 and
+below only).
 
 =item B<P>
 
@@ -868,15 +938,15 @@ Print out some session cache status information.
 
 =item B<k>
 
-Send a key update message to the client (TLSv1.3 only)
+Send a key update message to the client ((D)TLSv1.3 only).
 
 =item B<K>
 
-Send a key update message to the client and request one back (TLSv1.3 only)
+Send a key update message to the client and request one back ((D)TLSv1.3 only).
 
 =item B<c>
 
-Send a certificate request to the client (TLSv1.3 only)
+Send a certificate request to the client ((D)TLSv1.3 only).
 
 =back
 
@@ -918,7 +988,7 @@ L<SSL_CONF_cmd(3)>,
 L<SSL_CTX_set_max_send_fragment(3)>,
 L<SSL_CTX_set_split_send_fragment(3)>,
 L<SSL_CTX_set_max_pipelines(3)>,
-L<ossl_store-file(7)>
+L<ossl_store(7)>
 
 =head1 HISTORY
 
@@ -927,7 +997,7 @@ The -no_alt_chains option was added in OpenSSL 1.1.0.
 The
 -allow-no-dhe-kex and -prioritize_chacha options were added in OpenSSL 1.1.1.
 
-The B<-srpvfile>, B<-srpuserseed>, and B<-engine>
+The B<-srpvfile> and B<-srpuserseed>
 option were deprecated in OpenSSL 3.0.
 
 The
@@ -937,6 +1007,14 @@ B<-no_rx_cert_comp>,
 B<-no_tx_cert_comp>,
 and B<-tfo>
 options were added in OpenSSL 3.2.
+
+The B<-status_all> option was added in OpenSSL 3.6.
+
+The B<ech> options were added in OpenSSL 4.0.
+
+The B<-engine> option was removed in OpenSSL 4.0.
+
+The B<-expected-rpks> option was added in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

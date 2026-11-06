@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,8 +9,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 
 #include <openssl/e_os2.h>
+#include <openssl/crypto.h>
 
 #ifdef OPENSSL_SYS_UNIX
 #include <sys/stat.h>
@@ -97,7 +99,6 @@ static void usage(void)
 #if !defined(RUSAGE_SELF) && defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L
 #include <sys/times.h>
 #endif
-
 int main(int ac, char **av)
 {
 #if defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L
@@ -121,10 +122,14 @@ int main(int ac, char **av)
         default:
             usage();
             break;
-        case 'c':
-            if ((count = atoi(optarg)) < 0)
+        case 'c': {
+            unsigned long ul;
+
+            if (!OPENSSL_strtoul(optarg, NULL, 10, &ul) || ul > INT_MAX)
                 usage();
+            count = (int)ul;
             break;
+        }
         case 'd':
             debug = 1;
             break;
@@ -160,6 +165,8 @@ int main(int ac, char **av)
     }
     fp = fopen(av[0], "r");
     if ((long)fread(contents, 1, sb.st_size, fp) != sb.st_size) {
+        fclose(fp);
+        OPENSSL_free(contents);
         perror("fread");
         exit(EXIT_FAILURE);
     }
@@ -181,6 +188,7 @@ int main(int ac, char **av)
     }
 
     if (gettimeofday(&e_start, NULL) < 0) {
+        OPENSSL_free(contents);
         perror("elapsed start");
         exit(EXIT_FAILURE);
     }
@@ -192,6 +200,7 @@ int main(int ac, char **av)
     s_start.tv_usec = (rus.tms_stime * 1000000) / CLOCKS_PER_SEC;
 #else
     if (getrusage(RUSAGE_SELF, &start) < 0) {
+        OPENSSL_free(contents);
         perror("start");
         exit(EXIT_FAILURE);
     }
@@ -214,11 +223,13 @@ int main(int ac, char **av)
     s_end.tv_usec = (rus.tms_stime * 1000000) / CLOCKS_PER_SEC;
 #else
     if (getrusage(RUSAGE_SELF, &end) < 0) {
+        OPENSSL_free(contents);
         perror("getrusage");
         exit(EXIT_FAILURE);
     }
 #endif
     if (gettimeofday(&e_end, NULL) < 0) {
+        OPENSSL_free(contents);
         perror("gettimeofday");
         exit(EXIT_FAILURE);
     }
