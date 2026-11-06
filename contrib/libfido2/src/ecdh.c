@@ -35,8 +35,7 @@ hkdf_sha256(uint8_t *key, const char *info, const fido_blob_t *secret)
 static int
 hkdf_sha256(uint8_t *key, char *info, fido_blob_t *secret)
 {
-	const EVP_MD *const_md;
-	EVP_MD *md = NULL;
+	const EVP_MD *md;
 	EVP_PKEY_CTX *ctx = NULL;
 	size_t keylen = SHA256_DIGEST_LENGTH;
 	uint8_t	salt[32];
@@ -47,8 +46,7 @@ hkdf_sha256(uint8_t *key, char *info, fido_blob_t *secret)
 		fido_log_debug("%s: invalid param", __func__);
 		goto fail;
 	}
-	if ((const_md = EVP_sha256()) == NULL ||
-	    (md = EVP_MD_meth_dup(const_md)) == NULL ||
+	if ((md = EVP_sha256()) == NULL ||
 	    (ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_HKDF, NULL)) == NULL) {
 		fido_log_debug("%s: init", __func__);
 		goto fail;
@@ -68,8 +66,6 @@ hkdf_sha256(uint8_t *key, char *info, fido_blob_t *secret)
 
 	ok = 0;
 fail:
-	if (md != NULL)
-		EVP_MD_meth_free(md);
 	if (ctx != NULL)
 		EVP_PKEY_CTX_free(ctx);
 

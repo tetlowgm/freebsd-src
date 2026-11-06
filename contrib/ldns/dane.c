@@ -138,7 +138,7 @@ ldns_dane_cert2rdf(ldns_rdf** rdf, X509* cert,
 	unsigned char* buf = NULL;
 	size_t len;
 
-	X509_PUBKEY* xpubkey;
+	const X509_PUBKEY* xpubkey;
 	EVP_PKEY* epubkey;
 
 	unsigned char* digest;

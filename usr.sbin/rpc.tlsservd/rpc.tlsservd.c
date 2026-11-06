@@ -919,18 +919,19 @@ rpctls_cnname(X509 *cert, uint32_t *uidp, int *ngrps, uint32_t *gidp)
 
 		/* Sanity check the otherName. */
 		if (val->value->type != V_ASN1_UTF8STRING ||
-		    val->value->value.utf8string->length < 3 ||
-		    (size_t)val->value->value.utf8string->length > sizeof(usern)
-		    - 1) {
+		    ASN1_STRING_length(val->value->value.utf8string) < 3 ||
+		    (size_t)ASN1_STRING_length(val->value->value.utf8string) >
+		    sizeof(usern) - 1) {
 			rpctls_verbose_out("rpctls_cnname: invalid cnuser "
 			    "type=%d\n", val->value->type);
 			continue;
 		}
 
 		/* Look for a "user" in the otherName */
-		memcpy(usern, val->value->value.utf8string->data,
-		    val->value->value.utf8string->length);
-		usern[val->value->value.utf8string->length] = '\0';
+		memcpy(usern,
+		    ASN1_STRING_get0_data(val->value->value.utf8string),
+		    ASN1_STRING_length(val->value->value.utf8string));
+		usern[ASN1_STRING_length(val->value->value.utf8string)] = '\0';
 
 		/* Now, look for the @dnsname suffix in the commonName. */
 		cp = strcasestr(usern, rpctls_dnsname);

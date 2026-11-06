@@ -314,7 +314,7 @@ read_cert(const char *path, struct cert_tree *tree, struct cert_tree *exclude)
 {
 	FILE *f;
 	X509 *x509;
-	X509_NAME *name;
+	const X509_NAME *name;
 	struct cert *cert;
 	unsigned long hash;
 	int len, ni, no;

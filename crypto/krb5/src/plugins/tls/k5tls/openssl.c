@@ -162,7 +162,7 @@ static GENERAL_NAMES *
 get_cert_sans(const X509 *x)
 {
     int ext;
-    X509_EXTENSION *san_ext;
+    const X509_EXTENSION *san_ext;
 
     ext = X509_get_ext_by_NID(x, NID_subject_alt_name, -1);
     if (ext < 0)
@@ -178,7 +178,7 @@ get_cert_sans(const X509 *x)
 static int
 get_cert_cn(const X509 *x, char *buf, size_t bufsize)
 {
-    X509_NAME *name;
+    const X509_NAME *name;
 
     name = X509_get_subject_name(x);
     if (name == NULL)

@@ -5,6 +5,7 @@ MAN=	rpc.tlsservd.8
 SRCS=	rpc.tlsservd.c rpc.tlscommon.c rpctlssd.h rpctlssd_svc.c rpctlssd_xdr.c
 
 CFLAGS+= -I.
+CFLAGS+= -DOPENSSL_API_COMPAT=0x10100000L
 
 LIBADD=	ssl crypto util pthread
 

@@ -2032,9 +2032,9 @@ asn_to_calendar	(
 	 * Also note that two-digit years less than 50 map to years greater than
 	 * 100. Dontcha love ASN.1? Better than MIL-188.
 	 */
-	len = asn1time->length;
+	len = ASN1_STRING_length(asn1time);
 	REQUIRE(len < sizeof(v));
-	(void)strncpy(v, (char *)(asn1time->data), len);
+	(void)strncpy(v, (const char *)ASN1_STRING_get0_data(asn1time), len);
 	REQUIRE(len >= 13);
 	temp = strtoul(v+len-3, NULL, 10);
 	pjd->second = temp;
@@ -3551,8 +3551,8 @@ cert_parse(
 		 */
 		case NID_subject_key_identifier:
 			data = X509_EXTENSION_get_data(ext);
-			ret->grpkey = BN_bin2bn(&data->data[2],
-			    data->length - 2, NULL);
+			ret->grpkey = BN_bin2bn(&ASN1_STRING_get0_data(data)[2],
+			    ASN1_STRING_length(data) - 2, NULL);
 			/* fall through */
 		default:
 			DPRINTF(1, ("cert_parse: %s\n",

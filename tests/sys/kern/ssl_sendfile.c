@@ -111,10 +111,13 @@ common_init(struct ctx *c, int sbsize)
 	X509_gmtime_adj(X509_get_notBefore(c->cert), 0);
 	X509_gmtime_adj(X509_get_notAfter(c->cert), 60L*60*24*365);
 	X509_set_pubkey(c->cert, c->pkey);
-	name = X509_get_subject_name(c->cert);
+	name = X509_NAME_new();
+	ATF_REQUIRE(name != NULL);
 	X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC,
 	    (unsigned char *)"localhost", -1, -1, 0);
+	X509_set_subject_name(c->cert, name);
 	X509_set_issuer_name(c->cert, name);
+	X509_NAME_free(name);
 	ext = X509V3_EXT_conf_nid(NULL, NULL, NID_basic_constraints,
 	    "critical,CA:FALSE");
 	X509_add_ext(c->cert, ext, -1);
