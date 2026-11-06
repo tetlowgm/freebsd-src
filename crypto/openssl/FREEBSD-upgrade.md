@@ -190,6 +190,27 @@ reflect these changes. Please try to stick to the new versioning scheme in the
 target OpenSSL release to improve interoperability with binaries compiled
 dynamically against the ports version of OpenSSL, for instance.
 
+Upstream generates these from `util/libcrypto.num` and `util/libssl.num`
+for the configured feature set:
+
+```
+% gmake libcrypto.ld libssl.ld
+```
+
+`secure/lib/libcrypto/Version.map` and `secure/lib/libssl/Version.map` are
+copies of these, except that `EC_GFp_nistp{224,256,521}_method` are left out
+of libcrypto's because they are not built on all architectures.
+
+The `MAN` and `MLINKS` lists in `secure/lib/libcrypto/man/man*/Makefile` and
+`secure/usr.bin/openssl/Makefile.man` can be derived from what upstream
+installs: run `gmake install_man_docs DESTDIR=...` and list the regular
+files and the symbolic links it creates.  Section 1 aliases and `config.5`
+are not installed.
+
+A dynamically linked consumer can still build after a function is removed
+upstream if a header keeps declaring it (as `<openssl/engine.h>` does for
+the ENGINE API), so check an installed world for unresolved symbols.
+
 Compare compilation flags, the list of files built and included, the list of
 symbols generated with the corresponding port if available.
 
