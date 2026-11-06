@@ -24,6 +24,7 @@ SRCS=	arm64cpuid.pl
 
 # aes
 SRCS+=	aesv8-armx.pl bsaes-armv8.pl vpaes-armv8.pl
+SRCS+=	aes-sha1-armv8.pl aes-sha256-armv8.pl aes-sha512-armv8.pl
 
 # bn
 SRCS+=	armv8-mont.pl
@@ -41,7 +42,7 @@ SRCS+=	md5-aarch64.pl
 SRCS+=	ghashv8-armx.pl aes-gcm-armv8_64.pl aes-gcm-armv8-unroll8_64.pl
 
 # poly1305
-SRCS+=	poly1305-armv8.pl
+SRCS+=	poly1305-armv8.pl poly1305-armv9-sve2.pl
 
 # sha
 SRCS+=	keccak1600-armv8.pl sha1-armv8.pl sha512-armv8.pl
@@ -50,7 +51,7 @@ ASM=	${SRCS:R:S/$/.S/} sha256-armv8.S
 
 all:	${ASM}
 	rm -f ${ASM:R:S/$/.s/}
-	${CP} ${LCRYPTO_SRC}/crypto/arm_arch.h ../arm_arch.h
+	${CP} ${LCRYPTO_SRC}/include/arch/arm_arch.h ../arch/arm_arch.h
 
 CLEANFILES=	${ASM}
 .SUFFIXES:	.pl
@@ -74,12 +75,12 @@ sha256-armv8.S:	sha512-armv8.pl
 	${LCRYPTO_SRC}/crypto/chacha/asm \
 	${LCRYPTO_SRC}/crypto/ec/asm \
 	${LCRYPTO_SRC}/crypto/md5/asm \
+	${LCRYPTO_SRC}/crypto/ml_dsa/asm \
 	${LCRYPTO_SRC}/crypto/modes/asm \
 	${LCRYPTO_SRC}/crypto/poly1305/asm \
 	${LCRYPTO_SRC}/crypto/rc4/asm \
 	${LCRYPTO_SRC}/crypto/sha/asm \
-	${LCRYPTO_SRC}/crypto/whrlpool/asm \
-	${LCRYPTO_SRC}/engines/asm
+	${LCRYPTO_SRC}/crypto/whrlpool/asm
 
 # cpuid
 SRCS=	x86_64cpuid.pl
@@ -87,7 +88,8 @@ SRCS=	x86_64cpuid.pl
 # aes
 SRCS+=	aes-x86_64.pl \
 	aesni-mb-x86_64.pl aesni-sha1-x86_64.pl aesni-sha256-x86_64.pl \
-	aesni-x86_64.pl aesni-xts-avx512.pl bsaes-x86_64.pl vpaes-x86_64.pl
+	aesni-x86_64.pl aesni-xts-avx512.pl bsaes-x86_64.pl vpaes-x86_64.pl \
+	aes-cfb-avx512.pl aes-cbc-vaes-x86_64.pl
 
 # bn
 SRCS+=	rsaz-avx2.pl rsaz-x86_64.pl \
@@ -108,6 +110,9 @@ SRCS+=	ecp_nistz256-x86_64.pl x25519-x86_64.pl
 # md5
 SRCS+=	md5-x86_64.pl
 
+# ml_dsa
+SRCS+=	ml_dsa_ntt-x86_64.pl
+
 # modes
 SRCS+=	aes-gcm-avx512.pl aesni-gcm-x86_64.pl ghash-x86_64.pl
 
@@ -118,14 +123,11 @@ SRCS+=	poly1305-x86_64.pl
 SRCS+=	rc4-md5-x86_64.pl rc4-x86_64.pl
 
 # sha
-SRCS+=	keccak1600-x86_64.pl sha1-mb-x86_64.pl sha1-x86_64.pl \
-	sha256-mb-x86_64.pl
+SRCS+=	keccak1600-x86_64.pl keccak1600x4-avx512vl.pl \
+	sha1-mb-x86_64.pl sha1-x86_64.pl sha256-mb-x86_64.pl
 
 # whrlpool
 SRCS+=	wp-x86_64.pl
-
-# engines
-SRCS+=	e_padlock-x86_64.pl
 
 SHA_ASM=	sha256-x86_64 sha512-x86_64
 SHA_SRC=	sha512-x86_64.pl
@@ -193,7 +195,7 @@ ASM=	${SRCS:R:S/$/.S/}
 
 all:	${ASM}
 	rm -f ${ASM:R:S/$/.s/}	
-	${CP} ${LCRYPTO_SRC}/crypto/arm_arch.h ../arm_arch.h
+	${CP} ${LCRYPTO_SRC}/include/arch/arm_arch.h ../arch/arm_arch.h
 
 CLEANFILES=	${ASM}
 .SUFFIXES:	.pl
@@ -219,8 +221,7 @@ CLEANFILES=	${ASM}
 	${LCRYPTO_SRC}/crypto/rc4/asm \
 	${LCRYPTO_SRC}/crypto/ripemd/asm \
 	${LCRYPTO_SRC}/crypto/sha/asm \
-	${LCRYPTO_SRC}/crypto/whrlpool/asm \
-	${LCRYPTO_SRC}/engines/asm
+	${LCRYPTO_SRC}/crypto/whrlpool/asm
 
 #PERLPATH=	-I${LCRYPTO_SRC}/crypto/des/asm -I${LCRYPTO_SRC}/crypto/perlasm
 CFLAGS=	-DOPENSSL_IA32_SSE2
@@ -269,9 +270,6 @@ SRCS+=	sha1-586.pl sha256-586.pl sha512-586.pl
 
 # whrlpool
 SRCS+=	wp-mmx.pl
-
-# engines
-SRCS+=	e_padlock-x86.pl
 
 ASM=	${SRCS:R:S/$/.S/}
 

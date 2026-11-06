@@ -38,11 +38,11 @@ SRCS+=	mem_clr.c
 .if defined(ASM_i386)
 SRCS+=	crypt586.S des-586.S
 .else
-SRCS+=	des_enc.c
+SRCS+=	des_enc.c fcrypt_b.c
 .endif
 
 # crypto/md5
-SRCS+=	md5_dgst.c
+SRCS+=	md5_dgst.c md5_one.c md5_sha1.c
 .if defined(ASM_aarch64)
 SRCS+=	md5-aarch64.S
 .elif defined(ASM_amd64)
@@ -68,6 +68,9 @@ SRCS+=	md4_prov.c wp_prov.c ripemd_prov.c
 SRCS+=	pbkdf1.c
 SRCS+=	pvkkdf.c
 
+# providers/implementations/skeymgmt
+SRCS+=	generic.c
+
 # common
 SRCS+=	provider_ctx.c provider_util.c
 
@@ -90,5 +93,6 @@ SRCS+=	tls_pad.c
 	${LCRYPTO_SRC}/providers/implementations/ciphers \
 	${LCRYPTO_SRC}/providers/implementations/digests \
 	${LCRYPTO_SRC}/providers/implementations/kdfs \
+	${LCRYPTO_SRC}/providers/implementations/skeymgmt \
 	${LCRYPTO_SRC}/ssl \
 	${LCRYPTO_SRC}/ssl/record/methods

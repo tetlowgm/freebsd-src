@@ -5,7 +5,7 @@
 #include <openssl/provider.h>
 
 #if defined(OPENSSL_VERSION_MAJOR) && (OPENSSL_VERSION_MAJOR >= 3)
-#define CRYPTO_LIBRARY "/lib/libcrypto.so.35"
+#define CRYPTO_LIBRARY "/lib/libcrypto.so.41"
 static void fbsd_ossl_provider_unload(void);
 static void print_dlerror(char *);
 static OSSL_PROVIDER *deflt;

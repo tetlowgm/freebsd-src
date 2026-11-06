@@ -59,7 +59,7 @@ all: patch
 
 	@echo "==> Syncing manpages (section 1)"
 	@rsync -a --delete \
-	    --exclude 'Makefile*' --exclude '*.1' \
+	    --exclude 'Makefile*' --exclude '.mandocs.stamp' --exclude 'man1' \
 	    ${LCRYPTO_DOC}/man/ \
 	    ${SRCTOP}/secure/lib/libcrypto/man
 

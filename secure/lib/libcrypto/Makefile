@@ -1,12 +1,11 @@
 # Reminders: do the following when upgrading to the next
 # major/minor OpenSSL version:
 # - bump `SHLIB_MAJOR`.
-# - remove `compat.c`.
-# - look at using the `Version.map` file provided by upstream.
+# - regenerate `Version.map` from upstream's `libcrypto.ld`.
 #    - test the upgrade path to make sure it works.
 SHLIBDIR?=	/lib
 .if !defined(LIBCRYPTO_WITHOUT_SUBDIRS) && !defined(BOOTSTRAPPING)
-SUBDIR=		engines modules
+SUBDIR=		modules
 .endif
 .ifdef BOOTSTRAPPING
 CFLAGS+=	-DOPENSSL_NO_SCTP
@@ -16,7 +15,7 @@ CFLAGS+=	-DOPENSSL_NO_SCTP
 .include <src.opts.mk>
 
 LIB=		crypto
-SHLIB_MAJOR=	35
+SHLIB_MAJOR=	41
 VERSION_MAP=	${.CURDIR}/Version.map
 
 NO_LINT=
@@ -30,10 +29,10 @@ SRCS=	cryptlib.c params.c params_from_text.c bsearch.c ex_data.c o_str.c
 SRCS+=	threads_pthread.c threads_win.c threads_none.c initthread.c
 SRCS+=	context.c sparse_array.c asn1_dsa.c packet.c param_build.c
 SRCS+=	param_build_set.c der_writer.c threads_lib.c params_dup.c
-SRCS+=	time.c params_idx.c
+SRCS+=	time.c threads_common.c array_alloc.c aligned_alloc.c
 
 SRCS+=	mem.c mem_sec.c
-SRCS+=	comp_methods.c cversion.c info.c cpt_err.c ebcdic.c uid.c o_time.c
+SRCS+=	comp_methods.c cversion.c info.c cpt_err.c ebcdic.c uid.c
 SRCS+=	o_dir.c o_fopen.c getenv.c o_init.c init.c trace.c provider.c
 SRCS+=	provider_child.c punycode.c passphrase.c sleep.c deterministic_nonce.c
 SRCS+=	quic_vlint.c defaults.c ssl_err.c
@@ -63,12 +62,15 @@ SRCS+=	mem_clr.c
 
 # aes
 SRCS+=	aes_cfb.c aes_ecb.c aes_ige.c aes_misc.c aes_ofb.c aes_wrap.c
+SRCS+=	aes_cbc_vaes_intrinsic.c
 .if defined(ASM_aarch64)
 SRCS+=	aes_cbc.c aes_core.c aesv8-armx.S bsaes-armv8.S vpaes-armv8.S
+SRCS+=	aes-sha1-armv8.S aes-sha256-armv8.S aes-sha512-armv8.S
 ACFLAGS.aesv8-armx.S=	-march=armv8-a+crypto
 .elif defined(ASM_amd64)
 SRCS+=	aes-x86_64.S aesni-mb-x86_64.S aesni-sha1-x86_64.S aesni-sha256-x86_64.S
 SRCS+=	aesni-x86_64.S aesni-xts-avx512.S bsaes-x86_64.S vpaes-x86_64.S
+SRCS+=	aes-cfb-avx512.S aes-cbc-vaes-x86_64.S
 .elif defined(ASM_arm)
 SRCS+=	aes_cbc.c aes-armv4.S aesv8-armx.S bsaes-armv7.S
 .elif defined(ASM_i386)
@@ -94,7 +96,7 @@ SRCS+=	i2d_evp.c n_pkey.c nsseq.c p5_pbe.c p5_pbev2.c p5_scrypt.c p8_pkey.c
 SRCS+=	t_bitst.c t_pkey.c t_spki.c tasn_dec.c tasn_enc.c tasn_fre.c
 SRCS+=	tasn_new.c tasn_prn.c tasn_scn.c tasn_typ.c tasn_utl.c x_algor.c
 SRCS+=	x_bignum.c x_info.c x_int64.c x_long.c x_pkey.c x_sig.c x_spki.c
-SRCS+=	x_val.c
+SRCS+=	x_val.c a_time_posix.c
 
 # async
 SRCS+=	async.c async_err.c async_null.c async_posix.c async_wait.c async_win.c
@@ -117,7 +119,7 @@ SRCS+=	bss_file.c bss_log.c bss_mem.c bss_null.c bss_sock.c ossl_core_bio.c
 SRCS+=	bn_add.c bn_blind.c bn_const.c bn_conv.c bn_ctx.c bn_depr.c bn_dh.c
 SRCS+=	bn_div.c bn_err.c bn_exp.c bn_exp2.c bn_gcd.c bn_gf2m.c bn_intern.c
 SRCS+=	bn_kron.c bn_lib.c bn_mod.c bn_mont.c bn_mpi.c bn_mul.c bn_nist.c
-SRCS+=	bn_prime.c bn_print.c bn_rand.c bn_recp.c bn_rsa_fips186_4.c bn_shift.c
+SRCS+=	bn_prime.c bn_print.c bn_rand.c bn_recp.c bn_rsa_fips186_5.c bn_shift.c
 SRCS+=	bn_sqr.c bn_sqrt.c bn_srp.c bn_word.c bn_x931p.c
 .if defined(ASM_aarch64)
 SRCS+=	armv8-mont.S bn_asm.c
@@ -193,7 +195,7 @@ SRCS+=	cmp_http.c
 # cms
 SRCS+=	cms_asn1.c cms_att.c cms_cd.c cms_dd.c cms_dh.c cms_ec.c cms_enc.c
 SRCS+=	cms_env.c cms_err.c cms_ess.c cms_io.c cms_kari.c cms_lib.c cms_pwri.c
-SRCS+=	cms_rsa.c cms_sd.c cms_smime.c
+SRCS+=	cms_rsa.c cms_sd.c cms_smime.c cms_kem.c cms_kemri.c
 
 # comp
 SRCS+=	comp_lib.c comp_err.c c_brotli.c c_zstd.c c_zlib.c
@@ -221,12 +223,12 @@ SRCS+=	des_enc.c fcrypt_b.c
 
 # dh
 SRCS+=	dh_ameth.c dh_asn1.c dh_backend.c dh_check.c dh_depr.c dh_err.c dh_gen.c
-SRCS+=	dh_group_params.c dh_kdf.c dh_key.c dh_lib.c dh_meth.c dh_pmeth.c
+SRCS+=	dh_group_params.c dh_kdf.c dh_key.c dh_lib.c dh_meth.c
 SRCS+=	dh_prn.c dh_rfc5114.c
 
 # dsa
 SRCS+=	dsa_ameth.c dsa_asn1.c dsa_backend.c dsa_check.c dsa_depr.c dsa_err.c
-SRCS+=	dsa_gen.c dsa_key.c dsa_lib.c dsa_meth.c dsa_ossl.c dsa_pmeth.c
+SRCS+=	dsa_gen.c dsa_key.c dsa_lib.c dsa_meth.c dsa_ossl.c
 SRCS+=	dsa_prn.c dsa_sign.c dsa_vrf.c
 
 # dso
@@ -240,7 +242,7 @@ SRCS+=	dso_win32.c
 SRCS+=	curve25519.c curve448.c curve448_tables.c ec2_oct.c ec2_smpl.c
 SRCS+=	ec_ameth.c ec_asn1.c ec_backend.c ec_check.c ec_curve.c ec_cvt.c
 SRCS+=	ec_deprecated.c ec_err.c ec_key.c ec_kmeth.c ec_lib.c ec_mult.c ec_oct.c
-SRCS+=	ec_pmeth.c ec_print.c ecdh_kdf.c ecdh_ossl.c ecdsa_ossl.c ecdsa_sign.c
+SRCS+=	ec_print.c ecdh_kdf.c ecdh_ossl.c ecdsa_ossl.c ecdsa_sign.c
 SRCS+=	ecdsa_vrf.c eck_prn.c ecp_mont.c ecp_nist.c
 SRCS+=	ecp_oct.c ecp_smpl.c ecx_backend.c ecx_key.c ecx_meth.c eddsa.c
 SRCS+=	f_generic.c f_impl32.c f_impl64.c scalar.c
@@ -268,12 +270,6 @@ SRCS+=	ecp_nistp521-ppc64.S ecp_nistz256-ppc64.S ecp_nistz256.c ecp_ppc.c x25519
 SRCS+=	decoder_err.c decoder_lib.c decoder_meth.c decoder_pkey.c
 SRCS+=	encoder_err.c encoder_lib.c encoder_meth.c encoder_pkey.c
 
-# engine
-SRCS+=	eng_all.c eng_cnf.c eng_ctrl.c eng_dyn.c eng_err.c
-SRCS+=	eng_fat.c eng_init.c eng_lib.c eng_list.c eng_openssl.c eng_pkey.c
-SRCS+=	eng_rdrand.c eng_table.c tb_asnmth.c tb_cipher.c tb_dh.c tb_digest.c
-SRCS+=	tb_dsa.c tb_eckey.c tb_pkmeth.c tb_rand.c tb_rsa.c
-
 # err
 SRCS+=	err.c err_all.c err_all_legacy.c err_blocks.c err_mark.c err_prn.c err_save.c
 
@@ -281,17 +277,19 @@ SRCS+=	err.c err_all.c err_all_legacy.c err_blocks.c err_mark.c err_prn.c err_sa
 SRCS+=	ess_asn1.c ess_err.c ess_lib.c
 
 # evp
-SRCS+=	asymcipher.c bio_b64.c bio_enc.c bio_md.c bio_ok.c c_allc.c c_alld.c cmeth_lib.c
+SRCS+=	asymcipher.c bio_b64.c bio_enc.c bio_md.c c_allc.c c_alld.c
 SRCS+=	ctrl_params_translate.c dh_ctrl.c dh_support.c digest.c dsa_ctrl.c e_aes.c e_aes_cbc_hmac_sha1.c
 SRCS+=	e_aes_cbc_hmac_sha256.c e_aria.c e_bf.c e_camellia.c e_cast.c
 SRCS+=	e_chacha20_poly1305.c e_des.c e_des3.c e_idea.c e_null.c e_old.c
 SRCS+=	e_rc2.c e_rc4.c e_rc4_hmac_md5.c e_rc5.c e_seed.c e_sm4.c e_xcbc_d.c ec_ctrl.c ec_support.c
+SRCS+=	enc_b64_avx2.c enc_b64_scalar.c
 SRCS+=	encode.c evp_cnf.c evp_enc.c evp_err.c evp_fetch.c evp_key.c evp_lib.c evp_pbe.c
 SRCS+=	evp_pkey.c evp_rand.c evp_utils.c exchange.c kdf_lib.c kdf_meth.c kem.c keymgmt_lib.c keymgmt_meth.c
 SRCS+=	legacy_blake2.c legacy_md4.c legacy_md5.c legacy_md5_sha1.c m_null.c
 SRCS+=	legacy_ripemd.c legacy_sha.c legacy_wp.c m_sigver.c mac_lib.c mac_meth.c names.c p5_crpt.c
 SRCS+=	p5_crpt2.c p_dec.c p_enc.c p_legacy.c p_lib.c s_lib.c p_open.c p_seal.c p_sign.c
 SRCS+=	p_verify.c pbe_scrypt.c pmeth_check.c pmeth_gn.c skeymgmt_meth.c pmeth_lib.c signature.c
+SRCS+=	evp_pkey_type.c
 
 # ffc
 SRCS+=	ffc_backend.c ffc_dh.c ffc_key_generate.c ffc_key_validate.c
@@ -332,9 +330,17 @@ SRCS+=	md5-586.S
 SRCS+=	ml_dsa_encoders.c ml_dsa_key_compress.c ml_dsa_key.c
 SRCS+=	ml_dsa_matrix.c ml_dsa_ntt.c ml_dsa_params.c ml_dsa_sample.c
 SRCS+=	ml_dsa_sign.c
+.if defined(ASM_amd64)
+SRCS+=	ml_dsa_ntt-x86_64.S
+.elif defined(ASM_powerpc64) || defined(ASM_powerpc64le)
+SRCS+=	mldsa_ntt_ppc64le.S mldsa_intt_ppc64le.S
+.endif
 
 # ml_kem
 SRCS+=	ml_kem.c
+.if defined(ASM_powerpc64) || defined(ASM_powerpc64le)
+SRCS+=	mlkem_ntt_ppc64le.S mlkem_intt_ppc64le.S
+.endif
 
 # modes
 SRCS+=	cbc128.c ccm128.c cfb128.c ctr128.c cts128.c gcm128.c ocb128.c
@@ -379,7 +385,7 @@ SRCS+=	pk7_smime.c pkcs7err.c
 # poly1305
 SRCS+=	poly1305.c
 .if defined(ASM_aarch64)
-SRCS+=	poly1305-armv8.S
+SRCS+=	poly1305-armv8.S poly1305-armv9-sve2.S
 .elif defined(ASM_amd64)
 SRCS+=	poly1305-x86_64.S
 .elif defined(ASM_arm)
@@ -407,8 +413,9 @@ SRCS+=	provider_seeding.c provider_util.c securitycheck.c
 SRCS+=	securitycheck_default.c
 
 # providers/common/der
-# der_digests_gen.c, der_dsa_key.c and der_ec_key.c are not listed: nothing in
-# libcrypto references them, and upstream's linker drops them from libcommon.a.
+# der_dsa_key.c and der_ec_key.c are not listed: nothing in libcrypto
+# references them, and upstream's linker drops them from libcommon.a.
+SRCS+=	der_digests_gen.c der_hkdf_gen.c
 SRCS+=	der_rsa_gen.c der_rsa_key.c der_rsa_sig.c
 SRCS+=	der_ml_dsa_gen.c der_ml_dsa_key.c
 SRCS+=	der_wrap_gen.c
@@ -431,7 +438,12 @@ SRCS+=	cipher_aes.c cipher_aes_hw.c \
 	cipher_aes_wrp.c \
 	cipher_aes_cbc_hmac_sha.c \
 	cipher_aes_cbc_hmac_sha256_hw.c cipher_aes_cbc_hmac_sha1_hw.c \
+	cipher_aes_cbc_hmac_sha_etm.c cipher_aes_cbc_hmac_sha1_etm_hw.c \
+	cipher_aes_cbc_hmac_sha256_etm_hw.c cipher_aes_cbc_hmac_sha512_etm_hw.c \
 	cipher_cts.c
+SRCS+=	cipher_aes_hw_aesni.c cipher_aes_hw_armv8.c cipher_aes_hw_rv32i.c \
+	cipher_aes_hw_rv64i.c cipher_aes_hw_s390x.c cipher_aes_hw_t4.c \
+	cipher_aes_gcm_hw_ppc.c
 SRCS+=	cipher_aes_ocb.c cipher_aes_ocb_hw.c
 SRCS+=	cipher_aes_xts_fips.c
 SRCS+=	cipher_aes_gcm_siv.c cipher_aes_gcm_siv_hw.c \
@@ -451,7 +463,7 @@ SRCS+=	blake2_prov.c blake2b_prov.c blake2s_prov.c
 SRCS+=	md5_prov.c md5_sha1_prov.c
 SRCS+=	null_prov.c
 SRCS+=	ripemd_prov.c
-SRCS+=	sha2_prov.c sha3_prov.c
+SRCS+=	sha2_prov.c sha3_prov.c cshake_prov.c ml_dsa_mu_prov.c
 
 # providers/implementations/encode_decode
 SRCS+=	decode_der2key.c decode_epki2pki.c decode_msblob2key.c decode_pvk2key.c
@@ -467,7 +479,7 @@ SRCS+=	kdf_exch.c
 
 # providers/implementations/kdfs
 SRCS+=	argon2.c hkdf.c hmacdrbg_kdf.c kbkdf.c krb5kdf.c
-SRCS+=	pbkdf2.c pbkdf2_fips.c
+SRCS+=	pbkdf2.c ikev2kdf.c snmpkdf.c srtpkdf.c
 SRCS+=	pkcs12kdf.c scrypt.c sskdf.c sshkdf.c tls1_prf.c x942kdf.c
 
 # providers/implementations/kem
@@ -491,7 +503,12 @@ SRCS+=	seed_src.c
 SRCS+=	seed_src_jitter.c
 
 # providers/implementations/rands/seeding
-SRCS+=	rand_cpu_x86.c rand_tsc.c rand_unix.c rand_win.c
+SRCS+=	rand_tsc.c rand_unix.c rand_win.c
+.if defined(ASM_aarch64)
+SRCS+=	rand_cpu_arm64.c
+.else
+SRCS+=	rand_cpu_x86.c
+.endif
 
 # providers/implementations/signature
 SRCS+=	dsa_sig.c eddsa_sig.c ecdsa_sig.c mac_legacy_sig.c ml_dsa_sig.c
@@ -535,7 +552,7 @@ SRCS+=	rmd-586.S
 # rsa
 SRCS+=	rsa_ameth.c rsa_asn1.c rsa_backend.c rsa_chk.c rsa_crpt.c rsa_depr.c
 SRCS+=	rsa_err.c rsa_gen.c rsa_lib.c rsa_meth.c rsa_mp.c rsa_mp_names.c
-SRCS+=	rsa_none.c rsa_oaep.c rsa_ossl.c rsa_pk1.c rsa_pmeth.c rsa_prn.c
+SRCS+=	rsa_none.c rsa_oaep.c rsa_ossl.c rsa_pk1.c rsa_prn.c
 SRCS+=	rsa_pss.c rsa_saos.c rsa_schemes.c rsa_sign.c rsa_sp800_56b_check.c
 SRCS+=	rsa_sp800_56b_gen.c rsa_x931.c rsa_x931g.c
 
@@ -543,11 +560,12 @@ SRCS+=	rsa_sp800_56b_gen.c rsa_x931.c rsa_x931g.c
 SRCS+=	seed.c seed_cbc.c seed_cfb.c seed_ecb.c seed_ofb.c
 
 # sha
-SRCS+=	sha1_one.c sha1dgst.c sha256.c sha3.c sha512.c
+SRCS+=	sha1_one.c sha1dgst.c sha256.c sha3.c sha3_encode.c sha512.c
 .if defined(ASM_aarch64)
 SRCS+=	keccak1600-armv8.S sha1-armv8.S sha256-armv8.S sha512-armv8.S
 .elif defined(ASM_amd64)
-SRCS+=	keccak1600-x86_64.S sha1-mb-x86_64.S sha1-x86_64.S
+SRCS+=	keccak1600-x86_64.S keccak1600x4-avx512vl.S sha3_x4_avx512vl.c
+SRCS+=	sha1-mb-x86_64.S sha1-x86_64.S
 SRCS+=	sha256-mb-x86_64.S sha256-x86_64.S sha512-x86_64.S
 .elif defined(ASM_arm)
 SRCS+=	keccak1600-armv4.S sha1-armv4-large.S sha256-armv4.S sha512-armv4.S
@@ -629,13 +647,10 @@ SRCS+=	v3_usernotice.c v3_battcons.c v3_audit_id.c v3_iobo.c v3_authattid.c
 SRCS+=	v3_rolespec.c v3_attrdesc.c v3_timespec.c v3_attrmap.c v3_aaa.c
 SRCS+=	x509type.c
 
-# FreeBSD compatibility symbols for consumers of libcrypto.so.35
-SRCS+=	compat.c
-
 INCS=	aes.h asn1.h asn1err.h asn1t.h async.h asyncerr.h bio.h
 INCS+=	bioerr.h blowfish.h bn.h bnerr.h buffer.h buffererr.h byteorder.h camellia.h
 INCS+=	cast.h cmac.h cmp.h cmp_util.h cmperr.h cms.h cmserr.h comp.h comperr.h conf.h
-INCS+=	conferr.h configuration.h conftypes.h core.h core_dispatch.h core_names.h core_object.h
+INCS+=	conf_api.h conferr.h configuration.h conftypes.h core.h core_dispatch.h core_names.h core_object.h
 INCS+=	crmf.h crmferr.h crypto.h cryptoerr.h cryptoerr_legacy.h ct.h cterr.h
 INCS+=	decoder.h decodererr.h
 INCS+=	der_digests.h
@@ -648,15 +663,16 @@ INCS+=	der_slh_dsa.h
 INCS+=	der_wrap.h
 INCS+=	des.h dh.h dherr.h dsa.h
 INCS+=	dsaerr.h
-INCS+=	dtls1.h e_os2.h e_ostime.h ebcdic.h ec.h ecdh.h ecdsa.h ecerr.h encoder.h encodererr.h
+INCS+=	dtls1.h e_os2.h ech.h e_ostime.h ebcdic.h ec.h ecdh.h ecdsa.h ecerr.h encoder.h encodererr.h
 INCS+=	engine.h engineerr.h err.h ess.h esserr.h evp.h evperr.h fips_names.h fipskey.h hmac.h hpke.h http.h httperr.h idea.h indicator.h
 INCS+=	kdf.h kdferr.h lhash.h macros.h md2.h md4.h md5.h mdc2.h ml_kem.h modes.h obj_mac.h
 INCS+=	objects.h objectserr.h ocsp.h ocsperr.h opensslconf.h opensslv.h
 INCS+=	ossl_typ.h param_build.h params.h pem.h pem2.h pemerr.h pkcs12.h pkcs12err.h pkcs7.h
+INCS+=	posix_time.h
 INCS+=	pkcs7err.h prov_ssl.h proverr.h provider.h quic.h rand.h randerr.h rc2.h rc4.h rc5.h ripemd.h
 INCS+=	rsa.h rsaerr.h safestack.h seed.h self_test.h sha.h srp.h srtp.h ssl.h ssl2.h
 INCS+=	ssl3.h sslerr.h sslerr_legacy.h stack.h store.h storeerr.h symhacks.h thread.h tls1.h trace.h ts.h
-INCS+=	tserr.h txt_db.h types.h ui.h uierr.h whrlpool.h x509.h x509_vfy.h x509err.h
+INCS+=	tserr.h txt_db.h types.h ui.h uierr.h whrlpool.h x509.h x509_acert.h x509_vfy.h x509err.h
 INCS+=	x509v3.h x509v3err.h
 
 INCSDIR=${INCLUDEDIR}/openssl
@@ -741,7 +757,6 @@ SUBDIR.${MK_TESTS}=	tests
 	${LCRYPTO_SRC}/crypto/ec/curve448/arch_32 \
 	${LCRYPTO_SRC}/crypto/ec/curve448/arch_64 \
 	${LCRYPTO_SRC}/crypto/encode_decode \
-	${LCRYPTO_SRC}/crypto/engine \
 	${LCRYPTO_SRC}/crypto/err \
 	${LCRYPTO_SRC}/crypto/ess \
 	${LCRYPTO_SRC}/crypto/evp \
@@ -757,7 +772,9 @@ SUBDIR.${MK_TESTS}=	tests
 	${LCRYPTO_SRC}/crypto/md5 \
 	${LCRYPTO_SRC}/crypto/mdc2 \
 	${LCRYPTO_SRC}/crypto/ml_dsa \
+	${LCRYPTO_SRC}/crypto/ml_dsa/asm \
 	${LCRYPTO_SRC}/crypto/ml_kem \
+	${LCRYPTO_SRC}/crypto/ml_kem/asm \
 	${LCRYPTO_SRC}/crypto/modes \
 	${LCRYPTO_SRC}/crypto/objects \
 	${LCRYPTO_SRC}/crypto/ocsp \

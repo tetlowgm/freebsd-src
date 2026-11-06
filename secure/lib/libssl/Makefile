@@ -1,7 +1,7 @@
 .include <src.opts.mk>
 
 LIB=		ssl
-SHLIB_MAJOR=	35
+SHLIB_MAJOR=	41
 VERSION_MAP=	${.CURDIR}/Version.map
 
 NO_LINT=
@@ -15,8 +15,9 @@ SRCS=	pqueue.c \
 	statem_lib.c extensions.c extensions_srvr.c \
 	extensions_clnt.c extensions_cust.c s3_msg.c \
 	methods.c t1_lib.c t1_enc.c tls13_enc.c \
-	d1_lib.c d1_msg.c \
+	d1_lib.c d1_msg.c d1_transcript.c \
 	statem_dtls.c d1_srtp.c \
+	dgram_demux.c dtls_conn_lookup.c dtls_record_rx.c \
 	ssl_lib.c ssl_cert.c ssl_sess.c \
 	ssl_ciph.c ssl_stat.c ssl_rsa.c \
 	ssl_asn1.c ssl_txt.c ssl_init.c ssl_conf.c ssl_mcnf.c \
@@ -61,6 +62,9 @@ SRCS+=	getenv.c ctype.c
 SRCS+=	quic_obj.c
 SRCS+=	quic_strm_reas.c
 
+# ech
+SRCS+=	ech_helper.c ech_internal.c ech_ssl_apis.c ech_store.c
+
 # rbtree
 SRCS+=	rbtree.c
 
@@ -68,7 +72,7 @@ SRCS+=	rbtree.c
 SRCS+=	rec_layer_d1.c rec_layer_s3.c
 
 # record/methods
-SRCS+=	tls_common.c ssl3_meth.c tls1_meth.c tls13_meth.c tlsany_meth.c
+SRCS+=	tls_common.c tls1_meth.c tls13_meth.c tlsany_meth.c
 SRCS+=	dtls_meth.c tls_multib.c
 SRCS+=	ssl3_cbc.c
 SRCS+=	tls_pad.c
@@ -99,6 +103,7 @@ PICFLAG+=	-DOPENSSL_PIC
 	${LCRYPTO_SRC}/crypto/thread \
 	${LCRYPTO_SRC}/crypto/thread/arch \
 	${LCRYPTO_SRC}/ssl \
+	${LCRYPTO_SRC}/ssl/ech \
 	${LCRYPTO_SRC}/ssl/quic \
 	${LCRYPTO_SRC}/ssl/record \
 	${LCRYPTO_SRC}/ssl/record/methods \

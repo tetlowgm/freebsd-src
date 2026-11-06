@@ -13,8 +13,8 @@ LIBADD=	ssl crypto
 CFLAGS+=	-I${LCRYPTO_SRC}/apps/include
 CFLAGS+=	-I${OBJTOP}/secure/lib/libcrypto
 
-SRCS=	asn1parse.c ca.c ciphers.c cmp.c cms.c crl.c crl2pkcs7.c dgst.c
-SRCS+=	dhparam.c dsa.c dsaparam.c ec.c ecparam.c enc.c engine.c errstr.c
+SRCS=	asn1parse.c ca.c ciphers.c cmp.c cms.c configutl.c crl.c crl2pkcs7.c
+SRCS+=	dgst.c dhparam.c dsa.c dsaparam.c ec.c ech.c ecparam.c enc.c errstr.c
 SRCS+=	fipsinstall.c gendsa.c genpkey.c genrsa.c info.c kdf.c
 SRCS+=	lib/cmp_mock_srv.c list.c lib/log.c mac.c nseq.c ocsp.c openssl.c
 SRCS+=	passwd.c pkcs12.c pkcs7.c pkcs8.c pkey.c pkeyparam.c pkeyutl.c prime.c
@@ -27,7 +27,7 @@ SRCS+=	lib/apps.c lib/apps_ui.c lib/opt.c lib/fmt.c lib/s_cb.c lib/s_socket.c
 SRCS+=	lib/app_rand.c
 SRCS+=	lib/columns.c lib/app_params.c lib/names.c lib/app_provider.c
 SRCS+=	lib/app_x509.c lib/http_server.c
-SRCS+=	lib/engine.c lib/engine_loader.c lib/app_libctx.c lib/apps_opt_printf.c
+SRCS+=	lib/app_libctx.c lib/apps_opt_printf.c
 SRCS+=	lib/tlssrp_depr.c
 
 .include <bsd.prog.mk>
