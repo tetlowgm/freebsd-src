@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -115,19 +115,6 @@ $OpenSSL::safe::opt_config_item = ""
 . "\n"
 . "See L<openssl(1)/Configuration Option>.";
 
-# Engine option
-$OpenSSL::safe::opt_engine_synopsis = "";
-$OpenSSL::safe::opt_engine_item = "";
-if (!$disabled{"deprecated-3.0"}) {
-  $OpenSSL::safe::opt_engine_synopsis = ""
-  . "[B<-engine> I<id>]\n";
-  $OpenSSL::safe::opt_engine_item = ""
-  . "=item B<-engine> I<id>\n"
-  . "\n"
-  . "See L<openssl(1)/Engine Options>.\n"
-  . "This option is deprecated.";
-}
-
 # Trusted certs options
 $OpenSSL::safe::opt_trust_synopsis = ""
 . "[B<-CAfile> I<file>]\n"
@@ -149,14 +136,13 @@ $OpenSSL::safe::opt_versiontls_synopsis = ""
 . "[B<-no_tls1_1>]\n"
 . "[B<-no_tls1_2>]\n"
 . "[B<-no_tls1_3>]\n"
-. "[B<-ssl3>]\n"
 . "[B<-tls1>]\n"
 . "[B<-tls1_1>]\n"
 . "[B<-tls1_2>]\n"
 . "[B<-tls1_3>]";
 $OpenSSL::safe::opt_versiontls_item = ""
 . "=item B<-no_ssl3>, B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>, B<-no_tls1_3>,\n"
-. "B<-ssl3>, B<-tls1>, B<-tls1_1>, B<-tls1_2>, B<-tls1_3>\n"
+. "B<-tls1>, B<-tls1_1>, B<-tls1_2>, B<-tls1_3>\n"
 . "\n"
 . "See L<openssl(1)/TLS Version Options>.";
 
@@ -165,11 +151,12 @@ $OpenSSL::safe::opt_version_synopsis = ""
 . "$OpenSSL::safe::opt_versiontls_synopsis\n"
 . "[B<-dtls>]\n"
 . "[B<-dtls1>]\n"
-. "[B<-dtls1_2>]";
+. "[B<-dtls1_2>]\n"
+. "[B<-dtls1_3>]";
 $OpenSSL::safe::opt_version_item = "\n"
 . "$OpenSSL::safe::opt_versiontls_item\n"
 . "\n"
-. "=item B<-dtls>, B<-dtls1>, B<-dtls1_2>\n"
+. "=item B<-dtls>, B<-dtls1>, B<-dtls1_2>, B<-dtls1_3>\n"
 . "\n"
 . "These specify the use of DTLS instead of TLS.\n"
 . "See L<openssl(1)/TLS Version Options>.";

@@ -95,9 +95,9 @@ stored in memory:
 HMAC_Init_ex() initializes or reuses a B<HMAC_CTX> structure to use the hash
 function I<evp_md> and key I<key>. If both are NULL, or if I<key> is NULL
 and I<evp_md> is the same as the previous call, then the
-existing key is
-reused. I<ctx> must have been created with HMAC_CTX_new() before the first use
-of an B<HMAC_CTX> in this function.
+existing key is reused. I<ctx> must have been created with HMAC_CTX_new()
+before the first use of an B<HMAC_CTX> in this function. I<impl> B<must>
+be NULL.
 
 If HMAC_Init_ex() is called with I<key> NULL and I<evp_md> is not the
 same as the previous digest used by I<ctx> then an error is returned
@@ -112,6 +112,9 @@ be authenticated (I<len> bytes at I<data>).
 
 HMAC_Final() places the message authentication code in I<md>, which
 must have space for the hash function output.
+After calling HMAC_Final() no calls to HMAC_Update() or HMAC_Final() can be
+made, but HMAC_Init_ex() can be called to initialize a new HMAC
+operation.
 
 HMAC_CTX_copy() copies all of the internal state from I<sctx> into I<dctx>.
 
@@ -163,7 +166,7 @@ OpenSSL before version 1.0.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

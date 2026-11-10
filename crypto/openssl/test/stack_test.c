@@ -50,6 +50,15 @@ static int int_compare(const int *const *a, const int *const *b)
     return 0;
 }
 
+static int int_compare_backward(const int *const *a, const int *const *b)
+{
+    if (**a > **b)
+        return -1;
+    if (**a < **b)
+        return 1;
+    return 0;
+}
+
 static int test_int_stack(int reserve)
 {
     static int v[] = { 1, 2, -4, 16, 999, 1, -173, 1, 9 };
@@ -90,11 +99,17 @@ static int test_int_stack(int reserve)
 
     /* Check push and num */
     for (i = 0; i < n; i++) {
+        /* Empty or single element stack should be sorted */
+        if ((i == 0 || i == 1) && !TEST_true(sk_sint_is_sorted(s)))
+            goto end;
         if (!TEST_int_eq(sk_sint_num(s), i)) {
             TEST_info("int stack size %d", i);
             goto end;
         }
-        sk_sint_push(s, v + i);
+        if (!TEST_int_eq(sk_sint_push(s, v + i), i + 1)) {
+            TEST_info("int stack size %d", i);
+            goto end;
+        }
     }
     if (!TEST_int_eq(sk_sint_num(s), n))
         goto end;
@@ -131,9 +146,18 @@ static int test_int_stack(int reserve)
     /* sorting */
     if (!TEST_false(sk_sint_is_sorted(s)))
         goto end;
-    (void)sk_sint_set_cmp_func(s, &int_compare);
+    (void)sk_sint_set_cmp_func(s, &int_compare_backward);
     sk_sint_sort(s);
-    if (!TEST_true(sk_sint_is_sorted(s)))
+    if (!TEST_true(sk_sint_is_sorted(s))) /* should be sorted */
+        goto end;
+    (void)sk_sint_set_cmp_func(s, &int_compare_backward);
+    if (!TEST_true(sk_sint_is_sorted(s))) /* should still be sorted */
+        goto end;
+    (void)sk_sint_set_cmp_func(s, &int_compare);
+    if (!TEST_false(sk_sint_is_sorted(s))) /* should no longer be sorted */
+        goto end;
+    sk_sint_sort(s);
+    if (!TEST_true(sk_sint_is_sorted(s))) /* now should be sorted again */
         goto end;
 
     /* find sorted -- the value is matched so we don't need to locate it */
@@ -155,6 +179,30 @@ static int test_int_stack(int reserve)
             goto end;
         }
 
+    if (!TEST_true(sk_sint_is_sorted(s)))
+        goto end;
+
+    for (i = 0; i < n_exfinds; i++) {
+        int loc = sk_sint_find_ex(s, &exfinds[i].value);
+        int value = *sk_sint_value(s, loc);
+
+        /* inserting in the correct location should preserve is_sorted */
+        if (value < exfinds[i].value)
+            loc++;
+        sk_sint_insert(s, &exfinds[i].value, loc);
+        if (!TEST_true(sk_sint_is_sorted(s)))
+            goto end;
+    }
+
+    if (!TEST_true(sk_sint_is_sorted(s)))
+        goto end;
+
+    /* inserting out of order should make the array unsorted again */
+    sk_sint_insert(s, v + 6, 0);
+
+    if (!TEST_false(sk_sint_is_sorted(s)))
+        goto end;
+
     /* shift */
     if (!TEST_ptr_eq(sk_sint_shift(s), v + 6))
         goto end;
@@ -175,7 +223,7 @@ static int test_uchar_stack(int reserve)
 {
     static const unsigned char v[] = { 1, 3, 7, 5, 255, 0 };
     const int n = OSSL_NELEM(v);
-    STACK_OF(uchar) *s = sk_uchar_new(&uchar_compare), *r = NULL;
+    STACK_OF(uchar) *s = sk_uchar_new(&uchar_compare), *r = NULL, *q = NULL;
     int i;
     int testresult = 0;
 
@@ -202,18 +250,48 @@ static int test_uchar_stack(int reserve)
     r = sk_uchar_dup(s);
     if (!TEST_int_eq(sk_uchar_num(r), n))
         goto end;
+    q = sk_uchar_dup(s);
+    if (!TEST_int_eq(sk_uchar_num(q), n))
+        goto end;
     sk_uchar_sort(r);
+    sk_uchar_sort(q);
+    for (i = 0; i < n; i++) {
+        int idx = sk_uchar_find(q, v + i);
+
+        if (!TEST_int_ge(idx, 0)
+            || !TEST_uchar_eq(*sk_uchar_value(q, idx), v[i])) {
+            TEST_info("uchar sorted find %d", i);
+            goto end;
+        }
+    }
 
     /* pop */
-    for (i = 0; i < n; i++)
+    for (i = 0; i < n; i++) {
         if (!TEST_ptr_eq(sk_uchar_pop(s), v + i)) {
             TEST_info("uchar pop %d", i);
             goto end;
         }
+        /* Previously unsorted stack of more than 1 element remains unsorted */
+        if (i < n - 2 && !TEST_false(sk_uchar_is_sorted(s)))
+            goto end;
+        /* A single or zero element stack should be sorted */
+        if (i > n - 2 && !TEST_true(sk_uchar_is_sorted(s)))
+            goto end;
+    }
 
     /* free -- we rely on the debug malloc to detect leakage here */
     sk_uchar_free(s);
     s = NULL;
+
+    /* pop */
+    for (i = 0; i < n; i++) {
+        /* A sorted stack should remain sorted */
+        if (!TEST_true(sk_uchar_is_sorted(q)))
+            goto end;
+    }
+    /* free -- we rely on the debug malloc to detect leakage here */
+    sk_uchar_free(q);
+    q = NULL;
 
     /* dup again */
     if (!TEST_int_eq(sk_uchar_num(r), n))
@@ -252,6 +330,7 @@ static int test_uchar_stack(int reserve)
 end:
     sk_uchar_free(r);
     sk_uchar_free(s);
+    sk_uchar_free(q);
     return testresult;
 }
 
@@ -267,6 +346,40 @@ static TST_SS *SS_copy(const TST_SS *p)
 static void SS_free(TST_SS *p)
 {
     OPENSSL_free(p);
+}
+
+static char *string_copy(const char *p)
+{
+    return OPENSSL_strdup(p);
+}
+
+static int string_cmp(const char *const *a, const char *const *b)
+{
+    return strcmp(*a, *b);
+}
+
+static void string_free(char *p)
+{
+    OPENSSL_free(p);
+}
+
+static int push_string(STACK_OF(OPENSSL_STRING) *s, const char *str)
+{
+    char *p = OPENSSL_strdup(str);
+    int expected = sk_OPENSSL_STRING_num(s) + 1;
+    int pushed;
+
+    if (!TEST_ptr(p))
+        return 0;
+
+    pushed = sk_OPENSSL_STRING_push(s, p);
+    if (!TEST_int_eq(pushed, expected)) {
+        if (pushed <= 0)
+            OPENSSL_free(p);
+        return 0;
+    }
+
+    return 1;
 }
 
 static int test_SS_stack(void)
@@ -343,6 +456,55 @@ end:
     return testresult;
 }
 
+static int test_OPENSSL_STRING_deep_copy_mfail(void)
+{
+    STACK_OF(OPENSSL_STRING) *s = sk_OPENSSL_STRING_new_null();
+    STACK_OF(OPENSSL_STRING) *r = NULL;
+    static const char *strings[] = {
+        "alpha", "beta", "gamma"
+    };
+    char *p;
+    int i;
+    int testresult = 0;
+
+    if (!TEST_ptr(s))
+        goto end;
+
+    for (i = 0; i < (int)OSSL_NELEM(strings); i++) {
+        p = OPENSSL_strdup(strings[i]);
+        if (!TEST_ptr(p)
+            || !TEST_int_eq(sk_OPENSSL_STRING_push(s, p), i + 1)) {
+            OPENSSL_free(p);
+            goto end;
+        }
+    }
+
+    MFAIL_start();
+    r = sk_OPENSSL_STRING_deep_copy(s, string_copy, string_free);
+    MFAIL_end();
+
+    if (r == NULL)
+        goto end;
+
+    if (!TEST_int_eq(sk_OPENSSL_STRING_num(r), sk_OPENSSL_STRING_num(s)))
+        goto end;
+
+    for (i = 0; i < sk_OPENSSL_STRING_num(s); i++) {
+        char *src = sk_OPENSSL_STRING_value(s, i);
+        char *dst = sk_OPENSSL_STRING_value(r, i);
+
+        if (!TEST_ptr_ne(dst, src)
+            || !TEST_str_eq(dst, src))
+            goto end;
+    }
+
+    testresult = 1;
+end:
+    sk_OPENSSL_STRING_pop_free(r, string_free);
+    sk_OPENSSL_STRING_pop_free(s, string_free);
+    return testresult;
+}
+
 static int test_SU_stack(void)
 {
     STACK_OF(TST_SU) *s = sk_TST_SU_new_null();
@@ -379,11 +541,89 @@ end:
     return testresult;
 }
 
+static int test_STRING_STACK_stack_ubsan(int idx)
+{
+    STACK_OF(OPENSSL_STRING) *s = NULL;
+    STACK_OF(OPENSSL_STRING) *t = NULL;
+    STACK_OF(OPENSSL_STRING) *u = NULL;
+    int testresult = 0;
+
+    switch (idx) {
+    case 0:
+        s = sk_OPENSSL_STRING_new_null();
+        break;
+    case 1:
+        s = sk_OPENSSL_STRING_new(string_cmp);
+        break;
+    case 2:
+        s = sk_OPENSSL_STRING_new_reserve(string_cmp, 2);
+        break;
+    case 3:
+        s = sk_OPENSSL_STRING_deep_copy(NULL, string_copy, string_free);
+        break;
+    case 4:
+        t = sk_OPENSSL_STRING_new(string_cmp);
+        if (!TEST_ptr(t))
+            goto end;
+        if (!push_string(t, "b")
+            || !push_string(t, "a"))
+            goto end;
+        s = sk_OPENSSL_STRING_dup(t);
+        if (s != NULL) {
+            sk_OPENSSL_STRING_free(t);
+            t = NULL;
+        }
+        break;
+    case 5:
+        t = sk_OPENSSL_STRING_deep_copy(NULL, string_copy, string_free);
+        if (!TEST_ptr(t))
+            goto end;
+        if (!push_string(t, "b")
+            || !push_string(t, "a"))
+            goto end;
+        s = sk_OPENSSL_STRING_deep_copy(t, string_copy, string_free);
+        break;
+    default:
+        goto end;
+    }
+    if (!TEST_ptr(s))
+        goto end;
+
+    if (idx < 4) {
+        if (!push_string(s, "b")
+            || !push_string(s, "a"))
+            goto end;
+    }
+
+    sk_OPENSSL_STRING_set_cmp_func(s, string_cmp);
+    sk_OPENSSL_STRING_sort(s);
+    if (!TEST_str_eq(sk_OPENSSL_STRING_value(s, 0), "a")
+        || !TEST_int_eq(sk_OPENSSL_STRING_find(s, "b"), 1))
+        goto end;
+
+    u = sk_OPENSSL_STRING_deep_copy(s, string_copy, string_free);
+    if (!TEST_ptr(u)
+        || !TEST_int_eq(sk_OPENSSL_STRING_num(u), 2)
+        || !TEST_ptr_ne(sk_OPENSSL_STRING_value(u, 0),
+            sk_OPENSSL_STRING_value(s, 0))
+        || !TEST_str_eq(sk_OPENSSL_STRING_value(u, 0), "a"))
+        goto end;
+
+    testresult = 1;
+end:
+    sk_OPENSSL_STRING_pop_free(u, string_free);
+    sk_OPENSSL_STRING_pop_free(s, string_free);
+    sk_OPENSSL_STRING_pop_free(t, string_free);
+    return testresult;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_int_stack, 4);
     ADD_ALL_TESTS(test_uchar_stack, 4);
     ADD_TEST(test_SS_stack);
+    ADD_ALL_TESTS(test_STRING_STACK_stack_ubsan, 6);
     ADD_TEST(test_SU_stack);
+    ADD_MFAIL_TEST(test_OPENSSL_STRING_deep_copy_mfail);
     return 1;
 }

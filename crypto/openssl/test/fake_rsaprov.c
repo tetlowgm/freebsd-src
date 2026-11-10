@@ -349,7 +349,7 @@ static int fake_rsa_sig_sign(void *ctx, unsigned char *sig,
     *siglen = 256;
     /* record that the real sign operation was called */
     if (sig != NULL) {
-        if (!TEST_int_ge(sigsize, *siglen))
+        if (!TEST_size_t_ge(sigsize, *siglen))
             return 0;
         *sigctx = 2;
         /* produce a fake signature */
@@ -462,7 +462,7 @@ static int fake_rsa_dgstsgnvfy_final(void *ctx, unsigned char *sig,
         *siglen = 256;
         /* record that the real sign operation was called */
         if (sig != NULL) {
-            if (!TEST_int_ge(sigsize, *siglen))
+            if (!TEST_size_t_ge(sigsize, *siglen))
                 return 0;
             /* produce a fake signature */
             memset(sig, 'a', *siglen);
@@ -1269,5 +1269,10 @@ OSSL_PROVIDER *fake_rsa_start(OSSL_LIB_CTX *libctx)
 
 void fake_rsa_finish(OSSL_PROVIDER *p)
 {
+    TEST_info("fake_rsa info: has_selection: %d imptypes_selection: %d"
+              "exptypes_selection: %d query_id: %d key_deleted: %d",
+        has_selection, imptypes_selection,
+        exptypes_selection, query_id, key_deleted);
+
     OSSL_PROVIDER_unload(p);
 }

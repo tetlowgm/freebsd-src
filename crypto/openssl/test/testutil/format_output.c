@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -112,7 +112,7 @@ static void test_fail_string_common(const char *prefix, const char *file,
             m2 += n2;
         l1 -= n1;
         l2 -= n2;
-        cnt += width;
+        cnt += (unsigned int)width;
     }
 fin:
     test_flush_stderr();
@@ -129,15 +129,19 @@ void test_fail_string_message(const char *prefix, const char *file,
     const char *op, const char *m1, size_t l1,
     const char *m2, size_t l2)
 {
+    test_output_record_begin();
     test_fail_string_common(prefix, file, line, type, left, right, op,
         m1, l1, m2, l2);
     test_printf_stderr("\n");
+    test_output_record_end();
 }
 
 void test_output_string(const char *name, const char *m, size_t l)
 {
+    test_output_record_begin();
     test_fail_string_common("string", NULL, 0, NULL, NULL, NULL, name,
         m, l, m, l);
+    test_output_record_end();
 }
 
 /* BIGNUM formatted output routines */
@@ -206,7 +210,7 @@ static void test_bignum_zero_print(const BIGNUM *bn, char sep)
 static int convert_bn_memory(const unsigned char *in, size_t bytes,
     char *out, int *lz, const BIGNUM *bn)
 {
-    int n = bytes * 2, i;
+    int n = (int)(bytes * 2), i;
     char *p = out, *q = NULL;
     const char *r;
 
@@ -299,7 +303,7 @@ static void test_fail_bignum_common(const char *prefix, const char *file,
 
     len = ((l1 > l2 ? l1 : l2) + bytes - 1) / bytes * bytes;
 
-    if (len > MEM_BUFFER_SIZE && (bufp = OPENSSL_malloc(len * 2)) == NULL) {
+    if (len > MEM_BUFFER_SIZE && (bufp = OPENSSL_malloc_array(2, len)) == NULL) {
         bufp = buffer;
         len = MEM_BUFFER_SIZE;
         test_printf_stderr("WARNING: these BIGNUMs have been truncated\n");
@@ -307,15 +311,15 @@ static void test_fail_bignum_common(const char *prefix, const char *file,
 
     if (bn1 != NULL) {
         m1 = bufp;
-        BN_bn2binpad(bn1, m1, len);
+        BN_bn2binpad(bn1, m1, (int)len);
     }
     if (bn2 != NULL) {
         m2 = bufp + len;
-        BN_bn2binpad(bn2, m2, len);
+        BN_bn2binpad(bn2, m2, (int)len);
     }
 
     while (len > 0) {
-        cnt = 8 * (len - bytes);
+        cnt = (unsigned int)(8 * (len - bytes));
         n1 = convert_bn_memory(m1, bytes, b1, &lz1, bn1);
         n2 = convert_bn_memory(m2, bytes, b2, &lz2, bn2);
 
@@ -369,8 +373,10 @@ void test_fail_bignum_message(const char *prefix, const char *file,
     const char *op,
     const BIGNUM *bn1, const BIGNUM *bn2)
 {
+    test_output_record_begin();
     test_fail_bignum_common(prefix, file, line, type, left, right, op, bn1, bn2);
     test_printf_stderr("\n");
+    test_output_record_end();
 }
 
 void test_fail_bignum_mono_message(const char *prefix, const char *file,
@@ -378,14 +384,18 @@ void test_fail_bignum_mono_message(const char *prefix, const char *file,
     const char *left, const char *right,
     const char *op, const BIGNUM *bn)
 {
+    test_output_record_begin();
     test_fail_bignum_common(prefix, file, line, type, left, right, op, bn, bn);
     test_printf_stderr("\n");
+    test_output_record_end();
 }
 
 void test_output_bignum(const char *name, const BIGNUM *bn)
 {
+    test_output_record_begin();
     if (bn == NULL || BN_is_zero(bn)) {
-        test_printf_stderr("bignum: '%s' = %s\n", name,
+        test_printf_stderr("bignum: '%s' = %s\n",
+            name == NULL ? "<NULL>" : name,
             test_bignum_zero_null(bn));
     } else if (BN_num_bytes(bn) <= BN_OUTPUT_SIZE) {
         unsigned char buf[BN_OUTPUT_SIZE];
@@ -396,12 +406,14 @@ void test_output_bignum(const char *name, const BIGNUM *bn)
         hex_convert_memory(buf, n, p, BN_OUTPUT_SIZE);
         while (*p == '0' && *++p != '\0')
             ;
-        test_printf_stderr("bignum: '%s' = %s0x%s\n", name,
+        test_printf_stderr("bignum: '%s' = %s0x%s\n",
+            name == NULL ? "<NULL>" : name,
             BN_is_negative(bn) ? "-" : "", p);
     } else {
         test_fail_bignum_common("bignum", NULL, 0, NULL, NULL, NULL, name,
             bn, bn);
     }
+    test_output_record_end();
 }
 
 /* Memory output routines */
@@ -504,7 +516,7 @@ static void test_fail_memory_common(const char *prefix, const char *file,
             m2 += n2;
         l1 -= n1;
         l2 -= n2;
-        cnt += bytes;
+        cnt += (unsigned int)bytes;
     }
 fin:
     test_flush_stderr();
@@ -522,13 +534,17 @@ void test_fail_memory_message(const char *prefix, const char *file,
     const unsigned char *m1, size_t l1,
     const unsigned char *m2, size_t l2)
 {
+    test_output_record_begin();
     test_fail_memory_common(prefix, file, line, type, left, right, op,
         m1, l1, m2, l2);
     test_printf_stderr("\n");
+    test_output_record_end();
 }
 
 void test_output_memory(const char *name, const unsigned char *m, size_t l)
 {
+    test_output_record_begin();
     test_fail_memory_common("memory", NULL, 0, NULL, NULL, NULL, name,
         m, l, m, l);
+    test_output_record_end();
 }

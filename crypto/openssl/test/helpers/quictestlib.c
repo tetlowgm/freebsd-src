@@ -18,8 +18,6 @@
 #include "../threadstest.h"
 #endif
 #include "internal/quic_ssl.h"
-#include "../../ssl/ssl_local.h"
-#include "internal/ssl_unwrap.h"
 #include "internal/quic_wire_pkt.h"
 #include "internal/quic_record_tx.h"
 #include "internal/quic_error.h"
@@ -816,7 +814,7 @@ static int packet_plain_mutate(const QUIC_PKT_HDR *hdrin,
      * 14 long header (we assume token length is 0,
      * which is fine for server not so fine for client)
      */
-    grow_allowance = 1200 - bufsz - 16 - 14;
+    grow_allowance = 1200 - (int)bufsz - 16 - 14;
     grow_allowance -= hdrin->dst_conn_id.id_len;
     grow_allowance -= hdrin->src_conn_id.id_len;
     assert(grow_allowance >= 0);
@@ -934,9 +932,10 @@ int qtest_fault_prepend_frame(QTEST_FAULT *fault, const unsigned char *frame,
     old_len = fault->pplainio.buf_len;
 
     /* Extend the size of the packet by the size of the new frame */
-    if (!TEST_true(qtest_fault_resize_plain_packet(fault,
-            old_len + frame_len)))
+    if (!qtest_fault_resize_plain_packet(fault, old_len + frame_len)) {
+        TEST_info("Cannot extend packet (%zu + %zu)", old_len, frame_len);
         return 0;
+    }
 
     memmove(buf + frame_len, buf, old_len);
     memcpy(buf, frame, frame_len);
@@ -1172,7 +1171,7 @@ static int pcipher_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
     size_t *num_processed)
 {
     BIO *next = BIO_next(b);
-    ossl_ssize_t ret = 0;
+    int ret = 0;
     size_t i = 0, tmpnump;
     QUIC_PKT_HDR hdr;
     PACKET pkt;
@@ -1446,6 +1445,7 @@ static int create_dgram_pair(BIO **c_bio_p, BIO **s_bio_p)
     struct in_addr ina;
     int bio_flags = 0;
     int ok;
+    size_t ring_buf_size = 1500;
 
     ina.s_addr = htonl(0x7f000001);
     bio_flags |= BIO_DGRAM_CAP_HANDLES_DST_ADDR
@@ -1455,7 +1455,16 @@ static int create_dgram_pair(BIO **c_bio_p, BIO **s_bio_p)
 
     c_bio = NULL;
     s_bio = NULL;
-    ok = BIO_new_bio_dgram_pair(&c_bio, 1500, &s_bio, 1500);
+#if defined(_AIX)
+    /*
+     * AIX has a struct sockaddr_un definition that greatly inflates the size of the
+     * BIO_ADDR structure, two of which are used to form a pseudo udp header in bio
+     * dgram pair BIO's.  We need to increase the size of the pair ring buffers here
+     * to prevent test failures stemming from inability to transmit such large headers
+     */
+    ring_buf_size = 4096;
+#endif
+    ok = BIO_new_bio_dgram_pair(&c_bio, ring_buf_size, &s_bio, ring_buf_size);
     if (ok == 0) {
         TEST_info("%s BIO_new_bio_dgram_pair() error", OPENSSL_FUNC);
         goto done;
@@ -1550,7 +1559,6 @@ static int init_client(SSL *c_ssl)
     BIO_ADDR *peer_addr = NULL;
     struct in_addr ina;
     int ok = 0;
-    SSL_CONNECTION *sc;
 
     ina.s_addr = htonl(0x7f000001);
 
@@ -1560,9 +1568,8 @@ static int init_client(SSL *c_ssl)
         goto done;
     }
 
-    sc = SSL_CONNECTION_FROM_SSL(c_ssl);
-    if (sc == NULL || !X509_VERIFY_PARAM_set1_host(sc->param, "localhost", 0)) {
-        ok = 0;
+    ok = SSL_set1_dnsname(c_ssl, "localhost");
+    if (ok == 0) {
         TEST_info("%s SSL_set1_dnsname()", OPENSSL_FUNC);
         goto done;
     }

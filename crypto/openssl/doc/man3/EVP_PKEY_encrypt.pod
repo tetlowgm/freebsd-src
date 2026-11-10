@@ -17,12 +17,13 @@ EVP_PKEY_encrypt_init, EVP_PKEY_encrypt - encrypt using a public key algorithm
 
 =head1 DESCRIPTION
 
-The EVP_PKEY_encrypt_init() function initializes a public key algorithm
-context using key B<pkey> for an encryption operation.
+The EVP_PKEY_encrypt_init() function initializes the public key algorithm
+context I<ctx> for an encryption operation.  A key must already be associated
+with I<ctx>; this is normally done by creating it with
+L<EVP_PKEY_CTX_new(3)> or L<EVP_PKEY_CTX_new_from_pkey(3)>.
 
-The EVP_PKEY_encrypt_init_ex() function initializes a public key algorithm
-context using key B<pkey> for an encryption operation and sets the
-algorithm specific B<params>.
+The EVP_PKEY_encrypt_init_ex() function is the same as
+EVP_PKEY_encrypt_init() but additionally sets the algorithm-specific I<params>.
 
 The EVP_PKEY_encrypt() function performs a public key encryption operation
 using B<ctx>. The data to be encrypted is specified using the B<in> and
@@ -52,24 +53,21 @@ algorithm.
 =head1 EXAMPLES
 
 Encrypt data using OAEP (for RSA keys). See also L<PEM_read_PUBKEY(3)> or
-L<d2i_X509(3)> for means to load a public key. You may also simply
-set 'eng = NULL;' to start with the default OpenSSL RSA implementation:
+L<d2i_X509(3)> for means to load a public key.
 
  #include <openssl/evp.h>
  #include <openssl/rsa.h>
- #include <openssl/engine.h>
 
  EVP_PKEY_CTX *ctx;
- ENGINE *eng;
  unsigned char *out, *in;
  size_t outlen, inlen;
  EVP_PKEY *key;
 
  /*
-  * NB: assumes eng, key, in, inlen are already set up,
+  * NB: assumes key, in, inlen are already set up,
   * and that key is an RSA public key
   */
- ctx = EVP_PKEY_CTX_new(key, eng);
+ ctx = EVP_PKEY_CTX_new_from_pkey(NULL, key, NULL);
  if (!ctx)
      /* Error occurred */
  if (EVP_PKEY_encrypt_init(ctx) <= 0)
@@ -94,7 +92,6 @@ set 'eng = NULL;' to start with the default OpenSSL RSA implementation:
 =head1 SEE ALSO
 
 L<d2i_X509(3)>,
-L<ENGINE_by_id(3)>,
 L<EVP_PKEY_CTX_new(3)>,
 L<EVP_PKEY_decrypt(3)>,
 L<EVP_PKEY_sign(3)>,
@@ -108,7 +105,7 @@ These functions were added in OpenSSL 1.0.0.
 
 =head1 COPYRIGHT
 
-Copyright 2006-2021 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

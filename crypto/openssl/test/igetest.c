@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -43,7 +43,7 @@ struct ige_test {
     const int encrypt;
 };
 
-static struct ige_test const ige_test_vectors[] = {
+static const struct ige_test ige_test_vectors[] = {
     { { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
           0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f }, /* key */
         { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
@@ -88,7 +88,7 @@ struct bi_ige_test {
     const int encrypt;
 };
 
-static struct bi_ige_test const bi_ige_test_vectors[] = {
+static const struct bi_ige_test bi_ige_test_vectors[] = {
     { { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
           0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f }, /* key1 */
         { 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
@@ -154,7 +154,7 @@ static int test_ige_vectors(int n)
     unsigned char iv[AES_BLOCK_SIZE * 2];
     int testresult = 1;
 
-    if (!TEST_int_le(v->length, MAX_VECTOR_SIZE))
+    if (!TEST_size_t_le(v->length, MAX_VECTOR_SIZE))
         return 0;
 
     if (v->encrypt == AES_ENCRYPT)
@@ -195,15 +195,15 @@ static int test_bi_ige_vectors(int n)
     AES_KEY key2;
     unsigned char buf[MAX_VECTOR_SIZE];
 
-    if (!TEST_int_le(v->length, MAX_VECTOR_SIZE))
+    if (!TEST_size_t_le(v->length, MAX_VECTOR_SIZE))
         return 0;
 
     if (v->encrypt == AES_ENCRYPT) {
-        AES_set_encrypt_key(v->key1, 8 * v->keysize, &key1);
-        AES_set_encrypt_key(v->key2, 8 * v->keysize, &key2);
+        AES_set_encrypt_key(v->key1, (int)(8 * v->keysize), &key1);
+        AES_set_encrypt_key(v->key2, (int)(8 * v->keysize), &key2);
     } else {
-        AES_set_decrypt_key(v->key1, 8 * v->keysize, &key1);
-        AES_set_decrypt_key(v->key2, 8 * v->keysize, &key2);
+        AES_set_decrypt_key(v->key1, (int)(8 * v->keysize), &key1);
+        AES_set_decrypt_key(v->key2, (int)(8 * v->keysize), &key2);
     }
 
     AES_bi_ige_encrypt(v->in, buf, v->length, &key1, &key2, v->iv,
